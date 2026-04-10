@@ -1,0 +1,58 @@
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+/**
+ * Environment variable validation.
+ * Validated at module import time — the process exits with a clear error
+ * listing the missing variable(s) if any required value is absent.
+ *
+ * Import this module in server-side entry points (db/client.ts, stripe.ts)
+ * so validation runs on startup before any request is served.
+ *
+ * Client-side vars must be prefixed with NEXT_PUBLIC_.
+ */
+export const env = createEnv({
+  server: {
+    // ── Auth0 ────────────────────────────────────────────────────────────────
+    AUTH0_DOMAIN:        z.string().min(1),
+    AUTH0_CLIENT_ID:     z.string().min(1),
+    AUTH0_CLIENT_SECRET: z.string().min(1),
+    AUTH0_SECRET:        z.string().min(1),
+    APP_BASE_URL:        z.string().url(),
+
+    // ── Database ─────────────────────────────────────────────────────────────
+    DATABASE_URL: z.string().url(),
+
+    // ── SendGrid (optional in local dev) ─────────────────────────────────────
+    SENDGRID_API_KEY:    z.string().startsWith("SG.").optional(),
+    SENDGRID_FROM_EMAIL: z.string().email().optional(),
+
+    // ── Scheduler (optional in local dev) ────────────────────────────────────
+    SCHEDULER_SECRET: z.string().min(1).optional(),
+
+    // ── Anthropic (optional in local dev) ────────────────────────────────────
+    ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-").optional(),
+
+    // ── Stripe (optional in local dev) ───────────────────────────────────────
+    STRIPE_SECRET_KEY:       z.string().startsWith("sk_").optional(),
+    STRIPE_WEBHOOK_SECRET:   z.string().startsWith("whsec_").optional(),
+    STRIPE_STARTER_PRICE_ID: z.string().startsWith("price_").optional(),
+    STRIPE_GROWTH_PRICE_ID:  z.string().startsWith("price_").optional(),
+
+    // ── Upstash Redis (optional — rate limiting skipped when absent) ──────────
+    UPSTASH_REDIS_REST_URL:   z.string().url().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+
+    // ── Sentry (optional — error tracking skipped when absent) ───────────────
+    SENTRY_DSN: z.string().url().optional(),
+  },
+
+  client: {
+    // ── Sentry (client-side, must be NEXT_PUBLIC_) ────────────────────────────
+    NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+  },
+
+  experimental__runtimeEnv: {
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  },
+});

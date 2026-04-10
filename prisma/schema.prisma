@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  admin
+  department_owner
+  business_owner
+}
+
+enum TermType {
+  fixed
+  indefinite
+}
+
+enum PeriodUnit {
+  months
+  days
+}
+
+enum ContractStatus {
+  active
+  expired
+  auto_renewed
+  action_required
+}
+
+enum DocumentType {
+  main
+  attachment
+  addendum
+  amendment
+  renewal
+}
+
+enum FileFormat {
+  pdf
+  docx
+  xlsx
+}
+
+enum AlertChannel {
+  email
+  slack
+}
+
+enum AlertTriggerReference {
+  renewal_notice_deadline
+  end_date
+}
+
+enum TenantPlan {
+  trial
+  starter
+  growth
+  enterprise
+}
+
+enum TenantPlanStatus {
+  active
+  past_due
+  canceled
+  read_only
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id                   String           @id @default(uuid())
+  name                 String
+  slug                 String           @unique
+  gcsBucket            String           @map("gcs_bucket")
+  slackWebhookUrl      String?          @map("slack_webhook_url")
+  // ── Billing (§15) ──────────────────────────────────────────────────────────
+  stripeCustomerId     String?          @map("stripe_customer_id")
+  stripeSubscriptionId String?          @map("stripe_subscription_id")
+  plan                 TenantPlan       @default(trial)
+  planStatus           TenantPlanStatus @default(active)
+  trialEndsAt          DateTime?        @map("trial_ends_at")
+  seatCount            Int              @default(1) @map("seat_count")
+  createdAt            DateTime         @default(now()) @map("created_at")
+
+  users               User[]
+  departments         Department[]
+  vendors             Vendor[]
+  contracts           Contract[]
+  documents           Document[]
+  notificationAlerts  NotificationAlert[]
+  extractionResults   ExtractionResult[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  tenantId     String    @map("tenant_id")
+  auth0Id      String    @unique @map("auth0_id")
+  name         String
+  email        String
+  role         UserRole
+  departmentId String?   @map("department_id")
+  slackUserId  String?   @map("slack_user_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  tenant              Tenant              @relation(fields: [tenantId], references: [id])
+  department          Department?         @relation(fields: [departmentId], references: [id])
+  contractOwnerships  ContractOwner[]
+  uploadedDocuments   Document[]          @relation("UploadedBy")
+  confirmedExtractions ExtractionResult[] @relation("ConfirmedBy")
+
+  @@map("users")
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  users     User[]
+  contracts Contract[]
+
+  @@map("departments")
+}
+
+model Vendor {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  name         String
+  contactName  String?  @map("contact_name")
+  contactEmail String?  @map("contact_email")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  contracts Contract[]
+
+  @@map("vendors")
+}
+
+model Contract {
+  id                        String         @id @default(uuid())
+  tenantId                  String         @map("tenant_id")
+  vendorId                  String         @map("vendor_id")
+  departmentId              String         @map("department_id")
+  internalGroupEntity       String         @map("internal_group_entity")
+  startDate                 DateTime       @map("start_date")
+  endDate                   DateTime       @map("end_date")
+  durationMonths            Int            @map("duration_months")
+  termType                  TermType       @map("term_type")
+  autoRenewal               Boolean        @map("auto_renewal")
+  renewalPeriodMonths       Int?           @map("renewal_period_months")
+  renewalNoticePeriodValue  Int?           @map("renewal_notice_period_value")
+  renewalNoticePeriodUnit   PeriodUnit?    @map("renewal_notice_period_unit")
+  renewalNoticeDeadline     DateTime?      @map("renewal_notice_deadline")
+  status                    ContractStatus @default(active)
+  actionConfirmed           Boolean        @default(false) @map("action_confirmed")
+  actionConfirmedAt         DateTime?      @map("action_confirmed_at")
+  createdAt                 DateTime       @default(now()) @map("created_at")
+  updatedAt                 DateTime       @updatedAt @map("updated_at")
+
+  tenant             Tenant              @relation(fields: [tenantId], references: [id])
+  vendor             Vendor              @relation(fields: [vendorId], references: [id])
+  department         Department          @relation(fields: [departmentId], references: [id])
+  owners             ContractOwner[]
+  documents          Document[]
+  notificationAlerts NotificationAlert[]
+
+  @@map("contracts")
+}
+
+model ContractOwner {
+  contractId String   @map("contract_id")
+  userId     String   @map("user_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  contract Contract @relation(fields: [contractId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@id([contractId, userId])
+  @@map("contract_owners")
+}
+
+model Document {
+  id           String       @id @default(uuid())
+  tenantId     String       @map("tenant_id")
+  contractId   String       @map("contract_id")
+  type         DocumentType
+  version      Int          @default(1)
+  fileName     String       @map("file_name")
+  filePath     String       @map("file_path")
+  fileFormat   FileFormat   @map("file_format")
+  uploadedById String       @map("uploaded_by")
+  uploadedAt   DateTime     @default(now()) @map("uploaded_at")
+
+  tenant           Tenant            @relation(fields: [tenantId], references: [id])
+  contract         Contract          @relation(fields: [contractId], references: [id])
+  uploadedBy       User              @relation("UploadedBy", fields: [uploadedById], references: [id])
+  extractionResult ExtractionResult?
+
+  @@map("documents")
+}
+
+model NotificationAlert {
+  id               String                @id @default(uuid())
+  tenantId         String                @map("tenant_id")
+  contractId       String                @map("contract_id")
+  triggerValue     Int                   @map("trigger_value")
+  triggerUnit      PeriodUnit            @map("trigger_unit")
+  triggerReference AlertTriggerReference @map("trigger_reference")
+  channels         Json           // AlertChannel[]: "email" | "slack"
+  sentAt           DateTime?             @map("sent_at")
+  createdAt        DateTime              @default(now()) @map("created_at")
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  contract Contract @relation(fields: [contractId], references: [id])
+
+  @@map("notification_alerts")
+}
+
+model ExtractionResult {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  documentId    String    @unique @map("document_id")
+  extractedData Json      @map("extracted_data")
+  confidence    Json
+  confirmedById String?   @map("confirmed_by")
+  confirmedAt   DateTime? @map("confirmed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  document    Document @relation(fields: [documentId], references: [id])
+  confirmedBy User?    @relation("ConfirmedBy", fields: [confirmedById], references: [id])
+
+  @@map("extraction_results")
+}
