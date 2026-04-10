@@ -42,7 +42,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     <form onSubmit={handleSubmit} className="max-w-md space-y-5">
       {/* Identity */}
       <div>
-        <h2 className="text-sm font-medium text-gray-700 mb-3">Identity</h2>
+        <h2 className="text-base font-semibold text-gray-700 mb-3">Identity</h2>
         <div className="space-y-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-gray-500">Display name</label>
@@ -69,7 +69,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
       {/* Slack */}
       <div>
-        <h2 className="text-sm font-medium text-gray-700 mb-3">Slack</h2>
+        <h2 className="text-base font-semibold text-gray-700 mb-3">Slack</h2>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">Slack user ID</label>
           <input
@@ -87,7 +87,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
       {/* Notification preferences */}
       <div>
-        <h2 className="text-sm font-medium text-gray-700 mb-1">
+        <h2 className="text-base font-semibold text-gray-700 mb-1">
           Notification preferences
         </h2>
         <p className="text-xs text-gray-400 mb-0">

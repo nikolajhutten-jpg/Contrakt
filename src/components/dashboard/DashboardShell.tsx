@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import KpiRow from "@/components/dashboard/KpiRow";
 import ContractTable from "@/components/dashboard/ContractTable";
 import EmptyState from "@/components/ui/EmptyState";
+import Button from "@/components/ui/Button";
 import type { DashboardKpis, OnboardingState } from "@/lib/db/dashboard";
 import type { ContractSummary } from "@/types";
 
@@ -38,7 +40,7 @@ function ChecklistItem({ done, label }: ChecklistItemProps) {
 
 interface DashboardShellProps {
   kpis: DashboardKpis;
-  actionRequired: ContractSummary[];
+  activeContracts: ContractSummary[];
   upcomingRenewals: ContractSummary[];
   onboarding: OnboardingState;
   isAdmin: boolean;
@@ -46,7 +48,7 @@ interface DashboardShellProps {
 
 export default function DashboardShell({
   kpis,
-  actionRequired,
+  activeContracts,
   upcomingRenewals,
   onboarding,
   isAdmin,
@@ -76,7 +78,12 @@ export default function DashboardShell({
 
   return (
     <div className="px-8 py-6 max-w-screen-xl">
-      <h1 className="text-xl font-medium text-gray-900 mb-6">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Home</h1>
+        <Link href="/contracts/new">
+          <Button variant="primary" size="sm">Add contract</Button>
+        </Link>
+      </div>
 
       {/* Onboarding checklist (§13.7) */}
       {showChecklist && (
@@ -124,56 +131,63 @@ export default function DashboardShell({
         <KpiRow kpis={kpis} />
       </div>
 
-      {/* Action required section */}
+      {/* All contracts section */}
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-3">
-          <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
-          <h2 className="text-sm font-medium text-gray-900">Action required</h2>
-          {actionRequired.length > 0 && (
-            <span className="text-xs text-red-600 font-medium">
-              {actionRequired.length} contract
-              {actionRequired.length !== 1 ? "s" : ""}
-            </span>
-          )}
+          <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+          <Link
+            href="/contracts"
+            className="text-sm font-medium text-gray-900 hover:underline"
+          >
+            All contracts
+          </Link>
         </div>
-        {actionRequired.length === 0 ? (
+        {activeContracts.length === 0 ? (
           <EmptyState
-            heading="No action required"
-            subtext="Contracts needing attention will appear here."
-            actionLabel="View all contracts"
-            onAction={() => router.push("/contracts")}
-          />
-        ) : (
-          <ContractTable contracts={actionRequired} />
-        )}
-      </section>
-
-      {/* Upcoming renewals section */}
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
-          <h2 className="text-sm font-medium text-gray-900">
-            Upcoming renewals
-          </h2>
-          {upcomingRenewals.length > 0 && (
-            <span className="text-xs text-amber-600 font-medium">
-              {upcomingRenewals.length} contract
-              {upcomingRenewals.length !== 1 ? "s" : ""} within 90 days
-            </span>
-          )}
-        </div>
-        {upcomingRenewals.length === 0 ? (
-          <EmptyState
-            heading="No upcoming renewals"
-            subtext="Contracts with approaching renewal deadlines will appear here."
+            heading="No active contracts"
+            subtext="Your active contracts will appear here."
             actionLabel="Upload a contract"
             onAction={() => router.push("/contracts/new")}
           />
         ) : (
-          <ContractTable
-            contracts={upcomingRenewals}
-            forceRenewalDueBadge
+          <>
+            <ContractTable contracts={activeContracts} showFilter={false} />
+            <div className="mt-3 text-right">
+              <Link href="/contracts" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                View all →
+              </Link>
+            </div>
+          </>
+        )}
+      </section>
+
+      {/* Action required section */}
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
+          <Link
+            href="/action-required"
+            className="text-sm font-medium text-gray-900 hover:underline"
+          >
+            Action required
+          </Link>
+        </div>
+        {upcomingRenewals.length === 0 ? (
+          <EmptyState
+            heading="No action required"
+            subtext="Contracts with renewal notice deadlines in the next 2 months will appear here."
+            actionLabel="View all contracts"
+            onAction={() => router.push("/contracts")}
           />
+        ) : (
+          <>
+            <ContractTable contracts={upcomingRenewals} showFilter={false} />
+            <div className="mt-3 text-right">
+              <Link href="/action-required" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                View all →
+              </Link>
+            </div>
+          </>
         )}
       </section>
     </div>

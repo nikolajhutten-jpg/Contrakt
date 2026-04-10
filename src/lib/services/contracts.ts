@@ -3,17 +3,16 @@ import type { CreateContractInput } from "@/types";
 import type { CreateContractData } from "@/lib/db/contracts";
 
 /**
- * Number of whole calendar months between two dates.
- * Fractional months are floored — consistent with how contract durations
- * are expressed as integers in the spec.
+ * Rounds total days to the nearest month (using 30.44 days/month average),
+ * with a minimum of 1. This gives correct results for short ranges like
+ * "01 Apr → 30 Apr" (1 month) and "01 Jan → 31 Dec" (12 months).
  */
 export function calculateDurationMonths(
   startDate: Date,
   endDate: Date,
 ): number {
-  const years = endDate.getFullYear() - startDate.getFullYear();
-  const months = endDate.getMonth() - startDate.getMonth();
-  return years * 12 + months;
+  const days = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+  return Math.max(1, Math.round(days / 30.44));
 }
 
 /**
@@ -78,7 +77,7 @@ export function buildCreateContractData(
     tenantId,
     vendorId: input.vendorId,
     departmentId: input.departmentId,
-    internalGroupEntity: input.internalGroupEntity,
+    groupEntityId: input.groupEntityId,
     startDate,
     endDate,
     durationMonths,

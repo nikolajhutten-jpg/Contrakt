@@ -14,7 +14,7 @@ export default async function DepartmentsPage() {
 
   return (
     <div className="px-8 py-6 max-w-screen-xl">
-      <h1 className="text-xl font-medium text-gray-900 mb-6">Departments</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Departments</h1>
       <DepartmentList initialDepartments={departments} />
     </div>
   );

@@ -98,7 +98,7 @@ export default function UploadShell() {
   if (phase === "upload") {
     return (
       <div className="px-8 py-6 max-w-screen-xl">
-        <h1 className="text-xl font-medium text-gray-900 mb-8">Upload contract</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Upload contract</h1>
         <UploadZone onUpload={handleUploaded} onError={handleUploadError} />
       </div>
     );
@@ -107,7 +107,7 @@ export default function UploadShell() {
   if (phase === "polling") {
     return (
       <div className="px-8 py-6 max-w-screen-xl">
-        <h1 className="text-xl font-medium text-gray-900 mb-8">Upload contract</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Upload contract</h1>
         <div className="max-w-xl mx-auto flex flex-col items-center gap-4 py-16 text-gray-500">
           <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
           <p className="text-sm">Analyzing {fileName}…</p>
@@ -120,7 +120,7 @@ export default function UploadShell() {
   if (phase === "error") {
     return (
       <div className="px-8 py-6 max-w-screen-xl">
-        <h1 className="text-xl font-medium text-gray-900 mb-8">Upload contract</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Upload contract</h1>
         <div className="max-w-xl mx-auto space-y-4">
           <p className="text-sm text-red-600">{error?.message}</p>
           <div className="flex gap-3">
@@ -152,7 +152,7 @@ export default function UploadShell() {
   // phase === "review"
   return (
     <div className="px-8 py-6 max-w-screen-xl">
-      <h1 className="text-xl font-medium text-gray-900 mb-8">Upload contract</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-8">Upload contract</h1>
       <ExtractionReview
         extracted={result?.extracted ?? null}
         confidence={result?.confidence ?? null}

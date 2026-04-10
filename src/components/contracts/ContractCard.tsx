@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { getDisplayStatus } from "@/lib/utils/contractStatus";
 import type { ContractSummary } from "@/types";
-import type { StatusVariant } from "@/components/ui/StatusBadge";
 
 function formatDate(date: Date | null): string {
   if (!date) return "—";
@@ -35,11 +35,13 @@ export default function ContractCard({ contract }: ContractCardProps) {
           <p className="font-medium text-gray-900 truncate">
             {contract.vendor.name}
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {contract.internalGroupEntity}
-          </p>
+          {contract.groupEntity && (
+            <p className="text-xs text-gray-500 mt-0.5">
+              {contract.groupEntity.name}
+            </p>
+          )}
         </div>
-        <StatusBadge status={contract.status as StatusVariant} />
+        <StatusBadge status={getDisplayStatus(contract)} />
       </div>
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">

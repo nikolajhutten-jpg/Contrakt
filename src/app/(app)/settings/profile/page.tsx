@@ -8,7 +8,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="px-8 py-6 max-w-screen-xl">
-      <h1 className="text-xl font-medium text-gray-900 mb-6">Profile & notifications</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Profile & notifications</h1>
       <ProfileForm user={localUser} />
     </div>
   );

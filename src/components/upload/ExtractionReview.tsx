@@ -3,10 +3,9 @@
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import ContractFormFields from "@/components/upload/ContractFormFields";
-import ConfidenceIndicator from "@/components/upload/ConfidenceIndicator";
 import OwnerSelect from "@/components/upload/OwnerSelect";
 import type { FieldValues } from "@/components/upload/ContractFormFields";
-import type { ExtractionOutput, ConfidenceRatings, Vendor, Department, User } from "@/types";
+import type { ExtractionOutput, ConfidenceRatings, Vendor, Department, User, GroupEntity } from "@/types";
 
 interface ExtractionReviewProps {
   extracted: ExtractionOutput | null;
@@ -25,12 +24,13 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [groupEntities, setGroupEntities] = useState<GroupEntity[]>([]);
   const [vendorId, setVendorId] = useState("");
   const [newVendorName, setNewVendorName] = useState(str(extracted?.vendor_name));
   const [departmentId, setDepartmentId] = useState("");
+  const [groupEntityId, setGroupEntityId] = useState("");
   const [ownerIds, setOwnerIds] = useState<string[]>([]);
   const [fields, setFields] = useState<FieldValues>({
-    internalGroupEntity: str(extracted?.internal_group_entity),
     startDate: str(extracted?.start_date),
     endDate: str(extracted?.end_date),
     termType: str(extracted?.term_type),
@@ -45,17 +45,19 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
       fetch("/api/vendors").then((r) => r.json()) as Promise<{ data: Vendor[] }>,
       fetch("/api/departments").then((r) => r.json()) as Promise<{ data: Department[] }>,
       fetch("/api/users").then((r) => r.json()) as Promise<{ data: User[] }>,
-    ]).then(([v, d, u]) => {
+      fetch("/api/group-entities").then((r) => r.json()) as Promise<{ data: GroupEntity[] }>,
+    ]).then(([v, d, u, g]) => {
       setVendors(v.data ?? []);
       setDepartments(d.data ?? []);
       setUsers(u.data ?? []);
+      setGroupEntities(g.data ?? []);
     });
   }, []);
 
   function handleSave() {
     setSaveError(null);
     if (!fields.startDate || !fields.endDate || !fields.termType || !departmentId) {
-      setSaveError("Start date, end date, term type, and department are required.");
+      setSaveError("Start date, end date, term, and department are required.");
       return;
     }
     if (fields.autoRenewal && !fields.renewalPeriodMonths) {
@@ -79,10 +81,13 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          vendorId: resolvedVendorId, departmentId,
-          internalGroupEntity: fields.internalGroupEntity,
-          startDate: fields.startDate, endDate: fields.endDate,
-          termType: fields.termType, autoRenewal: fields.autoRenewal,
+          vendorId: resolvedVendorId,
+          departmentId,
+          groupEntityId: groupEntityId || null,
+          startDate: fields.startDate,
+          endDate: fields.endDate,
+          termType: fields.termType,
+          autoRenewal: fields.autoRenewal,
           renewalPeriodMonths: fields.renewalPeriodMonths ? Number(fields.renewalPeriodMonths) : null,
           renewalNoticePeriodValue: fields.renewalNoticePeriodValue ? Number(fields.renewalNoticePeriodValue) : null,
           renewalNoticePeriodUnit: fields.renewalNoticePeriodUnit || null,
@@ -99,21 +104,14 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-medium text-gray-900">Review extracted details</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{fileName} · edit any field before saving</p>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-gray-400">
-          <span className="flex items-center gap-1"><ConfidenceIndicator level="high" /> High</span>
-          <span className="flex items-center gap-1"><ConfidenceIndicator level="medium" /> Review</span>
-          <span className="flex items-center gap-1"><ConfidenceIndicator level="low" /> Manual</span>
-        </div>
+      <div>
+        <h2 className="text-base font-medium text-gray-900">Contract details</h2>
+        <p className="text-xs text-gray-400 mt-0.5">{fileName} · edit any field before saving</p>
       </div>
 
       <div>
-        <label className="text-xs font-medium text-gray-500 flex items-center gap-1.5 mb-1">
-          <ConfidenceIndicator level={confidence?.vendor_name} /> Supplier / vendor
+        <label className="text-xs font-medium text-gray-500 block mb-1">
+          Supplier / vendor
         </label>
         <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} className={`${sel} mb-2`}>
           <option value="">— Create new vendor —</option>
@@ -123,6 +121,14 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
           <input type="text" value={newVendorName} onChange={(e) => setNewVendorName(e.target.value)}
             placeholder="New vendor name" className={sel} />
         )}
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-gray-500 mb-1">Group entity</label>
+        <select value={groupEntityId} onChange={(e) => setGroupEntityId(e.target.value)} className={sel}>
+          <option value="">— None —</option>
+          {groupEntities.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+        </select>
       </div>
 
       <div>

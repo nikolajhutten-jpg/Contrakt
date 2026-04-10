@@ -12,6 +12,7 @@ import type {
 const contractWithRelations = {
   vendor: true,
   department: true,
+  groupEntity: true,
   owners: {
     include: {
       user: { select: { id: true, name: true, email: true } },
@@ -71,7 +72,7 @@ export interface CreateContractData {
   tenantId: string;
   vendorId: string;
   departmentId: string;
-  internalGroupEntity: string;
+  groupEntityId: string | null;
   startDate: Date;
   endDate: Date;
   durationMonths: number;
@@ -103,7 +104,7 @@ export async function createContract(
 export interface UpdateContractData {
   vendorId?: string;
   departmentId?: string;
-  internalGroupEntity?: string;
+  groupEntityId?: string | null;
   startDate?: Date;
   endDate?: Date;
   durationMonths?: number;

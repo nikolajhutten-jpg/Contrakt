@@ -36,7 +36,7 @@ export default function ErrorPage({ error, unstable_retry }: ErrorPageProps) {
           />
         </svg>
       </div>
-      <h1 className="text-xl font-medium text-gray-900 mb-2">
+      <h1 className="text-2xl font-semibold text-gray-900 mb-2">
         Something went wrong
       </h1>
       <p className="text-sm text-gray-500 mb-6 max-w-xs">

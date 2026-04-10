@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import StatusBadge from "@/components/ui/StatusBadge";
 import EmptyState from "@/components/ui/EmptyState";
 import { confirmAction } from "@/lib/api/contracts";
+import { getDisplayStatus } from "@/lib/utils/contractStatus";
 import type { ContractSummary } from "@/types";
 
 interface ActionRequiredShellProps {
@@ -83,7 +84,7 @@ export default function ActionRequiredShell({
     <div className="px-8 py-6 max-w-screen-xl">
       <div className="flex items-center gap-2 mb-6">
         <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
-        <h1 className="text-xl font-medium text-gray-900">Action required</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Action required</h1>
         {contracts.length > 0 && (
           <span className="text-sm text-red-600 font-medium">
             {contracts.length} contract{contracts.length !== 1 ? "s" : ""}
@@ -162,7 +163,7 @@ export default function ActionRequiredShell({
                       {formatDate(contract.renewalNoticeDeadline)}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status="action_required" />
+                      <StatusBadge status={getDisplayStatus(contract)} />
                     </td>
                     {canConfirm && (
                       <td className="px-4 py-3">

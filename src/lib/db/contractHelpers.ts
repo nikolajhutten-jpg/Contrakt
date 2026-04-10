@@ -26,14 +26,18 @@ export function contractWhere(ctx: RoleContext) {
 export const summaryInclude = {
   vendor: { select: { id: true, name: true } },
   department: { select: { id: true, name: true } },
+  groupEntity: { select: { id: true, name: true } },
   owners: { include: { user: { select: { id: true, name: true } } } },
 } as const;
+
+// Note: startDate is a scalar on the contract row itself — no include needed.
 
 /** Maps a Prisma row (with nested includes) to the ContractSummary shape. */
 export function toSummary(row: {
   id: string;
   tenantId: string;
-  internalGroupEntity: string;
+  groupEntity: { id: string; name: string } | null;
+  startDate: Date;
   endDate: Date;
   renewalNoticeDeadline: Date | null;
   status: string;
@@ -44,7 +48,8 @@ export function toSummary(row: {
   return {
     id: row.id,
     tenantId: row.tenantId,
-    internalGroupEntity: row.internalGroupEntity,
+    groupEntity: row.groupEntity,
+    startDate: row.startDate,
     endDate: row.endDate,
     renewalNoticeDeadline: row.renewalNoticeDeadline,
     status: row.status as ContractStatus,

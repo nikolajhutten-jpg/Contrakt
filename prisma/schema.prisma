@@ -91,6 +91,7 @@ model Tenant {
   departments         Department[]
   vendors             Vendor[]
   contracts           Contract[]
+  groupEntities       GroupEntity[]
   documents           Document[]
   notificationAlerts  NotificationAlert[]
   extractionResults   ExtractionResult[]
@@ -151,7 +152,8 @@ model Contract {
   tenantId                  String         @map("tenant_id")
   vendorId                  String         @map("vendor_id")
   departmentId              String         @map("department_id")
-  internalGroupEntity       String         @map("internal_group_entity")
+  internalGroupEntity       String?        @map("internal_group_entity")
+  groupEntityId             String?        @map("group_entity_id")
   startDate                 DateTime       @map("start_date")
   endDate                   DateTime       @map("end_date")
   durationMonths            Int            @map("duration_months")
@@ -170,11 +172,25 @@ model Contract {
   tenant             Tenant              @relation(fields: [tenantId], references: [id])
   vendor             Vendor              @relation(fields: [vendorId], references: [id])
   department         Department          @relation(fields: [departmentId], references: [id])
+  groupEntity        GroupEntity?        @relation(fields: [groupEntityId], references: [id])
   owners             ContractOwner[]
   documents          Document[]
   notificationAlerts NotificationAlert[]
 
   @@map("contracts")
+}
+
+model GroupEntity {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  contracts Contract[]
+
+  @@map("group_entities")
 }
 
 model ContractOwner {

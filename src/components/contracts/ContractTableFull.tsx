@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ContractCard from "@/components/contracts/ContractCard";
+import { getDisplayStatus } from "@/lib/utils/contractStatus";
 import type { ContractSummary } from "@/types";
-import type { StatusVariant } from "@/components/ui/StatusBadge";
 
 const VIEW_KEY = "contrakt_contracts_view";
 
@@ -118,7 +118,7 @@ export default function ContractTableFull({ contracts }: ContractTableFullProps)
                       {formatDate(contract.renewalNoticeDeadline)}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={contract.status as StatusVariant} />
+                      <StatusBadge status={getDisplayStatus(contract)} />
                     </td>
                   </tr>
                 ))

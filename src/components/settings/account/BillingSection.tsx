@@ -99,7 +99,7 @@ export default function BillingSection({ tenant, usage }: Props) {
 
   return (
     <div className="max-w-md">
-      <h2 className="text-sm font-medium text-gray-900 mb-4">Billing</h2>
+      <h2 className="text-base font-semibold text-gray-900 mb-4">Billing</h2>
 
       {/* Plan badge */}
       <div className="flex items-center gap-3 mb-4">

@@ -7,18 +7,17 @@ interface KpiRowProps {
 
 export default function KpiRow({ kpis }: KpiRowProps) {
   return (
-    <div className="grid grid-cols-4 gap-4">
-      <KpiCard label="Total contracts" value={kpis.total} />
-      <KpiCard label="Active" value={kpis.active} valueColor="green" />
+    <div className="grid grid-cols-2 gap-4">
+      <KpiCard
+        label="All contracts"
+        value={kpis.total}
+        href="/contracts"
+      />
       <KpiCard
         label="Action required"
         value={kpis.actionRequired}
         valueColor={kpis.actionRequired > 0 ? "red" : "default"}
-      />
-      <KpiCard
-        label="Renewals due"
-        value={kpis.renewalsDue}
-        valueColor={kpis.renewalsDue > 0 ? "amber" : "default"}
+        href="/action-required"
       />
     </div>
   );

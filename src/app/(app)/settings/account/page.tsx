@@ -21,7 +21,7 @@ export default async function AccountSettingsPage() {
 
   return (
     <div className="px-8 py-6 max-w-screen-xl">
-      <h1 className="text-xl font-medium text-gray-900 mb-6">Account settings</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Account settings</h1>
 
       <div className="space-y-10">
         <AccountSettingsForm tenant={tenant} />

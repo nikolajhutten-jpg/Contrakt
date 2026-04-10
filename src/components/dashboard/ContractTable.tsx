@@ -3,13 +3,12 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { getDisplayStatus } from "@/lib/utils/contractStatus";
 import type { ContractSummary } from "@/types";
-import type { StatusVariant } from "@/components/ui/StatusBadge";
 
 interface ContractTableProps {
   contracts: ContractSummary[];
-  /** When true, the renewal_due badge variant is shown instead of the stored status. */
-  forceRenewalDueBadge?: boolean;
+  showFilter?: boolean;
 }
 
 function formatDate(date: Date | null): string {
@@ -29,7 +28,7 @@ function ownerNames(owners: { name: string }[]): string {
 
 export default function ContractTable({
   contracts,
-  forceRenewalDueBadge = false,
+  showFilter = true,
 }: ContractTableProps) {
   const [query, setQuery] = useState("");
 
@@ -40,7 +39,7 @@ export default function ContractTable({
       (c) =>
         c.vendor.name.toLowerCase().includes(q) ||
         c.department.name.toLowerCase().includes(q) ||
-        c.internalGroupEntity.toLowerCase().includes(q) ||
+        (c.groupEntity?.name ?? "").toLowerCase().includes(q) ||
         c.owners.some((o) => o.name.toLowerCase().includes(q)),
     );
   }, [contracts, query]);
@@ -48,46 +47,46 @@ export default function ContractTable({
   return (
     <div>
       {/* Filter */}
-      <div className="mb-3">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter by supplier, department, or owner…"
-          className="w-full max-w-sm px-3 py-1.5 text-sm border border-gray-300 rounded bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
-        />
-      </div>
+      {showFilter && (
+        <div className="mb-3">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter by supplier, department, or owner…"
+            className="w-full max-w-sm px-3 py-1.5 text-sm border border-gray-300 rounded bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+          />
+        </div>
+      )}
 
       {/* Table */}
       <div className="border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed">
+          <colgroup>
+            <col style={{ width: "20%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "12%" }} />
+          </colgroup>
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                Supplier
-              </th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                Department
-              </th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                Owner
-              </th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                End date
-              </th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                Notice deadline
-              </th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                Status
-              </th>
+              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Supplier</th>
+              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Department</th>
+              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Owner</th>
+              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Start date</th>
+              <th className="px-4 py-2.5 text-left font-medium text-gray-600">End date</th>
+              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Notice deadline</th>
+              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-4 py-8 text-center text-sm text-gray-400"
                 >
                   No contracts match your filter.
@@ -107,26 +106,13 @@ export default function ContractTable({
                       {contract.vendor.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {contract.department.name}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {ownerNames(contract.owners)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {formatDate(contract.endDate)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {formatDate(contract.renewalNoticeDeadline)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge
-                      status={
-                        forceRenewalDueBadge
-                          ? "renewal_due"
-                          : (contract.status as StatusVariant)
-                      }
-                    />
+                  <td className="px-4 py-3 text-gray-600">{contract.department.name}</td>
+                  <td className="px-4 py-3 text-gray-600">{ownerNames(contract.owners)}</td>
+                  <td className="px-4 py-3 text-gray-600">{formatDate(contract.startDate)}</td>
+                  <td className="px-4 py-3 text-gray-600">{formatDate(contract.endDate)}</td>
+                  <td className="px-4 py-3 text-gray-600">{formatDate(contract.renewalNoticeDeadline)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <StatusBadge status={getDisplayStatus(contract)} />
                   </td>
                 </tr>
               ))

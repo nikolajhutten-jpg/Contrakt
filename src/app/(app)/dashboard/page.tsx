@@ -3,13 +3,14 @@ import { resolveAuthContext } from "@/lib/auth/session";
 import {
   getDashboardKpis,
   getActionRequiredContracts,
+  getActiveContracts,
   getUpcomingRenewalsContracts,
   getOnboardingState,
 } from "@/lib/db/dashboard";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { UserRole } from "@/types";
 
-export const metadata = { title: "Dashboard — Contrakt" };
+export const metadata = { title: "Home — Contrakt" };
 
 export default async function DashboardPage() {
   const { localUser, tenantId } = await resolveAuthContext();
@@ -21,10 +22,10 @@ export default async function DashboardPage() {
     tenantId,
   };
 
-  const [kpis, actionRequired, upcomingRenewals, onboarding] =
+  const [kpis, activeContracts, upcomingRenewals, onboarding] =
     await Promise.all([
       getDashboardKpis(ctx),
-      getActionRequiredContracts(ctx),
+      getActiveContracts(ctx),
       getUpcomingRenewalsContracts(ctx),
       getOnboardingState(tenantId),
     ]);
@@ -37,7 +38,7 @@ export default async function DashboardPage() {
   return (
     <DashboardShell
       kpis={kpis}
-      actionRequired={actionRequired}
+      activeContracts={activeContracts}
       upcomingRenewals={upcomingRenewals}
       onboarding={onboarding}
       isAdmin={localUser.role === "admin"}

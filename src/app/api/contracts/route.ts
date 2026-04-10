@@ -84,8 +84,6 @@ function parseCreateInput(
 
   if (typeof b.vendorId !== "string") return "vendorId is required.";
   if (typeof b.departmentId !== "string") return "departmentId is required.";
-  if (typeof b.internalGroupEntity !== "string")
-    return "internalGroupEntity is required.";
   if (typeof b.startDate !== "string") return "startDate is required.";
   if (typeof b.endDate !== "string") return "endDate is required.";
   if (typeof b.termType !== "string") return "termType is required.";
@@ -95,7 +93,7 @@ function parseCreateInput(
   return {
     vendorId: b.vendorId,
     departmentId: b.departmentId,
-    internalGroupEntity: b.internalGroupEntity,
+    groupEntityId: typeof b.groupEntityId === "string" ? b.groupEntityId : null,
     startDate: b.startDate,
     endDate: b.endDate,
     termType: b.termType as CreateContractInput["termType"],

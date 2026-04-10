@@ -5,9 +5,9 @@ import Link from "next/link";
 import StatusBadge from "@/components/ui/StatusBadge";
 import EmptyState from "@/components/ui/EmptyState";
 import VendorEditForm from "@/components/vendors/VendorEditForm";
+import { getDisplayStatus } from "@/lib/utils/contractStatus";
 import { ContractStatus } from "@/types";
 import type { VendorWithContracts, VendorContractRow } from "@/lib/db/vendors";
-import type { StatusVariant } from "@/components/ui/StatusBadge";
 
 interface VendorDetailProps {
   vendor: VendorWithContracts;
@@ -58,7 +58,7 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
           </div>
         ) : (
           <div>
-            <h1 className="text-xl font-medium text-gray-900 mb-3">{vendor.name}</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-3">{vendor.name}</h1>
             <dl className="flex gap-6 text-sm">
               <div>
                 <dt className="text-xs text-gray-400 mb-0.5">Contact name</dt>
@@ -84,7 +84,7 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
       {/* Contract list */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-medium text-gray-900">Contracts</h2>
+          <h2 className="text-base font-semibold text-gray-900">Contracts</h2>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -112,7 +112,7 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">Internal entity</th>
+                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">Group entity</th>
                   <th className="px-4 py-2.5 text-left font-medium text-gray-600">Department</th>
                   <th className="px-4 py-2.5 text-left font-medium text-gray-600">Owner</th>
                   <th className="px-4 py-2.5 text-left font-medium text-gray-600">End date</th>
@@ -125,7 +125,7 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
                   <tr key={contract.id} className="bg-white hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <Link href={`/contracts/${contract.id}`} className="font-medium text-gray-900 hover:underline">
-                        {contract.internalGroupEntity || "—"}
+                        {contract.groupEntity?.name || "—"}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{contract.department.name}</td>
@@ -133,7 +133,7 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
                     <td className="px-4 py-3 text-gray-600">{fmt(contract.endDate)}</td>
                     <td className="px-4 py-3 text-gray-600">{fmt(contract.renewalNoticeDeadline)}</td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={contract.status as StatusVariant} />
+                      <StatusBadge status={getDisplayStatus({ ...contract, status: contract.status as ContractStatus })} />
                     </td>
                   </tr>
                 ))}

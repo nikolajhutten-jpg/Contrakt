@@ -24,7 +24,7 @@ export default function VendorList({ vendors, isAdmin }: VendorListProps) {
   return (
     <div className="px-8 py-6 max-w-screen-xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-medium text-gray-900">Vendors</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Vendors</h1>
         {isAdmin && (
           <Link
             href="/vendors/new"

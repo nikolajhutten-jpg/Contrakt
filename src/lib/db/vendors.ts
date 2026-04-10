@@ -7,7 +7,7 @@ import type { Vendor, VendorWithContractCount } from "@/types";
 export interface VendorContractRow {
   id: string;
   tenantId: string;
-  internalGroupEntity: string;
+  groupEntity: { id: string; name: string } | null;
   endDate: Date;
   renewalNoticeDeadline: Date | null;
   status: string;
@@ -63,7 +63,7 @@ export async function getVendorWithContracts(
         select: {
           id: true,
           tenantId: true,
-          internalGroupEntity: true,
+          groupEntity: { select: { id: true, name: true } },
           endDate: true,
           renewalNoticeDeadline: true,
           status: true,

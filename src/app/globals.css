@@ -7,6 +7,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
+:root {
+  --green-900: #1B4332;
+  --green-800: #2D6A4F;
+  --green-700: #40916C;
+  --green-500: #74C69D;
+  --green-100: #D8F3DC;
+}
+
 html,
 body {
   height: 100%;

@@ -13,14 +13,11 @@ export type { RoleContext } from "@/lib/db/contractHelpers";
 
 export interface BadgeCounts {
   actionRequired: number;
-  renewals: number;
 }
 
 export interface DashboardKpis {
   total: number;
-  active: number;
   actionRequired: number;
-  renewalsDue: number;
 }
 
 export interface OnboardingState {
@@ -30,40 +27,13 @@ export interface OnboardingState {
   firstContractUploaded: boolean;
 }
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-
-/** Upcoming-renewals window: notice deadline within the next 90 days. */
-function renewalWindow() {
-  const now = new Date();
-  const boundary = new Date(now);
-  boundary.setDate(now.getDate() + 90);
-  return { gte: now, lte: boundary };
-}
-
 // ─── Badge counts (used by Sidebar) ──────────────────────────────────────────
 
-export async function countActionRequired(ctx: RoleContext): Promise<number> {
-  return db.contract.count({
+export async function getBadgeCounts(ctx: RoleContext): Promise<BadgeCounts> {
+  const actionRequired = await db.contract.count({
     where: { ...contractWhere(ctx), status: ContractStatus.ActionRequired },
   });
-}
-
-export async function countUpcomingRenewals(ctx: RoleContext): Promise<number> {
-  return db.contract.count({
-    where: {
-      ...contractWhere(ctx),
-      status: ContractStatus.Active,
-      renewalNoticeDeadline: renewalWindow(),
-    },
-  });
-}
-
-export async function getBadgeCounts(ctx: RoleContext): Promise<BadgeCounts> {
-  const [actionRequired, renewals] = await Promise.all([
-    countActionRequired(ctx),
-    countUpcomingRenewals(ctx),
-  ]);
-  return { actionRequired, renewals };
+  return { actionRequired };
 }
 
 // ─── Dashboard KPIs ───────────────────────────────────────────────────────────
@@ -72,21 +42,24 @@ export async function getDashboardKpis(
   ctx: RoleContext,
 ): Promise<DashboardKpis> {
   const base = contractWhere(ctx);
-  const [total, active, actionRequired, renewalsDue] = await Promise.all([
+  const now = new Date();
+  const in60Days = new Date(now);
+  in60Days.setDate(now.getDate() + 60);
+
+  const [total, actionRequired] = await Promise.all([
     db.contract.count({ where: base }),
-    db.contract.count({ where: { ...base, status: ContractStatus.Active } }),
-    db.contract.count({
-      where: { ...base, status: ContractStatus.ActionRequired },
-    }),
     db.contract.count({
       where: {
         ...base,
         status: ContractStatus.Active,
-        renewalNoticeDeadline: renewalWindow(),
+        OR: [
+          { renewalNoticeDeadline: { gte: now, lte: in60Days } },
+          { renewalNoticeDeadline: null, endDate: { gte: now, lte: in60Days } },
+        ],
       },
     }),
   ]);
-  return { total, active, actionRequired, renewalsDue };
+  return { total, actionRequired };
 }
 
 // ─── Dashboard contract lists ─────────────────────────────────────────────────
@@ -94,9 +67,56 @@ export async function getDashboardKpis(
 export async function getActionRequiredContracts(
   ctx: RoleContext,
 ): Promise<ContractSummary[]> {
+  const now = new Date();
+  const in60Days = new Date(now);
+  in60Days.setDate(now.getDate() + 60);
+
   const rows = await db.contract.findMany({
-    where: { ...contractWhere(ctx), status: ContractStatus.ActionRequired },
-    orderBy: { renewalNoticeDeadline: "asc" },
+    where: {
+      ...contractWhere(ctx),
+      status: ContractStatus.Active,
+      OR: [
+        { renewalNoticeDeadline: { gte: now, lte: in60Days } },
+        { renewalNoticeDeadline: null, endDate: { gte: now, lte: in60Days } },
+      ],
+    },
+    orderBy: [
+      { renewalNoticeDeadline: { sort: "asc", nulls: "last" } },
+      { endDate: "asc" },
+    ],
+    include: summaryInclude,
+  });
+  return rows.map(toSummary);
+}
+
+export async function getActiveContracts(
+  ctx: RoleContext,
+): Promise<ContractSummary[]> {
+  const now = new Date();
+  const in60Days = new Date(now);
+  in60Days.setDate(now.getDate() + 60);
+
+  // Excludes contracts already shown in the "Action required" section.
+  const rows = await db.contract.findMany({
+    where: {
+      ...contractWhere(ctx),
+      status: ContractStatus.Active,
+      AND: [
+        {
+          NOT: {
+            OR: [
+              { renewalNoticeDeadline: { gte: now, lte: in60Days } },
+              { renewalNoticeDeadline: null, endDate: { gte: now, lte: in60Days } },
+            ],
+          },
+        },
+      ],
+    },
+    orderBy: [
+      { renewalNoticeDeadline: { sort: "asc", nulls: "last" } },
+      { endDate: "asc" },
+    ],
+    take: 15,
     include: summaryInclude,
   });
   return rows.map(toSummary);
@@ -105,13 +125,24 @@ export async function getActionRequiredContracts(
 export async function getUpcomingRenewalsContracts(
   ctx: RoleContext,
 ): Promise<ContractSummary[]> {
+  const now = new Date();
+  const in60Days = new Date(now);
+  in60Days.setDate(now.getDate() + 60);
+
   const rows = await db.contract.findMany({
     where: {
       ...contractWhere(ctx),
       status: ContractStatus.Active,
-      renewalNoticeDeadline: renewalWindow(),
+      OR: [
+        { renewalNoticeDeadline: { gte: now, lte: in60Days } },
+        { renewalNoticeDeadline: null, endDate: { gte: now, lte: in60Days } },
+      ],
     },
-    orderBy: { renewalNoticeDeadline: "asc" },
+    orderBy: [
+      { renewalNoticeDeadline: { sort: "asc", nulls: "last" } },
+      { endDate: "asc" },
+    ],
+    take: 15,
     include: summaryInclude,
   });
   return rows.map(toSummary);

@@ -127,12 +127,21 @@ export interface Vendor {
   createdAt: Date;
 }
 
+export interface GroupEntity {
+  id: string;
+  tenantId: string;
+  name: string;
+  isActive: boolean;
+  createdAt: Date;
+}
+
 export interface Contract {
   id: string;
   tenantId: string;
   vendorId: string;
   departmentId: string;
-  internalGroupEntity: string;
+  groupEntityId: string | null;
+  internalGroupEntity: string | null;
   startDate: Date;
   endDate: Date;
   durationMonths: number;
@@ -240,6 +249,7 @@ export interface ContractOwnerWithUser extends ContractOwner {
 export interface ContractWithRelations extends Contract {
   vendor: Vendor;
   department: Department;
+  groupEntity: GroupEntity | null;
   owners: ContractOwnerWithUser[];
   documents: Document[];
   notificationAlerts: NotificationAlert[];
@@ -249,7 +259,8 @@ export interface ContractWithRelations extends Contract {
 export interface ContractSummary {
   id: string;
   tenantId: string;
-  internalGroupEntity: string;
+  groupEntity: Pick<GroupEntity, "id" | "name"> | null;
+  startDate: Date;
   endDate: Date;
   renewalNoticeDeadline: Date | null;
   status: ContractStatus;
@@ -269,7 +280,7 @@ export interface ExtractionResultWithDocument extends ExtractionResult {
 export interface CreateContractInput {
   vendorId: string;
   departmentId: string;
-  internalGroupEntity: string;
+  groupEntityId: string | null;
   startDate: string; // ISO 8601
   endDate: string;   // ISO 8601
   termType: TermType;

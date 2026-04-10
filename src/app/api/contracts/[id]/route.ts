@@ -119,8 +119,8 @@ function parseUpdateInput(
 
   if (typeof b.vendorId === "string") patch.vendorId = b.vendorId;
   if (typeof b.departmentId === "string") patch.departmentId = b.departmentId;
-  if (typeof b.internalGroupEntity === "string")
-    patch.internalGroupEntity = b.internalGroupEntity;
+  if (typeof b.groupEntityId === "string" || b.groupEntityId === null)
+    patch.groupEntityId = b.groupEntityId as string | null;
   if (typeof b.termType === "string")
     patch.termType = b.termType as import("@/types").TermType;
   if (typeof b.autoRenewal === "boolean") patch.autoRenewal = b.autoRenewal;
