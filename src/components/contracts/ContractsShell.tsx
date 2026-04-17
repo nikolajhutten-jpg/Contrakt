@@ -39,8 +39,8 @@ export default function ContractsShell({
         >
           Contracts
         </h1>
-        <Button variant="primary" size="sm" onClick={() => router.push("/contracts/new")}>
-          Upload contract
+        <Button variant="secondary" size="sm" onClick={() => router.push("/contracts/new")}>
+          Add contract
         </Button>
       </div>
 
