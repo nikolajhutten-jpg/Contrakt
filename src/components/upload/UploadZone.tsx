@@ -26,12 +26,8 @@ export default function UploadZone({ onUpload, onError }: UploadZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   function validate(f: File): string | null {
-    if (!ALLOWED_TYPES.has(f.type)) {
-      return "Only PDF and DOCX files are supported.";
-    }
-    if (f.size > MAX_BYTES) {
-      return "This file is too large. Maximum file size is 25MB.";
-    }
+    if (!ALLOWED_TYPES.has(f.type)) return "Only PDF and DOCX files are supported.";
+    if (f.size > MAX_BYTES) return "This file is too large. Maximum file size is 25 MB.";
     return null;
   }
 
@@ -58,7 +54,6 @@ export default function UploadZone({ onUpload, onError }: UploadZoneProps) {
     try {
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const json = await res.json() as { data?: { jobId: string; fileName: string }; error?: string };
-
       if (!res.ok) {
         onError(json.error ?? "Upload failed. Please try again.");
         return;
@@ -72,54 +67,121 @@ export default function UploadZone({ onUpload, onError }: UploadZoneProps) {
   }
 
   return (
-    <div className="max-w-xl mx-auto">
+    <div style={{ maxWidth: "480px", margin: "0 auto" }}>
       {/* Drop zone */}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded cursor-pointer p-12 flex flex-col items-center gap-3 transition-colors ${
-          dragOver
-            ? "border-gray-400 bg-gray-50"
-            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-        }`}
+        style={{
+          background: dragOver ? "rgba(26,127,75,0.03)" : "#ffffff",
+          border: `0.5px dashed ${dragOver ? "#1a7f4b" : "rgba(0,0,0,0.2)"}`,
+          borderRadius: "12px",
+          padding: "48px 32px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          cursor: "pointer",
+          transition: "border-color 0.15s, background 0.15s",
+          userSelect: "none",
+        }}
       >
-        <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        {/* Upload icon */}
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="rgba(0,0,0,0.2)"
+          strokeWidth={1.5}
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round"
+            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
         </svg>
-        <p className="text-sm font-medium text-gray-700">
-          Drag and drop your contract here
+
+        <p style={{ fontSize: "15px", fontWeight: 500, color: "#171717", marginTop: "12px" }}>
+          Drop your contract here
         </p>
-        <p className="text-xs text-gray-400">PDF or DOCX · up to 25 MB</p>
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginTop: "4px" }}>
+          or click to browse — PDF or DOCX up to 20 MB
+        </p>
+
         <input
           ref={inputRef}
           type="file"
           accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          className="hidden"
+          style={{ display: "none" }}
           onChange={(e) => { const f = e.target.files?.[0]; if (f) pick(f); }}
         />
       </div>
 
-      {/* Selected file */}
+      {/* Selected file pill */}
       {file && (
-        <div className="mt-3 flex items-center justify-between gap-3 px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm">
-          <span className="text-gray-700 truncate">{file.name}</span>
-          <span className="text-gray-400 flex-shrink-0">{formatBytes(file.size)}</span>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            marginTop: "12px",
+            padding: "3px 10px 3px 12px",
+            background: "rgba(0,0,0,0.06)",
+            borderRadius: "20px",
+            fontSize: "12px",
+            color: "#171717",
+            maxWidth: "100%",
+          }}
+        >
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {file.name}
+          </span>
+          <span style={{ color: "rgba(0,0,0,0.4)", flexShrink: 0 }}>{formatBytes(file.size)}</span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setFile(null); setValidationError(null); }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "0 2px",
+              color: "rgba(0,0,0,0.35)",
+              fontSize: "14px",
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
+            aria-label="Clear file"
+          >
+            ×
+          </button>
         </div>
       )}
 
       {/* Validation error */}
       {validationError && (
-        <p className="mt-2 text-sm text-red-600">{validationError}</p>
+        <p style={{ fontSize: "13px", color: "#c0392b", marginTop: "8px" }}>{validationError}</p>
       )}
 
       {/* Upload button */}
       <button
         onClick={handleSubmit}
         disabled={!file || uploading}
-        className="mt-4 w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        style={{
+          display: "block",
+          width: "100%",
+          marginTop: "16px",
+          padding: "8px 0",
+          background: "#1a7f4b",
+          color: "#ffffff",
+          fontSize: "13px",
+          fontWeight: 500,
+          border: "none",
+          borderRadius: "8px",
+          cursor: file && !uploading ? "pointer" : "not-allowed",
+          opacity: !file || uploading ? 0.4 : 1,
+          transition: "opacity 0.15s",
+          letterSpacing: "-0.01em",
+        }}
       >
         {uploading ? "Uploading…" : "Upload and extract"}
       </button>

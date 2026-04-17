@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import UploadZone from "@/components/upload/UploadZone";
 import ExtractionReview from "@/components/upload/ExtractionReview";
+import Button from "@/components/ui/Button";
 import type { ExtractionOutput, ConfidenceRatings } from "@/types";
 
 type Phase = "upload" | "polling" | "review" | "error";
@@ -21,6 +22,28 @@ interface ErrorState {
 
 const POLL_MS = 2_000;
 const POLL_TIMEOUT_MS = 60_000;
+
+function PageHeader() {
+  return (
+    <div style={{ marginBottom: "32px" }}>
+      <h1 style={{ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.03em", color: "#171717" }}>
+        Upload contract
+      </h1>
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginTop: "4px" }}>
+        Upload a PDF or Word document to extract contract details automatically
+      </p>
+    </div>
+  );
+}
+
+function PollingDots() {
+  const [dots, setDots] = useState(1);
+  useEffect(() => {
+    const t = setInterval(() => setDots((d) => (d % 3) + 1), 500);
+    return () => clearInterval(t);
+  }, []);
+  return <span style={{ display: "inline-block", width: "18px" }}>{"·".repeat(dots)}</span>;
+}
 
 export default function UploadShell() {
   const [phase, setPhase] = useState<Phase>("upload");
@@ -42,7 +65,6 @@ export default function UploadShell() {
     setPhase("polling");
   }
 
-  // Poll the status endpoint until complete or failed
   useEffect(() => {
     if (phase !== "polling" || !jobId) return;
 
@@ -53,8 +75,7 @@ export default function UploadShell() {
       if (Date.now() - pollStart.current > POLL_TIMEOUT_MS) {
         clearInterval(timer);
         setError({
-          message:
-            "Extraction is taking longer than expected. You can wait or fill in the details manually.",
+          message: "Extraction is taking longer than expected. You can wait or fill in the details manually.",
           canRetry: true,
         });
         setPhase("error");
@@ -68,11 +89,7 @@ export default function UploadShell() {
 
         if (status === "failed") {
           clearInterval(timer);
-          setError({
-            message:
-              "Automatic extraction failed. Please fill in the details manually.",
-            canRetry: false,
-          });
+          setError({ message: "Automatic extraction failed. Please fill in the details manually.", canRetry: false });
           setPhase("error");
           return;
         }
@@ -89,75 +106,76 @@ export default function UploadShell() {
       }
     }, POLL_MS);
 
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
+    return () => { cancelled = true; clearInterval(timer); };
   }, [phase, jobId]);
 
+  const wrapper = (children: React.ReactNode) => (
+    <div style={{ padding: "28px 32px", maxWidth: "1280px" }}>
+      <PageHeader />
+      {children}
+    </div>
+  );
+
   if (phase === "upload") {
-    return (
-      <div className="px-8 py-6 max-w-screen-xl">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Upload contract</h1>
-        <UploadZone onUpload={handleUploaded} onError={handleUploadError} />
-      </div>
-    );
+    return wrapper(<UploadZone onUpload={handleUploaded} onError={handleUploadError} />);
   }
 
   if (phase === "polling") {
-    return (
-      <div className="px-8 py-6 max-w-screen-xl">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Upload contract</h1>
-        <div className="max-w-xl mx-auto flex flex-col items-center gap-4 py-16 text-gray-500">
-          <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-          <p className="text-sm">Analyzing {fileName}…</p>
-          <p className="text-xs text-gray-400">This usually takes a few seconds.</p>
-        </div>
-      </div>
+    return wrapper(
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", padding: "64px 0" }}>
+        <div
+          style={{
+            width: "20px",
+            height: "20px",
+            border: "2px solid rgba(0,0,0,0.1)",
+            borderTopColor: "#1a7f4b",
+            borderRadius: "50%",
+          }}
+          className="animate-spin"
+        />
+        <p style={{ fontSize: "14px", color: "rgba(0,0,0,0.45)" }}>
+          Extracting contract details<PollingDots />
+        </p>
+      </div>,
     );
   }
 
   if (phase === "error") {
-    return (
-      <div className="px-8 py-6 max-w-screen-xl">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-8">Upload contract</h1>
-        <div className="max-w-xl mx-auto space-y-4">
-          <p className="text-sm text-red-600">{error?.message}</p>
-          <div className="flex gap-3">
-            {error?.canRetry && (
-              <button
-                onClick={() => { setPhase("upload"); setError(null); setJobId(null); }}
-                className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded hover:bg-gray-700 transition-colors"
-              >
-                Try again
-              </button>
-            )}
-            {/* Manual fallback — proceed to review with null extraction */}
-            <button
-              onClick={() => {
-                setResult({ extracted: null, confidence: null, fileName, fileFormat: "" });
-                setPhase("review");
-                setError(null);
-              }}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+    return wrapper(
+      <div style={{ maxWidth: "480px", display: "flex", flexDirection: "column", gap: "16px" }}>
+        <p style={{ fontSize: "13px", color: "#c0392b" }}>{error?.message}</p>
+        <div style={{ display: "flex", gap: "8px" }}>
+          {error?.canRetry && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => { setPhase("upload"); setError(null); setJobId(null); }}
             >
-              Fill in manually
-            </button>
-          </div>
+              Try again
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setResult({ extracted: null, confidence: null, fileName, fileFormat: "" });
+              setPhase("review");
+              setError(null);
+            }}
+          >
+            Fill in manually
+          </Button>
         </div>
-      </div>
+      </div>,
     );
   }
 
   // phase === "review"
-  return (
-    <div className="px-8 py-6 max-w-screen-xl">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-8">Upload contract</h1>
-      <ExtractionReview
-        extracted={result?.extracted ?? null}
-        confidence={result?.confidence ?? null}
-        fileName={result?.fileName ?? fileName}
-      />
-    </div>
+  return wrapper(
+    <ExtractionReview
+      extracted={result?.extracted ?? null}
+      confidence={result?.confidence ?? null}
+      fileName={result?.fileName ?? fileName}
+    />,
   );
 }
