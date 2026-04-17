@@ -28,6 +28,29 @@ interface ContractTableFullProps {
   contracts: ContractSummary[];
 }
 
+const TH_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "36px",
+  textAlign: "left",
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "rgba(0,0,0,0.4)",
+  letterSpacing: "0.02em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const TD_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "40px",
+  fontSize: "13px",
+  color: "rgba(0,0,0,0.5)",
+  borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
 export default function ContractTableFull({ contracts }: ContractTableFullProps) {
   const [view, setView] = useState<"table" | "card">("table");
 
@@ -43,81 +66,119 @@ export default function ContractTableFull({ contracts }: ContractTableFullProps)
 
   return (
     <div>
-      {/* View toggle */}
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-gray-500">
+      {/* Toolbar: row count left, view toggle right */}
+      <div className="flex items-center justify-between" style={{ marginBottom: "12px" }}>
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)" }}>
           {contracts.length} contract{contracts.length !== 1 ? "s" : ""}
         </p>
-        <div className="flex items-center gap-1 border border-gray-200 rounded p-0.5 bg-white">
-          <button
-            onClick={() => switchView("table")}
-            aria-label="Table view"
-            className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-              view === "table"
-                ? "bg-gray-900 text-white"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Table
-          </button>
-          <button
-            onClick={() => switchView("card")}
-            aria-label="Card view"
-            className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-              view === "card"
-                ? "bg-gray-900 text-white"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Cards
-          </button>
+        {/* Segmented control */}
+        <div
+          style={{
+            display: "flex",
+            background: "rgba(0,0,0,0.05)",
+            borderRadius: "8px",
+            padding: "3px",
+            gap: "2px",
+          }}
+        >
+          {(["table", "card"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => switchView(v)}
+              aria-label={`${v === "table" ? "Table" : "Card"} view`}
+              style={{
+                fontSize: "12px",
+                fontWeight: 500,
+                padding: "3px 10px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                transition: "background 0.15s, color 0.15s",
+                background: view === v ? "#ffffff" : "transparent",
+                color: view === v ? "#171717" : "rgba(0,0,0,0.4)",
+                boxShadow: view === v ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+              }}
+            >
+              {v === "table" ? "Table" : "Cards"}
+            </button>
+          ))}
         </div>
       </div>
 
       {view === "card" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" style={{ gap: "12px" }}>
           {contracts.map((c) => (
             <ContractCard key={c.id} contract={c} />
           ))}
         </div>
       ) : (
-        <div className="border border-gray-200 rounded overflow-hidden">
-          <table className="w-full text-sm">
+        <div
+          style={{
+            background: "#ffffff",
+            border: "0.5px solid rgba(0,0,0,0.08)",
+            borderRadius: "12px",
+            overflow: "hidden",
+          }}
+        >
+          <table className="w-full table-fixed">
+            <colgroup>
+              <col style={{ width: "22%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "16%" }} />
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "18%" }} />
+            </colgroup>
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">Supplier</th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">Department</th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">Owner</th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">End date</th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">Notice deadline</th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">Status</th>
+              <tr style={{ borderBottom: "0.5px solid rgba(0,0,0,0.08)" }}>
+                <th style={TH_STYLE}>Supplier</th>
+                <th style={TH_STYLE}>Department</th>
+                <th style={TH_STYLE}>Owner</th>
+                <th style={TH_STYLE}>End date</th>
+                <th style={TH_STYLE}>Notice deadline</th>
+                <th style={TH_STYLE}>Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {contracts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">
+                  <td
+                    colSpan={6}
+                    style={{
+                      padding: "32px 16px",
+                      textAlign: "center",
+                      fontSize: "13px",
+                      color: "rgba(0,0,0,0.35)",
+                    }}
+                  >
                     No contracts found.
                   </td>
                 </tr>
               ) : (
                 contracts.map((contract) => (
-                  <tr key={contract.id} className="bg-white hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
+                  <tr
+                    key={contract.id}
+                    style={{ cursor: "pointer" }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
+                    }}
+                  >
+                    <td style={{ ...TD_STYLE, color: "#171717", fontWeight: 500 }}>
                       <Link
                         href={`/contracts/${contract.id}`}
-                        className="font-medium text-gray-900 hover:underline"
+                        style={{ color: "inherit", textDecoration: "none" }}
                       >
                         {contract.vendor.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{contract.department.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{ownerNames(contract.owners)}</td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(contract.endDate)}</td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {formatDate(contract.renewalNoticeDeadline)}
-                    </td>
-                    <td className="px-4 py-3">
+                    <td style={TD_STYLE}>{contract.department.name}</td>
+                    <td style={TD_STYLE}>{ownerNames(contract.owners)}</td>
+                    <td style={TD_STYLE}>{formatDate(contract.endDate)}</td>
+                    <td style={TD_STYLE}>{formatDate(contract.renewalNoticeDeadline)}</td>
+                    <td style={{ ...TD_STYLE, overflow: "visible" }}>
                       <StatusBadge status={getDisplayStatus(contract)} />
                     </td>
                   </tr>

@@ -28,15 +28,48 @@ export default function ContractCard({ contract }: ContractCardProps) {
   return (
     <Link
       href={`/contracts/${contract.id}`}
-      className="block bg-white border border-gray-200 rounded p-4 hover:border-gray-300 hover:shadow-sm transition-all"
+      style={{
+        display: "block",
+        background: "#ffffff",
+        border: "0.5px solid rgba(0,0,0,0.08)",
+        borderRadius: "12px",
+        padding: "14px 16px",
+        textDecoration: "none",
+        transition: "border-color 0.15s",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.14)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.08)";
+      }}
     >
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="min-w-0">
-          <p className="font-medium text-gray-900 truncate">
+      {/* Header row */}
+      <div className="flex items-start justify-between" style={{ gap: "12px", marginBottom: "12px" }}>
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              color: "#171717",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
             {contract.vendor.name}
           </p>
           {contract.groupEntity && (
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p
+              style={{
+                fontSize: "11px",
+                color: "rgba(0,0,0,0.4)",
+                marginTop: "2px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {contract.groupEntity.name}
             </p>
           )}
@@ -44,22 +77,54 @@ export default function ContractCard({ contract }: ContractCardProps) {
         <StatusBadge status={getDisplayStatus(contract)} />
       </div>
 
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+      {/* Metadata grid */}
+      <dl
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          columnGap: "16px",
+          rowGap: "8px",
+        }}
+      >
         <div>
-          <dt className="text-gray-400">Department</dt>
-          <dd className="text-gray-700 truncate">{contract.department.name}</dd>
+          <dt style={{ fontSize: "11px", color: "rgba(0,0,0,0.35)" }}>Department</dt>
+          <dd
+            style={{
+              fontSize: "12px",
+              color: "#171717",
+              marginTop: "1px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {contract.department.name}
+          </dd>
         </div>
         <div>
-          <dt className="text-gray-400">Owner</dt>
-          <dd className="text-gray-700 truncate">{ownerNames(contract.owners)}</dd>
+          <dt style={{ fontSize: "11px", color: "rgba(0,0,0,0.35)" }}>Owner</dt>
+          <dd
+            style={{
+              fontSize: "12px",
+              color: "#171717",
+              marginTop: "1px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {ownerNames(contract.owners)}
+          </dd>
         </div>
         <div>
-          <dt className="text-gray-400">End date</dt>
-          <dd className="text-gray-700">{formatDate(contract.endDate)}</dd>
+          <dt style={{ fontSize: "11px", color: "rgba(0,0,0,0.35)" }}>End date</dt>
+          <dd style={{ fontSize: "12px", color: "#171717", marginTop: "1px" }}>
+            {formatDate(contract.endDate)}
+          </dd>
         </div>
         <div>
-          <dt className="text-gray-400">Notice deadline</dt>
-          <dd className="text-gray-700">
+          <dt style={{ fontSize: "11px", color: "rgba(0,0,0,0.35)" }}>Notice deadline</dt>
+          <dd style={{ fontSize: "12px", color: "#171717", marginTop: "1px" }}>
             {formatDate(contract.renewalNoticeDeadline)}
           </dd>
         </div>
