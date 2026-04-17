@@ -28,9 +28,9 @@ const VARIANT_STYLE: Record<NonNullable<ButtonProps["variant"]>, React.CSSProper
   },
 };
 
-const SIZE_CLASS: Record<NonNullable<ButtonProps["size"]>, string> = {
-  sm: "px-3 py-1.5",
-  md: "px-4 py-1.5",
+const SIZE_STYLE: Record<NonNullable<ButtonProps["size"]>, React.CSSProperties> = {
+  sm: { padding: "5px 12px" },
+  md: { padding: "7px 16px" },
 };
 
 export default function Button({
@@ -43,12 +43,13 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`${BASE} ${SIZE_CLASS[size]} ${className}`}
+      className={`${BASE} ${className}`}
       style={{
         borderRadius: "8px",
         fontSize: "13px",
         letterSpacing: "-0.01em",
         fontFamily: "inherit",
+        ...SIZE_STYLE[size],
         ...VARIANT_STYLE[variant],
         ...style,
       }}
