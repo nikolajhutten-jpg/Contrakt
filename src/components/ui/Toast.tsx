@@ -55,7 +55,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <div
         aria-live="polite"
         aria-atomic="false"
-        className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"
+        style={{
+          position: "fixed",
+          bottom: "16px",
+          right: "16px",
+          zIndex: 50,
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          pointerEvents: "none",
+        }}
       >
         {toasts.map((toast) => (
           <ToastBadge key={toast.id} toast={toast} onDismiss={dismiss} />
@@ -67,10 +76,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 // ─── Toast UI ─────────────────────────────────────────────────────────────────
 
-const STYLES: Record<ToastVariant, string> = {
-  success: "bg-green-800 text-white",
-  error:   "bg-gray-900 text-white",
-  warning: "bg-amber-700 text-white",
+const VARIANT_STYLES: Record<ToastVariant, React.CSSProperties> = {
+  success: { color: "#1a7f4b" },
+  error:   { color: "#c0392b" },
+  warning: { color: "#b45309" },
 };
 
 const ICONS: Record<ToastVariant, string> = {
@@ -88,18 +97,53 @@ function ToastBadge({ toast, onDismiss }: ToastBadgeProps) {
   return (
     <div
       role="alert"
-      className={`flex items-center gap-3 px-4 py-3 rounded text-sm pointer-events-auto max-w-sm ${
-        STYLES[toast.variant]
-      }`}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        padding: "10px 14px",
+        borderRadius: "12px",
+        background: "#ffffff",
+        border: "0.5px solid rgba(0,0,0,0.1)",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+        fontSize: "13px",
+        maxWidth: "320px",
+        pointerEvents: "auto",
+        ...VARIANT_STYLES[toast.variant],
+      }}
     >
-      <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center rounded-full bg-white/20 text-xs font-bold">
+      <span
+        style={{
+          flexShrink: 0,
+          width: "16px",
+          height: "16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "50%",
+          background: "currentColor",
+          color: "#ffffff",
+          fontSize: "10px",
+          fontWeight: 700,
+        }}
+      >
         {ICONS[toast.variant]}
       </span>
-      <span className="flex-1">{toast.message}</span>
+      <span style={{ flex: 1, color: "#171717" }}>{toast.message}</span>
       <button
         onClick={() => onDismiss(toast.id)}
         aria-label="Dismiss"
-        className="ml-1 opacity-60 hover:opacity-100 transition-opacity text-base leading-none"
+        style={{
+          marginLeft: "4px",
+          opacity: 0.4,
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          fontSize: "16px",
+          lineHeight: 1,
+          color: "#171717",
+          padding: 0,
+        }}
       >
         ×
       </button>

@@ -38,47 +38,53 @@ export default function SetupWizard({ initialDepartments }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-lg bg-white border border-gray-200 rounded p-8">
+    <div style={{ minHeight: "100vh", background: "#f5f5f7", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
+      <div style={{ width: "100%", maxWidth: "512px", background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", padding: "32px" }}>
         {/* Header */}
-        <div className="mb-6">
-          <span className="text-lg font-medium text-gray-900">Contrakt</span>
+        <div style={{ marginBottom: "24px" }}>
+          <span style={{ fontSize: "16px", fontWeight: 600, color: "#171717", letterSpacing: "-0.02em" }}>Contrakt</span>
         </div>
-        <h1 className="text-base font-medium text-gray-900 mb-1">
+        <h1 style={{ fontSize: "18px", fontWeight: 600, color: "#171717", letterSpacing: "-0.02em", marginBottom: "4px" }}>
           Set up your workspace
         </h1>
-        <p className="text-sm text-gray-500 mb-6">
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "28px" }}>
           A few quick steps to get your team started.
         </p>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-2 mb-8">
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "32px" }}>
           {STEPS.map((s, i) => (
-            <div key={s.number} className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
+            <div key={s.number} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
-                    step === s.number
-                      ? "bg-gray-900 text-white"
-                      : step > s.number
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-200 text-gray-500"
-                  }`}
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "11px",
+                    fontWeight: 500,
+                    flexShrink: 0,
+                    background: step === s.number ? "#171717" : step > s.number ? "#1a7f4b" : "rgba(0,0,0,0.08)",
+                    color: step >= s.number ? "#ffffff" : "rgba(0,0,0,0.4)",
+                  }}
                 >
                   {step > s.number ? "✓" : s.number}
                 </span>
                 <span
-                  className={`text-xs ${
-                    step === s.number
-                      ? "text-gray-900 font-medium"
-                      : "text-gray-400"
-                  }`}
+                  style={{
+                    fontSize: "12px",
+                    color: step === s.number ? "#171717" : "rgba(0,0,0,0.4)",
+                    fontWeight: step === s.number ? 500 : 400,
+                  }}
                 >
                   {s.label}
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className="flex-1 h-px bg-gray-200 w-8" />
+                <div style={{ width: "32px", height: "0.5px", background: "rgba(0,0,0,0.1)" }} />
               )}
             </div>
           ))}

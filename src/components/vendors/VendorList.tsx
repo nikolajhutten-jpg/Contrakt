@@ -11,6 +11,25 @@ interface VendorListProps {
   isAdmin: boolean;
 }
 
+const TH_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "36px",
+  textAlign: "left",
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "rgba(0,0,0,0.4)",
+  textTransform: "uppercase",
+  letterSpacing: "0.02em",
+};
+
+const TD_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "40px",
+  fontSize: "13px",
+  color: "rgba(0,0,0,0.5)",
+  borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+};
+
 export default function VendorList({ vendors, isAdmin }: VendorListProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -22,13 +41,22 @@ export default function VendorList({ vendors, isAdmin }: VendorListProps) {
   }, [vendors, query]);
 
   return (
-    <div className="px-8 py-6 max-w-screen-xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Vendors</h1>
+    <div style={{ padding: "28px 32px", maxWidth: "960px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
+        <h1 style={{ fontSize: "22px", fontWeight: 600, color: "#171717", letterSpacing: "-0.03em" }}>Vendors</h1>
         {isAdmin && (
           <Link
             href="/vendors/new"
-            className="px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 transition-colors"
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              padding: "7px 16px",
+              background: "#1a7f4b",
+              color: "#ffffff",
+              borderRadius: "8px",
+              textDecoration: "none",
+              letterSpacing: "-0.01em",
+            }}
           >
             Add vendor
           </Link>
@@ -45,35 +73,31 @@ export default function VendorList({ vendors, isAdmin }: VendorListProps) {
       ) : (
         <>
           {/* Search */}
-          <div className="mb-4">
+          <div style={{ marginBottom: "16px" }}>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search vendors…"
-              className="w-full max-w-sm px-3 py-1.5 text-sm border border-gray-300 rounded bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+              style={{ width: "280px" }}
             />
           </div>
 
           {/* Vendor table */}
-          <div className="border border-gray-200 rounded overflow-hidden">
-            <table className="w-full text-sm">
+          <div style={{ background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                    Vendor name
-                  </th>
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                    Contracts
-                  </th>
+                <tr style={{ borderBottom: "0.5px solid rgba(0,0,0,0.08)" }}>
+                  <th style={TH_STYLE}>Vendor name</th>
+                  <th style={TH_STYLE}>Contracts</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {filtered.length === 0 ? (
                   <tr>
                     <td
                       colSpan={2}
-                      className="px-4 py-8 text-center text-sm text-gray-400"
+                      style={{ ...TD_STYLE, textAlign: "center", padding: "32px 16px" }}
                     >
                       No vendors match your search.
                     </td>
@@ -82,17 +106,18 @@ export default function VendorList({ vendors, isAdmin }: VendorListProps) {
                   filtered.map((vendor) => (
                     <tr
                       key={vendor.id}
-                      className="bg-white hover:bg-gray-50 transition-colors"
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                     >
-                      <td className="px-4 py-3">
+                      <td style={{ ...TD_STYLE, color: "#171717", fontWeight: 500 }}>
                         <Link
                           href={`/vendors/${vendor.id}`}
-                          className="font-medium text-gray-900 hover:underline"
+                          style={{ color: "#171717", textDecoration: "none" }}
                         >
                           {vendor.name}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-gray-500">
+                      <td style={TD_STYLE}>
                         {vendor.contractCount}{" "}
                         {vendor.contractCount === 1 ? "contract" : "contracts"}
                       </td>

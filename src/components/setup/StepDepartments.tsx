@@ -54,13 +54,13 @@ export default function StepDepartments({ initial, onComplete }: Props) {
 
   return (
     <div>
-      <p className="text-sm text-gray-600 mb-4">
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "16px" }}>
         Add at least one department to continue. You can add more later in
         settings.
       </p>
 
       {/* Suggestions */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
         {SUGGESTIONS.map((s) => {
           const added = existingNames.has(s.toLowerCase());
           return (
@@ -69,11 +69,15 @@ export default function StepDepartments({ initial, onComplete }: Props) {
               type="button"
               disabled={added || isPending}
               onClick={() => void addDepartment(s)}
-              className={`px-3 py-1.5 text-sm rounded border transition-colors ${
-                added
-                  ? "border-green-300 bg-green-50 text-green-700 cursor-default"
-                  : "border-gray-300 bg-white text-gray-700 hover:border-gray-900 hover:text-gray-900"
-              }`}
+              style={{
+                fontSize: "13px",
+                padding: "5px 12px",
+                borderRadius: "8px",
+                border: added ? "0.5px solid rgba(26,127,75,0.3)" : "0.5px solid rgba(0,0,0,0.12)",
+                background: added ? "rgba(26,127,75,0.06)" : "#ffffff",
+                color: added ? "#1a7f4b" : "#171717",
+                cursor: added || isPending ? "default" : "pointer",
+              }}
             >
               {added ? `${s} ✓` : s}
             </button>
@@ -82,32 +86,42 @@ export default function StepDepartments({ initial, onComplete }: Props) {
       </div>
 
       {/* Custom department */}
-      <form onSubmit={handleCustomSubmit} className="flex gap-2 mb-4">
+      <form onSubmit={handleCustomSubmit} style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
         <input
           type="text"
           value={customName}
           onChange={(e) => setCustomName(e.target.value)}
           placeholder="Add a custom department"
-          className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
+          style={{ flex: 1 }}
           disabled={isPending}
         />
         <button
           type="submit"
           disabled={!customName.trim() || isPending}
-          className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded border border-gray-300 hover:bg-gray-200 transition-colors disabled:opacity-50"
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "7px 14px",
+            background: "rgba(0,0,0,0.05)",
+            color: "#171717",
+            border: "0.5px solid rgba(0,0,0,0.1)",
+            borderRadius: "8px",
+            cursor: (!customName.trim() || isPending) ? "default" : "pointer",
+            opacity: (!customName.trim() || isPending) ? 0.4 : 1,
+          }}
         >
           Add
         </button>
       </form>
 
-      {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+      {error && <p style={{ fontSize: "13px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
 
       {/* Added list */}
       {departments.length > 0 && (
-        <ul className="text-sm text-gray-600 space-y-1 mb-4">
+        <ul style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: "4px", marginBottom: "16px", listStyle: "none", padding: 0, margin: 0, marginBottom: "16px" }}>
           {departments.map((d) => (
-            <li key={d.id} className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+            <li key={d.id} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#1a7f4b", flexShrink: 0, display: "inline-block" }} />
               {d.name}
             </li>
           ))}
@@ -118,7 +132,19 @@ export default function StepDepartments({ initial, onComplete }: Props) {
         type="button"
         disabled={departments.length === 0 || isPending}
         onClick={() => onComplete(departments)}
-        className="w-full bg-gray-900 text-white text-sm font-medium py-2 rounded hover:bg-gray-700 transition-colors disabled:opacity-50"
+        style={{
+          width: "100%",
+          fontSize: "13px",
+          fontWeight: 500,
+          padding: "8px 16px",
+          background: "#1a7f4b",
+          color: "#ffffff",
+          border: "none",
+          borderRadius: "8px",
+          cursor: (departments.length === 0 || isPending) ? "default" : "pointer",
+          opacity: (departments.length === 0 || isPending) ? 0.5 : 1,
+          letterSpacing: "-0.01em",
+        }}
       >
         Continue
       </button>

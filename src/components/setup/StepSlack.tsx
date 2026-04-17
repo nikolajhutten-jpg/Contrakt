@@ -50,14 +50,14 @@ export default function StepSlack({ onComplete }: Props) {
 
   return (
     <div>
-      <p className="text-sm text-gray-600 mb-4">
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "16px" }}>
         Paste your Slack Incoming Webhook URL to receive renewal alerts and
         notifications. You can configure this later in account settings.
       </p>
 
-      <div className="space-y-3 mb-6">
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+          <label style={{ display: "block", fontSize: "12px", fontWeight: 500, color: "#171717", marginBottom: "4px" }}>
             Slack webhook URL
           </label>
           <input
@@ -68,7 +68,6 @@ export default function StepSlack({ onComplete }: Props) {
               setTestStatus("idle");
             }}
             placeholder="https://hooks.slack.com/services/…"
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
             disabled={isTesting || isSaving}
           />
         </div>
@@ -78,29 +77,51 @@ export default function StepSlack({ onComplete }: Props) {
             type="button"
             onClick={handleTest}
             disabled={isTesting || isSaving}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
+            style={{
+              alignSelf: "flex-start",
+              fontSize: "13px",
+              fontWeight: 500,
+              padding: "7px 12px",
+              background: "rgba(0,0,0,0.05)",
+              color: "#171717",
+              border: "0.5px solid rgba(0,0,0,0.1)",
+              borderRadius: "8px",
+              cursor: (isTesting || isSaving) ? "default" : "pointer",
+              opacity: (isTesting || isSaving) ? 0.5 : 1,
+            }}
           >
             {isTesting ? "Sending test…" : "Send test notification"}
           </button>
         )}
 
         {testStatus === "ok" && (
-          <p className="text-sm text-green-600">
+          <p style={{ fontSize: "13px", color: "#1a7f4b" }}>
             Test notification sent successfully.
           </p>
         )}
         {testStatus === "failed" && (
-          <p className="text-sm text-red-600">{testError}</p>
+          <p style={{ fontSize: "13px", color: "#c0392b" }}>{testError}</p>
         )}
-        {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+        {saveError && <p style={{ fontSize: "13px", color: "#c0392b" }}>{saveError}</p>}
       </div>
 
-      <div className="flex gap-3">
+      <div style={{ display: "flex", gap: "12px" }}>
         <button
           type="button"
           onClick={onComplete}
           disabled={isSaving}
-          className="flex-1 border border-gray-300 text-gray-700 text-sm py-2 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
+          style={{
+            flex: 1,
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "8px 16px",
+            background: "rgba(0,0,0,0.05)",
+            color: "#171717",
+            border: "0.5px solid rgba(0,0,0,0.1)",
+            borderRadius: "8px",
+            cursor: isSaving ? "default" : "pointer",
+            opacity: isSaving ? 0.5 : 1,
+          }}
         >
           Skip for now
         </button>
@@ -108,7 +129,19 @@ export default function StepSlack({ onComplete }: Props) {
           type="button"
           onClick={handleSave}
           disabled={isSaving || !webhookUrl.trim()}
-          className="flex-1 bg-gray-900 text-white text-sm font-medium py-2 rounded hover:bg-gray-700 transition-colors disabled:opacity-50"
+          style={{
+            flex: 1,
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "8px 16px",
+            background: "#1a7f4b",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: (isSaving || !webhookUrl.trim()) ? "default" : "pointer",
+            opacity: (isSaving || !webhookUrl.trim()) ? 0.5 : 1,
+            letterSpacing: "-0.01em",
+          }}
         >
           {isSaving ? "Saving…" : "Save and finish"}
         </button>

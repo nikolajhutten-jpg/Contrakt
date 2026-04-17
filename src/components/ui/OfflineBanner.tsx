@@ -33,7 +33,17 @@ export default function OfflineBanner() {
     <div
       role="alert"
       aria-live="assertive"
-      className="sticky top-0 z-40 bg-amber-500 text-white text-sm text-center py-2 px-4"
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 40,
+        background: "#fff3e0",
+        borderBottom: "0.5px solid rgba(180,83,9,0.2)",
+        color: "#b45309",
+        fontSize: "13px",
+        textAlign: "center",
+        padding: "8px 16px",
+      }}
     >
       You appear to be offline. Changes may not be saved.
     </div>

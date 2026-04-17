@@ -16,10 +16,10 @@ export default async function SignupPage() {
 
   return (
     <>
-      <h1 className="text-base font-medium text-gray-900 mb-1">
+      <h1 style={{ fontSize: "18px", fontWeight: 600, color: "#171717", letterSpacing: "-0.02em", marginBottom: "4px" }}>
         Create your account
       </h1>
-      <p className="text-sm text-gray-500 mb-6">
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "24px" }}>
         Start your 14-day free trial — no credit card required.
       </p>
       <SignupForm />

@@ -8,10 +8,10 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white border border-gray-200 rounded p-8">
-        <div className="mb-6">
-          <span className="text-lg font-medium text-gray-900">Contrakt</span>
+    <div style={{ minHeight: "100vh", background: "#f5f5f7", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
+      <div style={{ width: "100%", maxWidth: "384px", background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", padding: "32px" }}>
+        <div style={{ marginBottom: "24px" }}>
+          <span style={{ fontSize: "16px", fontWeight: 600, color: "#171717", letterSpacing: "-0.02em" }}>Contrakt</span>
         </div>
         {children}
       </div>

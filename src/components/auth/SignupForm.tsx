@@ -5,6 +5,14 @@ import { signup } from "@/lib/api/auth";
 
 type FormState = "idle" | "submitting" | "success" | "error";
 
+const FIELD_LABEL: React.CSSProperties = {
+  display: "block",
+  fontSize: "12px",
+  fontWeight: 500,
+  color: "#171717",
+  marginBottom: "4px",
+};
+
 export default function SignupForm() {
   const [state, setState] = useState<FormState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -42,24 +50,34 @@ export default function SignupForm() {
 
   if (state === "success") {
     return (
-      <div className="text-center">
-        <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-          <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div style={{ textAlign: "center" }}>
+        <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#e6f4ec", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <svg style={{ width: "24px", height: "24px", color: "#1a7f4b" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h2 className="text-lg font-medium text-gray-900 mb-2">
+        <h2 style={{ fontSize: "16px", fontWeight: 500, color: "#171717", marginBottom: "8px" }}>
           Check your email
         </h2>
-        <p className="text-sm text-gray-500 mb-6">
-          We've sent a verification link to{" "}
-          <span className="font-medium text-gray-700">{fields.email}</span>.
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "24px" }}>
+          We&apos;ve sent a verification link to{" "}
+          <span style={{ fontWeight: 500, color: "#171717" }}>{fields.email}</span>.
           Click the link to verify your account and continue to workspace setup.
         </p>
         {/* TODO: remove this dev shortcut once Auth0 email verification is wired */}
         <a
           href="/setup"
-          className="inline-block px-4 py-2 bg-gray-900 text-white text-sm rounded hover:bg-gray-700 transition-colors"
+          style={{
+            display: "inline-block",
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "7px 16px",
+            background: "#1a7f4b",
+            color: "#ffffff",
+            borderRadius: "8px",
+            textDecoration: "none",
+            letterSpacing: "-0.01em",
+          }}
         >
           Continue to setup (dev)
         </a>
@@ -70,83 +88,83 @@ export default function SignupForm() {
   const busy = state === "submitting" || isPending;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Company name
-        </label>
+        <label style={FIELD_LABEL}>Company name</label>
         <input
           type="text"
           required
           value={fields.companyName}
           onChange={set("companyName")}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
           placeholder="Acme Corp"
           disabled={busy}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Full name
-        </label>
+        <label style={FIELD_LABEL}>Full name</label>
         <input
           type="text"
           required
           value={fields.name}
           onChange={set("name")}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
           placeholder="Jane Smith"
           disabled={busy}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Work email
-        </label>
+        <label style={FIELD_LABEL}>Work email</label>
         <input
           type="email"
           required
           value={fields.email}
           onChange={set("email")}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
           placeholder="jane@acme.com"
           disabled={busy}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Password
-        </label>
+        <label style={FIELD_LABEL}>Password</label>
         <input
           type="password"
           required
           minLength={8}
           value={fields.password}
           onChange={set("password")}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
           placeholder="Min. 8 characters"
           disabled={busy}
         />
       </div>
 
       {state === "error" && (
-        <p className="text-sm text-red-600">{errorMessage}</p>
+        <p style={{ fontSize: "13px", color: "#c0392b" }}>{errorMessage}</p>
       )}
 
       <button
         type="submit"
         disabled={busy}
-        className="w-full bg-gray-900 text-white text-sm font-medium py-2 rounded hover:bg-gray-700 transition-colors disabled:opacity-50"
+        style={{
+          width: "100%",
+          fontSize: "13px",
+          fontWeight: 500,
+          padding: "8px 16px",
+          background: "#1a7f4b",
+          color: "#ffffff",
+          border: "none",
+          borderRadius: "8px",
+          cursor: busy ? "default" : "pointer",
+          opacity: busy ? 0.5 : 1,
+          letterSpacing: "-0.01em",
+        }}
       >
         {busy ? "Creating account…" : "Create account"}
       </button>
 
-      <p className="text-xs text-gray-500 text-center">
+      <p style={{ fontSize: "12px", color: "rgba(0,0,0,0.4)", textAlign: "center" }}>
         Already have an account?{" "}
-        <a href="/api/auth/login" className="underline">
+        <a href="/api/auth/login" style={{ color: "#1a7f4b", textDecoration: "underline" }}>
           Sign in
         </a>
       </p>

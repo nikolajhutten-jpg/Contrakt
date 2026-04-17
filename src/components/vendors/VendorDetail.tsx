@@ -22,6 +22,25 @@ const fmt = (d: Date | string | null) =>
 const owners = (os: VendorContractRow["owners"]) =>
   os.length === 0 ? "—" : os.length === 1 ? os[0].user.name : `${os[0].user.name} +${os.length - 1}`;
 
+const TH_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "36px",
+  textAlign: "left",
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "rgba(0,0,0,0.4)",
+  textTransform: "uppercase",
+  letterSpacing: "0.02em",
+};
+
+const TD_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "40px",
+  fontSize: "13px",
+  color: "rgba(0,0,0,0.5)",
+  borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+};
+
 export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
@@ -32,19 +51,34 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
   );
 
   return (
-    <div className="px-8 py-6 max-w-screen-xl">
+    <div style={{ padding: "28px 32px", maxWidth: "960px" }}>
       {/* Vendor header */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between mb-4">
-          <nav className="text-xs text-gray-400">
-            <Link href="/vendors" className="hover:text-gray-600">Vendors</Link>
-            <span className="mx-1.5">/</span>
-            <span className="text-gray-700">{vendor.name}</span>
+      <div style={{ marginBottom: "32px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
+          <nav style={{ fontSize: "12px", color: "rgba(0,0,0,0.35)" }}>
+            <Link href="/vendors" style={{ color: "rgba(0,0,0,0.4)", textDecoration: "none" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#1a7f4b"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)"; }}
+            >
+              Vendors
+            </Link>
+            <span style={{ margin: "0 6px" }}>/</span>
+            <span style={{ color: "#171717" }}>{vendor.name}</span>
           </nav>
           {isAdmin && !isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="text-xs text-gray-500 hover:text-gray-700 border border-gray-300 rounded px-2.5 py-1 transition-colors"
+              style={{
+                fontSize: "12px",
+                color: "rgba(0,0,0,0.4)",
+                background: "none",
+                border: "0.5px solid rgba(0,0,0,0.12)",
+                borderRadius: "8px",
+                padding: "4px 10px",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#171717"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)"; }}
             >
               Edit vendor
             </button>
@@ -52,29 +86,29 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
         </div>
 
         {isEditing ? (
-          <div className="bg-white border border-gray-200 rounded p-5 max-w-sm">
-            <h2 className="text-sm font-medium text-gray-900 mb-4">Edit vendor</h2>
+          <div style={{ background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", padding: "20px", maxWidth: "384px" }}>
+            <h2 style={{ fontSize: "14px", fontWeight: 600, color: "#171717", letterSpacing: "-0.01em", marginBottom: "16px" }}>Edit vendor</h2>
             <VendorEditForm vendor={vendor} onClose={() => setIsEditing(false)} />
           </div>
         ) : (
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900 mb-3">{vendor.name}</h1>
-            <dl className="flex gap-6 text-sm">
+            <h1 style={{ fontSize: "22px", fontWeight: 600, color: "#171717", letterSpacing: "-0.03em", marginBottom: "12px" }}>{vendor.name}</h1>
+            <dl style={{ display: "flex", gap: "24px", fontSize: "13px" }}>
               <div>
-                <dt className="text-xs text-gray-400 mb-0.5">Contact name</dt>
-                <dd className="text-gray-700">{vendor.contactName || "—"}</dd>
+                <dt style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)", marginBottom: "2px" }}>Contact name</dt>
+                <dd style={{ color: "#171717" }}>{vendor.contactName || "—"}</dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400 mb-0.5">Contact email</dt>
-                <dd className="text-gray-700">
+                <dt style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)", marginBottom: "2px" }}>Contact email</dt>
+                <dd style={{ color: "#171717" }}>
                   {vendor.contactEmail
-                    ? <a href={`mailto:${vendor.contactEmail}`} className="hover:underline">{vendor.contactEmail}</a>
+                    ? <a href={`mailto:${vendor.contactEmail}`} style={{ color: "#1a7f4b", textDecoration: "none" }}>{vendor.contactEmail}</a>
                     : "—"}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-gray-400 mb-0.5">Contracts</dt>
-                <dd className="text-gray-700">{vendor.contracts.length}</dd>
+                <dt style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)", marginBottom: "2px" }}>Contracts</dt>
+                <dd style={{ color: "#171717" }}>{vendor.contracts.length}</dd>
               </div>
             </dl>
           </div>
@@ -83,12 +117,12 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
 
       {/* Contract list */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-gray-900">Contracts</h2>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+          <h2 style={{ fontSize: "15px", fontWeight: 600, color: "#171717", letterSpacing: "-0.02em" }}>Contracts</h2>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+            style={{ height: "32px", fontSize: "13px" }}
           >
             <option value="">All statuses</option>
             <option value={ContractStatus.Active}>Active</option>
@@ -106,33 +140,37 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
             onAction={() => window.location.assign("/contracts/new")}
           />
         ) : filtered.length === 0 ? (
-          <p className="text-sm text-gray-400 py-8 text-center">No contracts match the selected status.</p>
+          <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.35)", padding: "32px 0", textAlign: "center" }}>No contracts match the selected status.</p>
         ) : (
-          <div className="border border-gray-200 rounded overflow-hidden">
-            <table className="w-full text-sm">
+          <div style={{ background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">Group entity</th>
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">Department</th>
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">Owner</th>
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">End date</th>
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">Notice deadline</th>
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">Status</th>
+                <tr style={{ borderBottom: "0.5px solid rgba(0,0,0,0.08)" }}>
+                  <th style={TH_STYLE}>Group entity</th>
+                  <th style={TH_STYLE}>Department</th>
+                  <th style={TH_STYLE}>Owner</th>
+                  <th style={TH_STYLE}>End date</th>
+                  <th style={TH_STYLE}>Notice deadline</th>
+                  <th style={TH_STYLE}>Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody>
                 {filtered.map((contract) => (
-                  <tr key={contract.id} className="bg-white hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <Link href={`/contracts/${contract.id}`} className="font-medium text-gray-900 hover:underline">
+                  <tr
+                    key={contract.id}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                  >
+                    <td style={{ ...TD_STYLE, color: "#171717", fontWeight: 500 }}>
+                      <Link href={`/contracts/${contract.id}`} style={{ color: "#171717", textDecoration: "none" }}>
                         {contract.groupEntity?.name || "—"}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{contract.department.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{owners(contract.owners)}</td>
-                    <td className="px-4 py-3 text-gray-600">{fmt(contract.endDate)}</td>
-                    <td className="px-4 py-3 text-gray-600">{fmt(contract.renewalNoticeDeadline)}</td>
-                    <td className="px-4 py-3">
+                    <td style={TD_STYLE}>{contract.department.name}</td>
+                    <td style={TD_STYLE}>{owners(contract.owners)}</td>
+                    <td style={TD_STYLE}>{fmt(contract.endDate)}</td>
+                    <td style={TD_STYLE}>{fmt(contract.renewalNoticeDeadline)}</td>
+                    <td style={{ ...TD_STYLE, paddingTop: "0", paddingBottom: "0" }}>
                       <StatusBadge status={getDisplayStatus({ ...contract, status: contract.status as ContractStatus })} />
                     </td>
                   </tr>

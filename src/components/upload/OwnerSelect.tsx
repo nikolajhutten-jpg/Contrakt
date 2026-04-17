@@ -40,25 +40,41 @@ export default function OwnerSelect({ users, selected, onChange }: OwnerSelectPr
     onChange(selected.filter((x) => x !== id));
   }
 
-  const inputCls =
-    "w-full px-3 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400";
-
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} style={{ position: "relative" }}>
       {/* Selected pills */}
       {selectedUsers.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
           {selectedUsers.map((u) => (
             <span
               key={u.id}
-              className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "2px 8px",
+                fontSize: "12px",
+                background: "rgba(0,0,0,0.06)",
+                color: "#171717",
+                borderRadius: "20px",
+              }}
             >
               {u.name}
               <button
                 type="button"
                 onClick={() => remove(u.id)}
-                className="text-gray-400 hover:text-gray-600 leading-none"
                 aria-label={`Remove ${u.name}`}
+                style={{
+                  color: "rgba(0,0,0,0.35)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  lineHeight: 1,
+                  padding: 0,
+                  fontSize: "14px",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#c0392b"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.35)"; }}
               >
                 ×
               </button>
@@ -74,14 +90,24 @@ export default function OwnerSelect({ users, selected, onChange }: OwnerSelectPr
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
         placeholder={selectedUsers.length === 0 ? "Search owners…" : "Add another owner…"}
-        className={inputCls}
       />
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow-sm max-h-48 overflow-y-auto">
+        <div style={{
+          position: "absolute",
+          zIndex: 10,
+          marginTop: "4px",
+          width: "100%",
+          background: "#ffffff",
+          border: "0.5px solid rgba(0,0,0,0.1)",
+          borderRadius: "8px",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+          maxHeight: "192px",
+          overflowY: "auto",
+        }}>
           {filtered.length === 0 ? (
-            <p className="px-3 py-2 text-xs text-gray-400">
+            <p style={{ padding: "8px 12px", fontSize: "12px", color: "rgba(0,0,0,0.35)" }}>
               {users.length === 0 ? "No users found." : "No matches."}
             </p>
           ) : (
@@ -90,7 +116,19 @@ export default function OwnerSelect({ users, selected, onChange }: OwnerSelectPr
                 key={u.id}
                 type="button"
                 onClick={() => { add(u.id); setOpen(false); }}
-                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "8px 12px",
+                  fontSize: "13px",
+                  color: "#171717",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "block",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.03)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "none"; }}
               >
                 {u.name}
               </button>

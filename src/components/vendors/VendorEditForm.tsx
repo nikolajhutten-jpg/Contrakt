@@ -10,6 +10,14 @@ interface VendorEditFormProps {
   onClose: () => void;
 }
 
+const FIELD_LABEL: React.CSSProperties = {
+  display: "block",
+  fontSize: "12px",
+  fontWeight: 500,
+  color: "#171717",
+  marginBottom: "4px",
+};
+
 export default function VendorEditForm({ vendor, onClose }: VendorEditFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -40,52 +48,56 @@ export default function VendorEditForm({ vendor, onClose }: VendorEditFormProps)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500">Vendor name</label>
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div>
+        <label style={FIELD_LABEL}>Vendor name</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
           autoFocus
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500">
-          Contact name
-        </label>
+      <div>
+        <label style={FIELD_LABEL}>Contact name</label>
         <input
           type="text"
           value={contactName}
           onChange={(e) => setContactName(e.target.value)}
           placeholder="Optional"
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 placeholder-gray-400"
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500">
-          Contact email
-        </label>
+      <div>
+        <label style={FIELD_LABEL}>Contact email</label>
         <input
           type="email"
           value={contactEmail}
           onChange={(e) => setContactEmail(e.target.value)}
           placeholder="Optional"
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 placeholder-gray-400"
         />
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p style={{ fontSize: "12px", color: "#c0392b" }}>{error}</p>}
 
-      <div className="flex items-center gap-2 pt-1">
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
         <button
           type="submit"
           disabled={isPending || !name.trim()}
-          className="px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "7px 16px",
+            background: "#1a7f4b",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: (isPending || !name.trim()) ? "default" : "pointer",
+            opacity: (isPending || !name.trim()) ? 0.5 : 1,
+            letterSpacing: "-0.01em",
+          }}
         >
           {isPending ? "Saving…" : "Save changes"}
         </button>
@@ -93,7 +105,14 @@ export default function VendorEditForm({ vendor, onClose }: VendorEditFormProps)
           type="button"
           onClick={onClose}
           disabled={isPending}
-          className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          style={{
+            fontSize: "13px",
+            color: "rgba(0,0,0,0.4)",
+            background: "none",
+            border: "none",
+            cursor: isPending ? "default" : "pointer",
+            padding: 0,
+          }}
         >
           Cancel
         </button>

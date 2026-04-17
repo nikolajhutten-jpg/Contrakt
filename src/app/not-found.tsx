@@ -6,18 +6,29 @@ import Link from "next/link";
  */
 export default function NotFound() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-8 text-center bg-gray-50">
-      <p className="text-xs font-medium text-gray-400 tracking-widest uppercase mb-3">
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "0 32px", textAlign: "center", background: "#f5f5f7" }}>
+      <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(0,0,0,0.35)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "12px" }}>
         404
       </p>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-2">Page not found</h1>
-      <p className="text-sm text-gray-500 mb-6 max-w-xs">
+      <h1 style={{ fontSize: "22px", fontWeight: 600, color: "#171717", letterSpacing: "-0.03em", marginBottom: "8px" }}>
+        Page not found
+      </h1>
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "24px", maxWidth: "280px" }}>
         The page you&apos;re looking for doesn&apos;t exist or you don&apos;t
         have access to it.
       </p>
       <Link
         href="/dashboard"
-        className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 transition-colors"
+        style={{
+          fontSize: "13px",
+          fontWeight: 500,
+          padding: "7px 16px",
+          background: "#1a7f4b",
+          color: "#ffffff",
+          borderRadius: "8px",
+          textDecoration: "none",
+          letterSpacing: "-0.01em",
+        }}
       >
         Go to dashboard
       </Link>

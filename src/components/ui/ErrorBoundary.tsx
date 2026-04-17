@@ -37,10 +37,10 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center h-full min-h-96 px-8 text-center">
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", minHeight: "384px", padding: "0 32px", textAlign: "center" }}>
+          <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px" }}>
             <svg
-              className="w-5 h-5 text-gray-400"
+              style={{ width: "20px", height: "20px", color: "rgba(0,0,0,0.3)" }}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -53,15 +53,24 @@ export default class ErrorBoundary extends Component<Props, State> {
               />
             </svg>
           </div>
-          <h2 className="text-base font-medium text-gray-900 mb-1">
+          <h2 style={{ fontSize: "14px", fontWeight: 500, color: "#171717", marginBottom: "4px" }}>
             Something went wrong
           </h2>
-          <p className="text-sm text-gray-500 mb-5 max-w-xs">
+          <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "20px", maxWidth: "280px" }}>
             Something went wrong. Please try again.
           </p>
           <button
             onClick={() => this.setState({ hasError: false })}
-            className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 transition-colors"
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              padding: "7px 16px",
+              background: "#1a7f4b",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+            }}
           >
             Try again
           </button>

@@ -16,6 +16,14 @@ const ROLE_LABELS: Record<string, string> = {
   [UserRole.BusinessOwner]: "Business owner",
 };
 
+const FIELD_LABEL: React.CSSProperties = {
+  display: "block",
+  fontSize: "12px",
+  fontWeight: 500,
+  color: "#171717",
+  marginBottom: "4px",
+};
+
 export default function StepInviteUsers({ departments, onComplete }: Props) {
   const [invited, setInvited] = useState<User[]>([]);
   const [error, setError] = useState("");
@@ -59,49 +67,40 @@ export default function StepInviteUsers({ departments, onComplete }: Props) {
 
   return (
     <div>
-      <p className="text-sm text-gray-600 mb-4">
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "16px" }}>
         Invite team members to your workspace. You can do this later in user
         management.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-3 mb-4">
-        <div className="grid grid-cols-2 gap-3">
+      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Full name
-            </label>
+            <label style={FIELD_LABEL}>Full name</label>
             <input
               type="text"
               required
               value={fields.name}
               onChange={set("name")}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
               disabled={isPending}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Email
-            </label>
+            <label style={FIELD_LABEL}>Email</label>
             <input
               type="email"
               required
               value={fields.email}
               onChange={set("email")}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
               disabled={isPending}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Role
-          </label>
+          <label style={FIELD_LABEL}>Role</label>
           <select
             value={fields.role}
             onChange={set("role")}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
             disabled={isPending}
           >
             {Object.entries(ROLE_LABELS).map(([value, label]) => (
@@ -114,13 +113,10 @@ export default function StepInviteUsers({ departments, onComplete }: Props) {
 
         {fields.role === UserRole.DepartmentOwner && departments.length > 0 && (
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Department
-            </label>
+            <label style={FIELD_LABEL}>Department</label>
             <select
               value={fields.departmentId}
               onChange={set("departmentId")}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-900"
               disabled={isPending}
             >
               <option value="">Select department</option>
@@ -133,37 +129,57 @@ export default function StepInviteUsers({ departments, onComplete }: Props) {
           </div>
         )}
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p style={{ fontSize: "13px", color: "#c0392b" }}>{error}</p>}
 
         <button
           type="submit"
           disabled={isPending}
-          className="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded border border-gray-300 hover:bg-gray-200 transition-colors disabled:opacity-50"
+          style={{
+            alignSelf: "flex-start",
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "7px 14px",
+            background: "rgba(0,0,0,0.05)",
+            color: "#171717",
+            border: "0.5px solid rgba(0,0,0,0.1)",
+            borderRadius: "8px",
+            cursor: isPending ? "default" : "pointer",
+            opacity: isPending ? 0.5 : 1,
+          }}
         >
           {isPending ? "Sending invite…" : "Send invite"}
         </button>
       </form>
 
       {invited.length > 0 && (
-        <ul className="text-sm text-gray-600 space-y-1 mb-4">
+        <ul style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: "4px", marginBottom: "16px", listStyle: "none", padding: 0 }}>
           {invited.map((u) => (
-            <li key={u.id} className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+            <li key={u.id} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#1a7f4b", flexShrink: 0, display: "inline-block" }} />
               {u.name} ({u.email})
             </li>
           ))}
         </ul>
       )}
 
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={onComplete}
-          className="flex-1 bg-gray-900 text-white text-sm font-medium py-2 rounded hover:bg-gray-700 transition-colors"
-        >
-          {invited.length > 0 ? "Continue" : "Skip for now"}
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={onComplete}
+        style={{
+          width: "100%",
+          fontSize: "13px",
+          fontWeight: 500,
+          padding: "8px 16px",
+          background: "#1a7f4b",
+          color: "#ffffff",
+          border: "none",
+          borderRadius: "8px",
+          cursor: "pointer",
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {invited.length > 0 ? "Continue" : "Skip for now"}
+      </button>
     </div>
   );
 }
