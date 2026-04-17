@@ -117,7 +117,7 @@ export default function DashboardShell({
           )}
         </div>
         <Link href="/contracts/new">
-          <Button variant="primary" size="sm">Add contract</Button>
+          <Button variant="secondary" size="sm">Add contract</Button>
         </Link>
       </div>
 
