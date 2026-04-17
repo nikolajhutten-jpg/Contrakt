@@ -59,7 +59,7 @@ export default function KpiCard({
           textDecoration: "none",
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.15)";
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.14)";
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.08)";

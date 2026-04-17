@@ -19,19 +19,29 @@ interface ChecklistItemProps {
 
 function ChecklistItem({ done, label }: ChecklistItemProps) {
   return (
-    <li className="flex items-center gap-2 text-sm">
+    <li className="flex items-center gap-2" style={{ fontSize: "13px" }}>
       <span
-        className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center ${
-          done ? "bg-green-500" : "bg-gray-200"
-        }`}
+        className="flex-shrink-0 flex items-center justify-center"
+        style={{
+          width: "16px",
+          height: "16px",
+          borderRadius: "50%",
+          background: done ? "#1a7f4b" : "rgba(0,0,0,0.08)",
+        }}
       >
         {done && (
-          <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 10 10" fill="currentColor">
-            <path d="M8.5 2.5 4 7 1.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path
+              d="M8.5 2.5 4 7 1.5 4.5"
+              stroke="#ffffff"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         )}
       </span>
-      <span className={done ? "text-gray-400 line-through" : "text-gray-700"}>
+      <span style={{ color: done ? "rgba(0,0,0,0.35)" : "#171717", textDecoration: done ? "line-through" : "none" }}>
         {label}
       </span>
     </li>
@@ -55,11 +65,19 @@ export default function DashboardShell({
 }: DashboardShellProps) {
   const router = useRouter();
   const [checklistDismissed, setChecklistDismissed] = useState(true);
+  const [todayLabel, setTodayLabel] = useState("");
 
-  // Read dismissal state from localStorage after mount
   useEffect(() => {
     setChecklistDismissed(
       localStorage.getItem(CHECKLIST_DISMISSED_KEY) === "true",
+    );
+    setTodayLabel(
+      new Date().toLocaleDateString("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
     );
   }, []);
 
@@ -77,69 +95,99 @@ export default function DashboardShell({
   const showChecklist = isAdmin && !checklistDismissed && !allOnboardingDone;
 
   return (
-    <div className="px-8 py-6 max-w-screen-xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Home</h1>
+    <div style={{ padding: "28px 32px", maxWidth: "1280px" }}>
+      {/* Page header */}
+      <div className="flex items-start justify-between" style={{ marginBottom: "24px" }}>
+        <div>
+          <h1
+            style={{
+              fontSize: "22px",
+              fontWeight: 600,
+              letterSpacing: "-0.03em",
+              color: "#171717",
+              lineHeight: 1.2,
+            }}
+          >
+            Dashboard
+          </h1>
+          {todayLabel && (
+            <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginTop: "3px" }}>
+              {todayLabel}
+            </p>
+          )}
+        </div>
         <Link href="/contracts/new">
           <Button variant="primary" size="sm">Add contract</Button>
         </Link>
       </div>
 
-      {/* Onboarding checklist (§13.7) */}
+      {/* Onboarding checklist */}
       {showChecklist && (
-        <div className="mb-6 bg-white border border-gray-200 rounded p-5">
-          <div className="flex items-start justify-between mb-4">
+        <div
+          style={{
+            marginBottom: "24px",
+            background: "#ffffff",
+            border: "0.5px solid rgba(0,0,0,0.08)",
+            borderRadius: "12px",
+            padding: "16px 20px",
+          }}
+        >
+          <div className="flex items-start justify-between" style={{ marginBottom: "12px" }}>
             <div>
-              <h2 className="text-sm font-medium text-gray-900">
+              <h2 style={{ fontSize: "13px", fontWeight: 500, color: "#171717" }}>
                 Get started with Contrakt
               </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p style={{ fontSize: "12px", color: "rgba(0,0,0,0.4)", marginTop: "2px" }}>
                 Complete these steps to finish setting up your workspace.
               </p>
             </div>
             <button
               onClick={dismissChecklist}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              style={{
+                fontSize: "12px",
+                color: "rgba(0,0,0,0.35)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+              }}
             >
               Dismiss
             </button>
           </div>
-          <ul className="space-y-2">
+          <ul style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <ChecklistItem done label="Account created" />
-            <ChecklistItem
-              done={onboarding.departmentsAdded}
-              label="Add a department"
-            />
-            <ChecklistItem
-              done={onboarding.firstUserInvited}
-              label="Invite a team member"
-            />
-            <ChecklistItem
-              done={onboarding.slackConnected}
-              label="Connect Slack"
-            />
-            <ChecklistItem
-              done={onboarding.firstContractUploaded}
-              label="Upload your first contract"
-            />
+            <ChecklistItem done={onboarding.departmentsAdded} label="Add a department" />
+            <ChecklistItem done={onboarding.firstUserInvited} label="Invite a team member" />
+            <ChecklistItem done={onboarding.slackConnected} label="Connect Slack" />
+            <ChecklistItem done={onboarding.firstContractUploaded} label="Upload your first contract" />
           </ul>
         </div>
       )}
 
       {/* KPI row */}
-      <div className="mb-8">
+      <div style={{ marginBottom: "24px" }}>
         <KpiRow kpis={kpis} />
       </div>
 
-      {/* All contracts section */}
-      <section className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+      {/* Recent contracts section */}
+      <section style={{ marginBottom: "24px" }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: "12px" }}>
+          <span
+            style={{
+              fontSize: "15px",
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              color: "#171717",
+            }}
+          >
+            Recent contracts
+          </span>
           <Link
             href="/contracts"
-            className="text-sm font-medium text-gray-900 hover:underline"
+            style={{ fontSize: "13px", color: "#1a7f4b", textDecoration: "none" }}
           >
-            All contracts
+            View all →
           </Link>
         </div>
         {activeContracts.length === 0 ? (
@@ -150,26 +198,28 @@ export default function DashboardShell({
             onAction={() => router.push("/contracts/new")}
           />
         ) : (
-          <>
-            <ContractTable contracts={activeContracts} showFilter={false} />
-            <div className="mt-3 text-right">
-              <Link href="/contracts" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                View all →
-              </Link>
-            </div>
-          </>
+          <ContractTable contracts={activeContracts} showFilter={false} />
         )}
       </section>
 
       {/* Action required section */}
       <section>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
-          <Link
-            href="/action-required"
-            className="text-sm font-medium text-gray-900 hover:underline"
+        <div className="flex items-center justify-between" style={{ marginBottom: "12px" }}>
+          <span
+            style={{
+              fontSize: "15px",
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              color: "#171717",
+            }}
           >
             Action required
+          </span>
+          <Link
+            href="/action-required"
+            style={{ fontSize: "13px", color: "#1a7f4b", textDecoration: "none" }}
+          >
+            View all →
           </Link>
         </div>
         {upcomingRenewals.length === 0 ? (
@@ -180,14 +230,7 @@ export default function DashboardShell({
             onAction={() => router.push("/contracts")}
           />
         ) : (
-          <>
-            <ContractTable contracts={upcomingRenewals} showFilter={false} />
-            <div className="mt-3 text-right">
-              <Link href="/action-required" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                View all →
-              </Link>
-            </div>
-          </>
+          <ContractTable contracts={upcomingRenewals} showFilter={false} />
         )}
       </section>
     </div>

@@ -7,7 +7,7 @@ interface KpiRowProps {
 
 export default function KpiRow({ kpis }: KpiRowProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2" style={{ gap: "10px" }}>
       <KpiCard
         label="All contracts"
         value={kpis.total}

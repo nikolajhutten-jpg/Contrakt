@@ -20,14 +20,37 @@ export default function EmptyState({
   onAction,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-      {/* Illustrated placeholder — a simple geometric shape keeps it clean */}
-      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-5">
+    <div
+      style={{
+        background: "#ffffff",
+        border: "0.5px solid rgba(0,0,0,0.08)",
+        borderRadius: "12px",
+        padding: "48px 24px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+      }}
+    >
+      {/* Icon */}
+      <div
+        style={{
+          width: "48px",
+          height: "48px",
+          borderRadius: "50%",
+          background: "rgba(0,0,0,0.05)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "16px",
+        }}
+      >
         <svg
-          className="w-8 h-8 text-gray-400"
-          fill="none"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
-          stroke="currentColor"
+          fill="none"
+          stroke="rgba(0,0,0,0.3)"
           strokeWidth={1.5}
           aria-hidden="true"
         >
@@ -39,10 +62,14 @@ export default function EmptyState({
         </svg>
       </div>
 
-      <h3 className="text-base font-medium text-gray-900">{heading}</h3>
-      <p className="mt-1 text-sm text-gray-500 max-w-xs">{subtext}</p>
+      <h3 style={{ fontSize: "14px", fontWeight: 500, color: "#171717", marginBottom: "4px" }}>
+        {heading}
+      </h3>
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", maxWidth: "280px", lineHeight: 1.5 }}>
+        {subtext}
+      </p>
 
-      <div className="mt-5">
+      <div style={{ marginTop: "20px" }}>
         <Button onClick={onAction}>{actionLabel}</Button>
       </div>
     </div>

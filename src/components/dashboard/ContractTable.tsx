@@ -26,6 +26,29 @@ function ownerNames(owners: { name: string }[]): string {
   return `${owners[0].name} +${owners.length - 1}`;
 }
 
+const TH_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "36px",
+  textAlign: "left",
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "rgba(0,0,0,0.4)",
+  letterSpacing: "0.02em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const TD_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "40px",
+  fontSize: "13px",
+  color: "rgba(0,0,0,0.5)",
+  borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
+
 export default function ContractTable({
   contracts,
   showFilter = true,
@@ -48,20 +71,27 @@ export default function ContractTable({
     <div>
       {/* Filter */}
       {showFilter && (
-        <div className="mb-3">
+        <div style={{ marginBottom: "12px", display: "flex", justifyContent: "flex-end" }}>
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Filter by supplier, department, or owner…"
-            className="w-full max-w-sm px-3 py-1.5 text-sm border border-gray-300 rounded bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+            style={{ width: "280px" }}
           />
         </div>
       )}
 
       {/* Table */}
-      <div className="border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-sm table-fixed">
+      <div
+        style={{
+          background: "#ffffff",
+          border: "0.5px solid rgba(0,0,0,0.08)",
+          borderRadius: "12px",
+          overflow: "hidden",
+        }}
+      >
+        <table className="w-full table-fixed">
           <colgroup>
             <col style={{ width: "20%" }} />
             <col style={{ width: "15%" }} />
@@ -72,22 +102,27 @@ export default function ContractTable({
             <col style={{ width: "12%" }} />
           </colgroup>
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Supplier</th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Department</th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Owner</th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Start date</th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">End date</th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Notice deadline</th>
-              <th className="px-4 py-2.5 text-left font-medium text-gray-600">Status</th>
+            <tr style={{ borderBottom: "0.5px solid rgba(0,0,0,0.08)" }}>
+              <th style={TH_STYLE}>Supplier</th>
+              <th style={TH_STYLE}>Department</th>
+              <th style={TH_STYLE}>Owner</th>
+              <th style={TH_STYLE}>Start date</th>
+              <th style={TH_STYLE}>End date</th>
+              <th style={TH_STYLE}>Notice deadline</th>
+              <th style={TH_STYLE}>Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {filtered.length === 0 ? (
               <tr>
                 <td
                   colSpan={7}
-                  className="px-4 py-8 text-center text-sm text-gray-400"
+                  style={{
+                    padding: "32px 16px",
+                    textAlign: "center",
+                    fontSize: "13px",
+                    color: "rgba(0,0,0,0.35)",
+                  }}
                 >
                   No contracts match your filter.
                 </td>
@@ -96,22 +131,28 @@ export default function ContractTable({
               filtered.map((contract) => (
                 <tr
                   key={contract.id}
-                  className="bg-white hover:bg-gray-50 transition-colors"
+                  style={{ cursor: "pointer" }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
                 >
-                  <td className="px-4 py-3">
+                  <td style={{ ...TD_STYLE, color: "#171717", fontWeight: 500 }}>
                     <Link
                       href={`/contracts/${contract.id}`}
-                      className="font-medium text-gray-900 hover:underline"
+                      style={{ color: "inherit", textDecoration: "none" }}
                     >
                       {contract.vendor.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{contract.department.name}</td>
-                  <td className="px-4 py-3 text-gray-600">{ownerNames(contract.owners)}</td>
-                  <td className="px-4 py-3 text-gray-600">{formatDate(contract.startDate)}</td>
-                  <td className="px-4 py-3 text-gray-600">{formatDate(contract.endDate)}</td>
-                  <td className="px-4 py-3 text-gray-600">{formatDate(contract.renewalNoticeDeadline)}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td style={TD_STYLE}>{contract.department.name}</td>
+                  <td style={TD_STYLE}>{ownerNames(contract.owners)}</td>
+                  <td style={TD_STYLE}>{formatDate(contract.startDate)}</td>
+                  <td style={TD_STYLE}>{formatDate(contract.endDate)}</td>
+                  <td style={TD_STYLE}>{formatDate(contract.renewalNoticeDeadline)}</td>
+                  <td style={{ ...TD_STYLE, overflow: "visible" }}>
                     <StatusBadge status={getDisplayStatus(contract)} />
                   </td>
                 </tr>
