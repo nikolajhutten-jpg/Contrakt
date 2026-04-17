@@ -19,7 +19,6 @@ export default function ContractDetailShell({
 }: ContractDetailShellProps) {
   const router = useRouter();
 
-  // Default to the main document if one exists
   const mainDoc =
     contract.documents.find((d) => d.type === DocumentType.Main) ?? null;
 
@@ -28,26 +27,69 @@ export default function ContractDetailShell({
   return (
     <div className="flex h-full">
       {/* Left pane — document viewer */}
-      <div className="flex flex-col flex-1 min-w-0 border-r border-gray-200 bg-gray-50">
+      <div
+        className="flex flex-col flex-1 min-w-0"
+        style={{ borderRight: "0.5px solid rgba(0,0,0,0.08)", background: "#f5f5f7" }}
+      >
         {/* Viewer header */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white flex-shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
+        <div
+          className="flex items-center justify-between flex-shrink-0"
+          style={{
+            padding: "0 16px",
+            height: "44px",
+            background: "#ffffff",
+            borderBottom: "0.5px solid rgba(0,0,0,0.08)",
+          }}
+        >
+          <div className="flex items-center min-w-0" style={{ gap: "10px" }}>
             <button
               onClick={() => router.back()}
-              className="text-xs text-gray-400 hover:text-gray-600 flex-shrink-0"
+              style={{
+                fontSize: "13px",
+                color: "rgba(0,0,0,0.4)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "#1a7f4b";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)";
+              }}
             >
-              ← Back
+              ← Contracts
             </button>
-            <span className="text-gray-300 flex-shrink-0">·</span>
+            <span style={{ color: "rgba(0,0,0,0.2)", flexShrink: 0 }}>·</span>
             <h1
-              className="text-sm font-medium text-gray-900 truncate"
+              style={{
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "#171717",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
               title={contract.vendor.name}
             >
               {contract.vendor.name}
             </h1>
           </div>
           {selectedDoc && (
-            <span className="text-xs text-gray-400 flex-shrink-0 ml-2 truncate max-w-48">
+            <span
+              style={{
+                fontSize: "12px",
+                color: "rgba(0,0,0,0.35)",
+                flexShrink: 0,
+                marginLeft: "8px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                maxWidth: "200px",
+              }}
+            >
               {selectedDoc.fileName}
             </span>
           )}
@@ -60,7 +102,10 @@ export default function ContractDetailShell({
       </div>
 
       {/* Right pane — properties panel */}
-      <div className="w-96 flex-shrink-0 flex flex-col bg-white">
+      <div
+        className="flex-shrink-0 flex flex-col"
+        style={{ width: "380px", background: "#ffffff" }}
+      >
         <PropertiesPanel
           contract={contract}
           canEdit={canEdit}

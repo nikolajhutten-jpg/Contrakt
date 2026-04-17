@@ -11,6 +11,15 @@ interface EditableOwnersFieldProps {
   onSave: (ids: string[]) => Promise<void>;
 }
 
+const LABEL_STYLE: React.CSSProperties = {
+  width: "40%",
+  flexShrink: 0,
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "rgba(0,0,0,0.4)",
+  paddingTop: "1px",
+};
+
 export default function EditableOwnersField({
   ownerIds,
   displayValue,
@@ -35,40 +44,81 @@ export default function EditableOwnersField({
 
   if (!editing) {
     return (
-      <div className="py-3 border-b border-gray-100 last:border-0 group flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <dt className="text-xs font-medium text-gray-400 mb-0.5">Business owners</dt>
-          <dd className="text-sm text-gray-900">{displayValue || "—"}</dd>
-        </div>
-        <button
-          onClick={open}
-          className="opacity-0 group-hover:opacity-100 text-xs text-gray-400 hover:text-gray-600 transition-opacity flex-shrink-0 mt-4"
+      <div className="prop-row group" style={{ alignItems: "center" }}>
+        <dt style={LABEL_STYLE}>Business owners</dt>
+        <dd
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            minWidth: 0,
+          }}
         >
-          Edit
-        </button>
+          <span style={{ fontSize: "13px", color: "#171717" }}>{displayValue || "—"}</span>
+          <button
+            onClick={open}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{
+              fontSize: "11px",
+              color: "rgba(0,0,0,0.35)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "#1a7f4b";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.35)";
+            }}
+          >
+            Edit
+          </button>
+        </dd>
       </div>
     );
   }
 
   return (
-    <div className="py-3 border-b border-gray-100 last:border-0">
-      <dt className="text-xs font-medium text-gray-400 mb-1">Business owners</dt>
-      <OwnerSelect users={users} selected={draft} onChange={setDraft} />
-      <div className="flex items-center gap-2 mt-2">
-        <button
-          onClick={handleSave}
-          disabled={pending}
-          className="px-2.5 py-1 text-xs font-medium bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
-        >
-          {pending ? "Saving…" : "Save"}
-        </button>
-        <button
-          onClick={() => { setDraft(ownerIds); setEditing(false); }}
-          className="px-2.5 py-1 text-xs text-gray-500 hover:text-gray-700"
-        >
-          Cancel
-        </button>
-      </div>
+    <div className="prop-row" style={{ flexDirection: "column", alignItems: "stretch" }}>
+      <dt style={{ ...LABEL_STYLE, width: "auto", marginBottom: "6px" }}>Business owners</dt>
+      <dd>
+        <OwnerSelect users={users} selected={draft} onChange={setDraft} />
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+          <button
+            onClick={handleSave}
+            disabled={pending}
+            style={{
+              fontSize: "12px",
+              fontWeight: 500,
+              color: pending ? "rgba(0,0,0,0.3)" : "#1a7f4b",
+              background: "none",
+              border: "none",
+              cursor: pending ? "default" : "pointer",
+              padding: 0,
+            }}
+          >
+            {pending ? "Saving…" : "Save"}
+          </button>
+          <button
+            onClick={() => { setDraft(ownerIds); setEditing(false); }}
+            style={{
+              fontSize: "12px",
+              color: "rgba(0,0,0,0.35)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </dd>
     </div>
   );
 }

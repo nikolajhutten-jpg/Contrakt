@@ -17,6 +17,15 @@ interface EditableFieldProps {
   onSave: (next: string | boolean) => Promise<void>;
 }
 
+const LABEL_STYLE: React.CSSProperties = {
+  width: "40%",
+  flexShrink: 0,
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "rgba(0,0,0,0.4)",
+  paddingTop: "1px",
+};
+
 export default function EditableField({
   label,
   value,
@@ -50,61 +59,83 @@ export default function EditableField({
     displayValue ??
     (typeof value === "boolean" ? (value ? "Yes" : "No") : value || "—");
 
-  const inputCls =
-    "flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400";
-
   if (!editing) {
     return (
-      <div className="py-3 border-b border-gray-100 last:border-0 group flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <dt className="text-xs font-medium text-gray-400 mb-0.5">{label}</dt>
-          <dd className="text-sm text-gray-900">{shown}</dd>
-        </div>
-        <button
-          onClick={open}
-          className="opacity-0 group-hover:opacity-100 text-xs text-gray-400 hover:text-gray-600 transition-opacity flex-shrink-0 mt-4"
+      <div
+        className="prop-row group"
+        style={{ alignItems: "center" }}
+      >
+        <dt style={LABEL_STYLE}>{label}</dt>
+        <dd
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            minWidth: 0,
+          }}
         >
-          Edit
-        </button>
+          <span style={{ fontSize: "13px", color: "#171717" }}>{shown}</span>
+          <button
+            onClick={open}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{
+              fontSize: "11px",
+              color: "rgba(0,0,0,0.35)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "#1a7f4b";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.35)";
+            }}
+          >
+            Edit
+          </button>
+        </dd>
       </div>
     );
   }
 
   return (
-    <div className="py-3 border-b border-gray-100 last:border-0">
-      <dt className="text-xs font-medium text-gray-400 mb-1">{label}</dt>
-      <div className="flex items-center gap-2">
+    <div className="prop-row" style={{ flexDirection: "column", alignItems: "stretch" }}>
+      <dt style={{ ...LABEL_STYLE, width: "auto", marginBottom: "6px" }}>{label}</dt>
+      <dd style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
         {inputType === "toggle" ? (
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setDraft(true)}
-              className={`px-4 py-1.5 text-sm rounded border transition-colors ${
-                draft === true
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => setDraft(false)}
-              className={`px-4 py-1.5 text-sm rounded border transition-colors ${
-                draft === false
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              No
-            </button>
+          <div style={{ display: "flex", gap: "4px" }}>
+            {[true, false].map((v) => (
+              <button
+                key={String(v)}
+                type="button"
+                onClick={() => setDraft(v)}
+                style={{
+                  padding: "3px 12px",
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  borderRadius: "20px",
+                  border: "0.5px solid rgba(0,0,0,0.1)",
+                  cursor: "pointer",
+                  background: draft === v ? "#1a7f4b" : "rgba(0,0,0,0.05)",
+                  color: draft === v ? "#ffffff" : "rgba(0,0,0,0.5)",
+                  transition: "background 0.15s, color 0.15s",
+                }}
+              >
+                {v ? "Yes" : "No"}
+              </button>
+            ))}
           </div>
         ) : inputType === "select" ? (
           <select
             value={draft as string}
             onChange={(e) => setDraft(e.target.value)}
             autoFocus
-            className={inputCls}
+            style={{ flex: 1, height: "30px", fontSize: "13px" }}
           >
             {options.map((o) => (
               <option key={o.value} value={o.value}>
@@ -118,23 +149,40 @@ export default function EditableField({
             value={draft as string}
             onChange={(e) => setDraft(e.target.value)}
             autoFocus
-            className={inputCls}
+            style={{ flex: 1, height: "30px", fontSize: "13px" }}
           />
         )}
         <button
           onClick={handleSave}
           disabled={pending}
-          className="px-2.5 py-1 text-xs font-medium bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          style={{
+            fontSize: "12px",
+            fontWeight: 500,
+            color: pending ? "rgba(0,0,0,0.3)" : "#1a7f4b",
+            background: "none",
+            border: "none",
+            cursor: pending ? "default" : "pointer",
+            padding: 0,
+            flexShrink: 0,
+          }}
         >
           {pending ? "Saving…" : "Save"}
         </button>
         <button
           onClick={cancel}
-          className="px-2.5 py-1 text-xs text-gray-500 hover:text-gray-700"
+          style={{
+            fontSize: "12px",
+            color: "rgba(0,0,0,0.35)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+            flexShrink: 0,
+          }}
         >
           Cancel
         </button>
-      </div>
+      </dd>
     </div>
   );
 }

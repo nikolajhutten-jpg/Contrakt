@@ -64,83 +64,88 @@ export default function AddAlertForm({ contractId, onDone }: AddAlertFormProps) 
   }
 
   return (
-    <div className="mt-4 p-4 border border-gray-200 rounded bg-gray-50 space-y-3">
-      <h4 className="text-sm font-medium text-gray-900">Add alert</h4>
-
-      <div className="flex items-center gap-2 flex-wrap">
+    <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "0.5px solid rgba(0,0,0,0.08)" }}>
+      {/* Timing row */}
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginBottom: "10px" }}>
         <input
           type="number"
           min={1}
           value={form.triggerValue}
           onChange={(e) => setForm({ ...form, triggerValue: e.target.value })}
-          className="w-16 px-2 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          style={{ width: "56px", height: "30px", fontSize: "13px" }}
         />
         <select
           value={form.triggerUnit}
-          onChange={(e) =>
-            setForm({ ...form, triggerUnit: e.target.value as PeriodUnit })
-          }
-          className="px-2 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          onChange={(e) => setForm({ ...form, triggerUnit: e.target.value as PeriodUnit })}
+          style={{ height: "30px", fontSize: "13px" }}
         >
           <option value={PeriodUnit.Months}>months</option>
           <option value={PeriodUnit.Days}>days</option>
         </select>
-        <span className="text-sm text-gray-500">before</span>
+        <span style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)" }}>before</span>
         <select
           value={form.triggerReference}
           onChange={(e) =>
-            setForm({
-              ...form,
-              triggerReference: e.target.value as AlertTriggerReference,
-            })
+            setForm({ ...form, triggerReference: e.target.value as AlertTriggerReference })
           }
-          className="px-2 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          style={{ height: "30px", fontSize: "13px" }}
         >
-          <option value={AlertTriggerReference.RenewalNoticeDeadline}>
-            renewal notice deadline
-          </option>
+          <option value={AlertTriggerReference.RenewalNoticeDeadline}>renewal notice deadline</option>
           <option value={AlertTriggerReference.EndDate}>end date</option>
         </select>
       </div>
 
-      <div className="flex items-center gap-4">
-        <label className="flex items-center gap-1.5 text-sm text-gray-700">
+      {/* Channels */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#171717", cursor: "pointer" }}>
           <input
             type="checkbox"
             checked={form.emailChannel}
-            onChange={(e) =>
-              setForm({ ...form, emailChannel: e.target.checked })
-            }
-            className="rounded border-gray-300"
+            onChange={(e) => setForm({ ...form, emailChannel: e.target.checked })}
           />
           Email
         </label>
-        <label className="flex items-center gap-1.5 text-sm text-gray-700">
+        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#171717", cursor: "pointer" }}>
           <input
             type="checkbox"
             checked={form.slackChannel}
-            onChange={(e) =>
-              setForm({ ...form, slackChannel: e.target.checked })
-            }
-            className="rounded border-gray-300"
+            onChange={(e) => setForm({ ...form, slackChannel: e.target.checked })}
           />
           Slack
         </label>
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && (
+        <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "8px" }}>{error}</p>
+      )}
 
-      <div className="flex items-center gap-2">
+      {/* Actions */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
+          style={{
+            fontSize: "12px",
+            fontWeight: 500,
+            color: saving ? "rgba(0,0,0,0.3)" : "#1a7f4b",
+            background: "none",
+            border: "none",
+            cursor: saving ? "default" : "pointer",
+            padding: 0,
+          }}
         >
           {saving ? "Saving…" : "Save alert"}
         </button>
         <button
           onClick={onDone}
-          className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+          style={{
+            fontSize: "12px",
+            color: "rgba(0,0,0,0.35)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+          }}
         >
           Cancel
         </button>

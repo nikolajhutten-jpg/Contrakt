@@ -49,3 +49,14 @@ textarea:focus {
   border-color: #1a7f4b;
   box-shadow: 0 0 0 3px rgba(26, 127, 75, 0.12);
 }
+
+/* Properties panel field rows */
+.prop-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
+}
+.prop-row:last-child {
+  border-bottom: none;
+}

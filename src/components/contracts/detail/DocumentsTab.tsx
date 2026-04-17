@@ -25,45 +25,112 @@ const TYPE_LABELS: Record<string, string> = {
   renewal: "Renewal",
 };
 
+function TypeBadge({ type }: { type: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        borderRadius: "20px",
+        padding: "2px 8px",
+        fontSize: "11px",
+        fontWeight: 500,
+        background: "rgba(0,0,0,0.06)",
+        color: "rgba(0,0,0,0.5)",
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+      }}
+    >
+      {TYPE_LABELS[type] ?? type}
+    </span>
+  );
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <div
+      style={{
+        fontSize: "11px",
+        fontWeight: 500,
+        color: "rgba(0,0,0,0.35)",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        marginBottom: "6px",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function DocRow({
   doc,
   selected,
   onSelect,
   label,
+  indent = false,
 }: {
   doc: Document;
   selected: boolean;
   onSelect: () => void;
   label?: string;
+  indent?: boolean;
 }) {
   return (
     <button
       onClick={onSelect}
-      className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors ${
-        selected
-          ? "bg-gray-900 text-white"
-          : "hover:bg-gray-50 text-gray-700"
-      }`}
+      className="w-full text-left"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        padding: "8px 8px 8px",
+        paddingLeft: indent ? "16px" : "8px",
+        borderRadius: "8px",
+        borderLeft: indent ? "2px solid rgba(0,0,0,0.1)" : "none",
+        background: selected ? "rgba(26,127,75,0.06)" : "transparent",
+        cursor: "pointer",
+        border: "none",
+        width: "100%",
+        transition: "background 0.12s",
+      }}
+      onMouseEnter={(e) => {
+        if (!selected)
+          (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)";
+      }}
+      onMouseLeave={(e) => {
+        if (!selected)
+          (e.currentTarget as HTMLElement).style.background = "transparent";
+      }}
     >
-      <svg
-        className={`w-4 h-4 flex-shrink-0 ${selected ? "text-white" : "text-gray-400"}`}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
+      {/* Filename */}
+      <span
+        style={{
+          flex: 1,
+          fontSize: "13px",
+          fontWeight: 500,
+          color: selected ? "#1a7f4b" : "#171717",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          minWidth: 0,
+        }}
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        />
-      </svg>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{label ?? doc.fileName}</p>
-        <p className={`text-xs mt-0.5 ${selected ? "text-gray-300" : "text-gray-400"}`}>
-          {doc.fileFormat.toUpperCase()} · {formatDate(doc.uploadedAt)}
-        </p>
-      </div>
+        {label ?? doc.fileName}
+      </span>
+      {/* Type badge */}
+      <TypeBadge type={doc.type} />
+      {/* Date */}
+      <span
+        style={{
+          fontSize: "12px",
+          color: "rgba(0,0,0,0.4)",
+          flexShrink: 0,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {formatDate(doc.uploadedAt)}
+      </span>
     </button>
   );
 }
@@ -93,21 +160,21 @@ export default function DocumentsTab({
 
   if (documents.length === 0) {
     return (
-      <p className="text-sm text-gray-400 py-4">No documents attached yet.</p>
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", padding: "16px 0" }}>
+        No documents attached yet.
+      </p>
     );
   }
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       {sectionOrder.map((type) => {
         const docs = grouped[type];
         if (!docs || docs.length === 0) return null;
         return (
           <section key={type}>
-            <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1.5">
-              {TYPE_LABELS[type]}s
-            </h3>
-            <div className="space-y-0.5">
+            <SectionLabel>{TYPE_LABELS[type]}s</SectionLabel>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {docs.map((doc) => (
                 <DocRow
                   key={doc.id}
@@ -123,17 +190,16 @@ export default function DocumentsTab({
 
       {renewals.length > 0 && (
         <section>
-          <h3 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1.5">
-            Renewal history
-          </h3>
-          <div className="space-y-0.5">
+          <SectionLabel>Renewal history</SectionLabel>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             {renewals.map((doc) => (
               <DocRow
                 key={doc.id}
                 doc={doc}
                 selected={doc.id === selectedId}
                 onSelect={() => onSelect(doc)}
-                label={`Version ${doc.version} — ${doc.fileName}`}
+                label={`v${doc.version} — ${doc.fileName}`}
+                indent
               />
             ))}
           </div>

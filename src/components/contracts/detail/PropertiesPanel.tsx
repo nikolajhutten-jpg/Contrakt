@@ -32,16 +32,28 @@ export default function PropertiesPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Tab bar */}
-      <div className="flex border-b border-gray-200 flex-shrink-0">
+      <div
+        className="flex flex-shrink-0"
+        style={{ borderBottom: "0.5px solid rgba(0,0,0,0.08)" }}
+      >
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.id
-                ? "border-gray-900 text-gray-900"
-                : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
+            style={{
+              padding: "12px 16px",
+              fontSize: "13px",
+              fontWeight: 500,
+              border: "none",
+              borderBottom: activeTab === tab.id
+                ? "2px solid #1a7f4b"
+                : "2px solid transparent",
+              color: activeTab === tab.id ? "#1a7f4b" : "rgba(0,0,0,0.4)",
+              background: "transparent",
+              cursor: "pointer",
+              transition: "color 0.15s",
+              marginBottom: "-0.5px",
+            }}
           >
             {tab.label}
           </button>
@@ -49,7 +61,10 @@ export default function PropertiesPanel({
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto p-5">
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ padding: "20px 24px" }}
+      >
         {activeTab === "properties" && (
           <PropertiesTab contract={contract} canEdit={canEdit} />
         )}

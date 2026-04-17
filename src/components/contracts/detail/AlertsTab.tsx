@@ -16,6 +16,27 @@ const REF_LABELS: Record<string, string> = {
   end_date: "end date",
 };
 
+function ChannelPill({ label }: { label: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        borderRadius: "20px",
+        padding: "2px 8px",
+        fontSize: "11px",
+        fontWeight: 500,
+        background: "rgba(0,0,0,0.06)",
+        color: "rgba(0,0,0,0.5)",
+        whiteSpace: "nowrap",
+        textTransform: "capitalize",
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 function AlertRow({
   alert,
   contractId,
@@ -37,18 +58,27 @@ function AlertRow({
     });
   }
 
-  const channelList = alert.channels.join(" & ");
   const ref = REF_LABELS[alert.triggerReference] ?? alert.triggerReference;
 
   return (
-    <div className="flex items-start justify-between gap-3 py-3 border-b border-gray-100 last:border-0">
-      <div>
-        <p className="text-sm text-gray-900">
+    <div
+      className="group"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "12px",
+        padding: "10px 0",
+        borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+      }}
+    >
+      {/* Timing */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: "13px", color: "#171717" }}>
           {alert.triggerValue} {alert.triggerUnit} before {ref}
         </p>
-        <p className="text-xs text-gray-400 mt-0.5 capitalize">{channelList}</p>
         {alert.sentAt && (
-          <p className="text-xs text-green-600 mt-0.5">
+          <p style={{ fontSize: "11px", color: "#1a7f4b", marginTop: "2px" }}>
             Sent{" "}
             {new Date(alert.sentAt).toLocaleDateString("en-GB", {
               day: "2-digit",
@@ -58,11 +88,36 @@ function AlertRow({
           </p>
         )}
       </div>
+
+      {/* Channel pills */}
+      <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
+        {alert.channels.map((ch) => (
+          <ChannelPill key={ch} label={ch} />
+        ))}
+      </div>
+
+      {/* Remove — hover only */}
       {canEdit && (
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="text-xs text-gray-400 hover:text-red-600 disabled:opacity-50 transition-colors flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{
+            fontSize: "12px",
+            color: "rgba(0,0,0,0.35)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+            flexShrink: 0,
+            opacity: deleting ? 0.5 : undefined,
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.color = "#c0392b";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.35)";
+          }}
         >
           {deleting ? "Removing…" : "Remove"}
         </button>
@@ -81,11 +136,13 @@ export default function AlertsTab({
   return (
     <div>
       {alerts.length === 0 && !adding && (
-        <p className="text-sm text-gray-400 py-4">No alerts configured.</p>
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", padding: "16px 0" }}>
+          No alerts configured.
+        </p>
       )}
 
       {alerts.length > 0 && (
-        <div className="mb-2">
+        <div>
           {alerts.map((a) => (
             <AlertRow
               key={a.id}
@@ -100,7 +157,15 @@ export default function AlertsTab({
       {canEdit && !adding && (
         <button
           onClick={() => setAdding(true)}
-          className="mt-2 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors"
+          style={{
+            marginTop: "12px",
+            fontSize: "13px",
+            color: "#1a7f4b",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+          }}
         >
           + Add alert
         </button>
