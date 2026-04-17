@@ -45,12 +45,6 @@ const ROLE_LABEL: Record<string, string> = {
   [UserRole.BusinessOwner]: "Business owner",
 };
 
-function navItemStyle(isActive: boolean) {
-  return isActive
-    ? { backgroundColor: "var(--green-800)", color: "#ffffff", fontWeight: 500 }
-    : undefined;
-}
-
 function NavLink({
   href,
   isActive,
@@ -65,20 +59,24 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`flex items-center justify-between ${indent ? "pl-8" : "pl-5"} pr-4 py-2 text-sm transition-colors rounded-r-md mr-3`}
-      style={navItemStyle(isActive)}
+      className="flex items-center justify-between pr-3 py-1.5 text-[13px] transition-colors"
+      style={{
+        paddingLeft: indent ? "28px" : "8px",
+        borderRadius: "7px",
+        color: isActive ? "#171717" : "rgba(0,0,0,0.5)",
+        fontWeight: isActive ? 500 : 400,
+        background: isActive ? "rgba(0,0,0,0.05)" : "transparent",
+      }}
       onMouseEnter={(e) => {
         if (!isActive)
-          (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,255,255,0.08)";
+          (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.03)";
       }}
       onMouseLeave={(e) => {
         if (!isActive)
-          (e.currentTarget as HTMLElement).style.backgroundColor = "";
+          (e.currentTarget as HTMLElement).style.background = "transparent";
       }}
     >
-      <span style={{ color: isActive ? "#ffffff" : "rgba(255,255,255,0.75)" }}>
-        {children}
-      </span>
+      <span>{children}</span>
     </Link>
   );
 }
@@ -90,19 +88,32 @@ export default function Sidebar({ user, badgeCounts }: SidebarProps) {
 
   return (
     <aside
-      className="w-60 flex-shrink-0 flex flex-col h-full"
-      style={{ backgroundColor: "var(--green-900)" }}
+      className="flex-shrink-0 flex flex-col h-full"
+      style={{
+        width: "220px",
+        background: "#ffffff",
+        borderRight: "0.5px solid rgba(0,0,0,0.08)",
+      }}
     >
       {/* Logo */}
-      <div className="px-5 h-14 flex items-center">
-        <span className="text-base font-semibold text-white tracking-tight">
+      <div className="flex items-center h-14" style={{ padding: "0 16px" }}>
+        <span
+          style={{
+            fontSize: "15px",
+            fontWeight: 600,
+            letterSpacing: "-0.02em",
+            color: "#171717",
+          }}
+        >
           Contrakt
         </span>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-2 flex flex-col gap-0.5 overflow-y-auto">
-        {/* Main nav items */}
+      <nav
+        className="flex-1 flex flex-col overflow-y-auto"
+        style={{ padding: "4px 8px", gap: "2px" }}
+      >
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -113,24 +124,34 @@ export default function Sidebar({ user, badgeCounts }: SidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center justify-between pl-5 pr-4 py-2 text-sm transition-colors rounded-r-md mr-3"
-              style={navItemStyle(isActive)}
+              className="flex items-center justify-between py-1.5 text-[13px] transition-colors"
+              style={{
+                paddingLeft: "8px",
+                paddingRight: "8px",
+                borderRadius: "7px",
+                color: isActive ? "#171717" : "rgba(0,0,0,0.5)",
+                fontWeight: isActive ? 500 : 400,
+                background: isActive ? "rgba(0,0,0,0.05)" : "transparent",
+              }}
               onMouseEnter={(e) => {
                 if (!isActive)
-                  (e.currentTarget as HTMLElement).style.backgroundColor = "rgba(255,255,255,0.08)";
+                  (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.03)";
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
-                  (e.currentTarget as HTMLElement).style.backgroundColor = "";
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
               }}
             >
-              <span style={{ color: isActive ? "#ffffff" : "rgba(255,255,255,0.75)" }}>
-                {item.label}
-              </span>
+              <span>{item.label}</span>
               {item.badge && count > 0 && (
                 <span
-                  className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: "var(--green-500)", color: "var(--green-900)" }}
+                  className="inline-flex items-center justify-center min-w-[1.25rem] h-[18px] px-1.5 rounded-full"
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 500,
+                    background: "#1a7f4b",
+                    color: "#ffffff",
+                  }}
                 >
                   {count > 99 ? "99+" : count}
                 </span>
@@ -140,16 +161,21 @@ export default function Sidebar({ user, badgeCounts }: SidebarProps) {
         })}
 
         {/* Settings section */}
-        <div className="mt-0.5">
-          {/* Settings label — not a link, just a section header */}
+        <div style={{ marginTop: "16px" }}>
           <div
-            className="flex items-center pl-5 pr-4 py-2 text-sm"
-            style={{ color: isSettingsActive ? "#ffffff" : "rgba(255,255,255,0.75)", fontWeight: isSettingsActive ? 500 : undefined }}
+            style={{
+              fontSize: "11px",
+              fontWeight: 500,
+              color: "rgba(0,0,0,0.35)",
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              padding: "0 8px",
+              marginBottom: "4px",
+            }}
           >
             Settings
           </div>
 
-          {/* Sub-items — always visible (no collapse animation needed) */}
           {SETTINGS_SUB_ITEMS.map((sub) => {
             if (sub.adminOnly && !isAdmin) return null;
             const isActive = pathname.startsWith(sub.href);
@@ -163,9 +189,34 @@ export default function Sidebar({ user, badgeCounts }: SidebarProps) {
       </nav>
 
       {/* User identity */}
-      <div className="px-5 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-        <p className="text-sm font-medium text-white truncate">{user.name}</p>
-        <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.5)" }}>
+      <div
+        style={{
+          padding: "12px 16px",
+          borderTop: "0.5px solid rgba(0,0,0,0.08)",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            color: "#171717",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {user.name}
+        </p>
+        <p
+          style={{
+            fontSize: "11px",
+            marginTop: "2px",
+            color: "rgba(0,0,0,0.4)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
           {ROLE_LABEL[user.role] ?? user.role}
         </p>
       </div>

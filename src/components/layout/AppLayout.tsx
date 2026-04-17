@@ -65,7 +65,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <ToastProvider>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen" style={{ background: "#f5f5f7" }}>
         <Sidebar
           user={{ name: localUser.name, role: localUser.role }}
           badgeCounts={badgeCounts}

@@ -3,8 +3,8 @@
 /* Dark mode is out of scope for v1 (§17). */
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 :root {
@@ -13,6 +13,7 @@
   --green-700: #40916C;
   --green-500: #74C69D;
   --green-100: #D8F3DC;
+  --primary: #1a7f4b;
 }
 
 html,
@@ -23,6 +24,28 @@ body {
 body {
   background: #ffffff;
   color: #171717;
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base input / select / textarea */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+  font-family: inherit;
+  font-size: 13px;
+  border: 0.5px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 7px 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+select:focus,
+textarea:focus {
+  border-color: #1a7f4b;
+  box-shadow: 0 0 0 3px rgba(26, 127, 75, 0.12);
 }

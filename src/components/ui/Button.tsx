@@ -7,30 +7,51 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "sm" | "md";
 }
 
-const VARIANT: Record<NonNullable<ButtonProps["variant"]>, string> = {
-  primary:
-    "bg-[#2D6A4F] text-white hover:bg-[#1B4332] disabled:opacity-50 disabled:cursor-not-allowed",
-  secondary:
-    "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed",
-  danger:
-    "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed",
+const BASE =
+  "inline-flex items-center justify-center gap-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+
+const VARIANT_STYLE: Record<NonNullable<ButtonProps["variant"]>, React.CSSProperties> = {
+  primary: {
+    background: "#1a7f4b",
+    color: "#ffffff",
+    border: "none",
+  },
+  secondary: {
+    background: "rgba(0,0,0,0.05)",
+    color: "inherit",
+    border: "0.5px solid rgba(0,0,0,0.1)",
+  },
+  danger: {
+    background: "rgba(0,0,0,0.05)",
+    color: "#c0392b",
+    border: "0.5px solid rgba(0,0,0,0.1)",
+  },
 };
 
-const SIZE: Record<NonNullable<ButtonProps["size"]>, string> = {
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-4 py-2 text-sm",
+const SIZE_CLASS: Record<NonNullable<ButtonProps["size"]>, string> = {
+  sm: "px-3 py-1.5",
+  md: "px-4 py-1.5",
 };
 
 export default function Button({
   variant = "primary",
   size = "md",
   className = "",
+  style,
   children,
   ...rest
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded font-medium transition-colors ${VARIANT[variant]} ${SIZE[size]} ${className}`}
+      className={`${BASE} ${SIZE_CLASS[size]} ${className}`}
+      style={{
+        borderRadius: "8px",
+        fontSize: "13px",
+        letterSpacing: "-0.01em",
+        fontFamily: "inherit",
+        ...VARIANT_STYLE[variant],
+        ...style,
+      }}
       {...rest}
     >
       {children}
