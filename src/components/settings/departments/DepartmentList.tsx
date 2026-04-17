@@ -2,16 +2,39 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  createDepartment,
-  renameDepartment,
-  deactivateDepartment,
-} from "@/lib/api/departments";
+import { createDepartment, renameDepartment, deactivateDepartment } from "@/lib/api/departments";
 import type { Department } from "@/types";
 
 interface DepartmentListProps {
   initialDepartments: Department[];
 }
+
+const ROW_STYLE: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  padding: "0 16px",
+  height: "40px",
+  borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+};
+
+const ACTION_BTN: React.CSSProperties = {
+  fontSize: "12px",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: 0,
+  flexShrink: 0,
+};
+
+const SECTION_LABEL: React.CSSProperties = {
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "rgba(0,0,0,0.35)",
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+  padding: "10px 16px 6px",
+};
 
 export default function DepartmentList({ initialDepartments }: DepartmentListProps) {
   const router = useRouter();
@@ -77,19 +100,18 @@ export default function DepartmentList({ initialDepartments }: DepartmentListPro
   const inactive = departments.filter((d) => !d.isActive);
 
   return (
-    <div className="max-w-lg">
-      {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
+    <div>
+      {error && <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
 
-      {/* Active departments */}
-      <div className="border border-gray-200 rounded overflow-hidden mb-6">
+      <div style={{ background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden" }}>
         {active.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-gray-400">
+          <p style={{ padding: "32px 16px", textAlign: "center", fontSize: "13px", color: "rgba(0,0,0,0.35)" }}>
             No departments yet.
           </p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {active.map((dept) => (
-              <li key={dept.id} className="flex items-center gap-3 px-4 py-3 bg-white">
+              <li key={dept.id} className="group" style={ROW_STYLE}>
                 {renamingId === dept.id ? (
                   <>
                     <input
@@ -97,35 +119,43 @@ export default function DepartmentList({ initialDepartments }: DepartmentListPro
                       value={draftName}
                       onChange={(e) => setDraftName(e.target.value)}
                       autoFocus
-                      className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400"
+                      style={{ flex: 1, height: "28px", fontSize: "13px" }}
                     />
                     <button
                       onClick={() => handleRename(dept.id)}
                       disabled={isPending || !draftName.trim()}
-                      className="text-xs font-medium text-gray-900 hover:underline disabled:opacity-50"
+                      style={{ ...ACTION_BTN, color: "#1a7f4b", fontWeight: 500, opacity: (isPending || !draftName.trim()) ? 0.4 : 1 }}
                     >
                       Save
                     </button>
                     <button
                       onClick={() => setRenamingId(null)}
-                      className="text-xs text-gray-400 hover:text-gray-600"
+                      style={{ ...ACTION_BTN, color: "rgba(0,0,0,0.35)" }}
                     >
                       Cancel
                     </button>
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 text-sm text-gray-900">{dept.name}</span>
+                    <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: "#171717" }}>
+                      {dept.name}
+                    </span>
                     <button
                       onClick={() => startRename(dept)}
-                      className="text-xs text-gray-500 hover:text-gray-700"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ ...ACTION_BTN, color: "rgba(0,0,0,0.4)" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#171717"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)"; }}
                     >
                       Rename
                     </button>
                     <button
                       onClick={() => handleDeactivate(dept.id, dept.name)}
                       disabled={isPending}
-                      className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ ...ACTION_BTN, color: "rgba(0,0,0,0.4)", opacity: isPending ? 0.4 : undefined }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#c0392b"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)"; }}
                     >
                       Deactivate
                     </button>
@@ -135,39 +165,54 @@ export default function DepartmentList({ initialDepartments }: DepartmentListPro
             ))}
           </ul>
         )}
-      </div>
 
-      {/* Add department */}
-      <form onSubmit={handleAdd} className="flex items-center gap-2">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="New department name"
-          className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 placeholder-gray-400"
-        />
-        <button
-          type="submit"
-          disabled={isPending || !newName.trim()}
-          className="px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
+        {inactive.length > 0 && (
+          <>
+            <div style={SECTION_LABEL}>Inactive</div>
+            <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {inactive.map((dept) => (
+                <li key={dept.id} style={{ ...ROW_STYLE, borderBottom: "none" }}>
+                  <span style={{ fontSize: "13px", color: "rgba(0,0,0,0.3)", textDecoration: "line-through" }}>
+                    {dept.name}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {/* Add form */}
+        <form
+          onSubmit={handleAdd}
+          style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", borderTop: "0.5px solid rgba(0,0,0,0.08)" }}
         >
-          {isPending ? "Adding…" : "Add"}
-        </button>
-      </form>
-
-      {/* Inactive departments (informational) */}
-      {inactive.length > 0 && (
-        <div className="mt-6">
-          <p className="text-xs font-medium text-gray-400 mb-2">Deactivated</p>
-          <ul className="space-y-1">
-            {inactive.map((dept) => (
-              <li key={dept.id} className="text-sm text-gray-400 line-through">
-                {dept.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="New department name"
+            style={{ flex: 1, height: "30px", fontSize: "13px" }}
+          />
+          <button
+            type="submit"
+            disabled={isPending || !newName.trim()}
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              padding: "5px 12px",
+              background: "#1a7f4b",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "8px",
+              cursor: (isPending || !newName.trim()) ? "default" : "pointer",
+              opacity: (isPending || !newName.trim()) ? 0.4 : 1,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isPending ? "Adding…" : "Add"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

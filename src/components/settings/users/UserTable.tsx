@@ -18,6 +18,28 @@ const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.BusinessOwner]: "Business owner",
 };
 
+const TH_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "36px",
+  textAlign: "left",
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "rgba(0,0,0,0.4)",
+  letterSpacing: "0.02em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const COMPACT_SELECT: React.CSSProperties = {
+  height: "30px",
+  fontSize: "13px",
+  padding: "0 8px",
+  borderRadius: "6px",
+  border: "0.5px solid rgba(0,0,0,0.15)",
+  background: "#ffffff",
+  outline: "none",
+};
+
 function UserRow({
   user,
   departments,
@@ -72,33 +94,45 @@ function UserRow({
   }
 
   const activeDepts = departments.filter((d) => d.isActive);
+  const tdBase: React.CSSProperties = {
+    padding: "0 16px",
+    fontSize: "13px",
+    color: "rgba(0,0,0,0.5)",
+    borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+    verticalAlign: "middle",
+  };
 
   return (
-    <tr className="bg-white hover:bg-gray-50 transition-colors">
-      <td className="px-4 py-3">
-        <p className="text-sm font-medium text-gray-900">{user.name}</p>
-        <p className="text-xs text-gray-400">{user.email}</p>
-        {error && <p className="text-xs text-red-600 mt-0.5">{error}</p>}
+    <tr
+      className="group"
+      style={{ height: "48px" }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+    >
+      <td style={tdBase}>
+        <p style={{ fontSize: "13px", fontWeight: 500, color: "#171717" }}>{user.name}</p>
+        <p style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)", marginTop: "1px" }}>{user.email}</p>
+        {error && <p style={{ fontSize: "11px", color: "#c0392b", marginTop: "2px" }}>{error}</p>}
       </td>
-      <td className="px-4 py-3">
+      <td style={tdBase}>
         <select
           value={user.role}
           onChange={(e) => handleRoleChange(e.target.value as UserRole)}
           disabled={isPending || isSelf}
-          className="px-2 py-1 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:opacity-50"
+          style={{ ...COMPACT_SELECT, opacity: (isPending || isSelf) ? 0.5 : 1 }}
         >
           {Object.values(UserRole).map((r) => (
             <option key={r} value={r}>{ROLE_LABELS[r]}</option>
           ))}
         </select>
       </td>
-      <td className="px-4 py-3">
+      <td style={tdBase}>
         {user.role === UserRole.DepartmentOwner ? (
           <select
             value={user.departmentId ?? ""}
             onChange={(e) => handleDeptChange(e.target.value)}
             disabled={isPending}
-            className="px-2 py-1 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 disabled:opacity-50"
+            style={{ ...COMPACT_SELECT, opacity: isPending ? 0.5 : 1 }}
           >
             <option value="">No department</option>
             {activeDepts.map((d) => (
@@ -106,15 +140,26 @@ function UserRow({
             ))}
           </select>
         ) : (
-          <span className="text-sm text-gray-400">—</span>
+          <span style={{ color: "rgba(0,0,0,0.25)" }}>—</span>
         )}
       </td>
-      <td className="px-4 py-3">
+      <td style={{ ...tdBase, textAlign: "right" }}>
         {!isSelf && (
           <button
             onClick={handleDeactivate}
             disabled={isPending}
-            className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50 transition-colors"
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            style={{
+              fontSize: "12px",
+              color: "rgba(0,0,0,0.4)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              opacity: isPending ? 0.5 : undefined,
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#c0392b"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)"; }}
           >
             Deactivate
           </button>
@@ -124,46 +169,45 @@ function UserRow({
   );
 }
 
-export default function UserTable({
-  initialUsers,
-  departments,
-  currentUserId,
-}: UserTableProps) {
+export default function UserTable({ initialUsers, departments, currentUserId }: UserTableProps) {
   const [users, setUsers] = useState(initialUsers);
 
   return (
-    <div className="border border-gray-200 rounded overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-200 bg-gray-50">
-            <th className="px-4 py-2.5 text-left font-medium text-gray-600">User</th>
-            <th className="px-4 py-2.5 text-left font-medium text-gray-600">Role</th>
-            <th className="px-4 py-2.5 text-left font-medium text-gray-600">Department</th>
-            <th className="px-4 py-2.5 text-left font-medium text-gray-600" />
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {users.length === 0 ? (
-            <tr>
-              <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-400">
-                No users found.
-              </td>
+    <div>
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginBottom: "10px" }}>
+        {users.length} team member{users.length !== 1 ? "s" : ""}
+      </p>
+      <div style={{ background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden" }}>
+        <table className="w-full">
+          <thead>
+            <tr style={{ borderBottom: "0.5px solid rgba(0,0,0,0.08)" }}>
+              <th style={TH_STYLE}>User</th>
+              <th style={TH_STYLE}>Role</th>
+              <th style={TH_STYLE}>Department</th>
+              <th style={{ ...TH_STYLE, width: "80px" }} />
             </tr>
-          ) : (
-            users.map((user) => (
-              <UserRow
-                key={user.id}
-                user={user}
-                departments={departments}
-                isSelf={user.id === currentUserId}
-                onDeactivated={(id) =>
-                  setUsers((prev) => prev.filter((u) => u.id !== id))
-                }
-              />
-            ))
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan={4} style={{ padding: "32px 16px", textAlign: "center", fontSize: "13px", color: "rgba(0,0,0,0.35)" }}>
+                  No users found.
+                </td>
+              </tr>
+            ) : (
+              users.map((user) => (
+                <UserRow
+                  key={user.id}
+                  user={user}
+                  departments={departments}
+                  isSelf={user.id === currentUserId}
+                  onDeactivated={(id) => setUsers((prev) => prev.filter((u) => u.id !== id))}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,15 @@ interface GroupEntityListProps {
   initialEntities: GroupEntity[];
 }
 
+const ROW_STYLE: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  padding: "0 16px",
+  height: "40px",
+  borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+};
+
 export default function GroupEntityList({ initialEntities }: GroupEntityListProps) {
   const router = useRouter();
   const [entities, setEntities] = useState(initialEntities);
@@ -54,23 +63,36 @@ export default function GroupEntityList({ initialEntities }: GroupEntityListProp
   }
 
   return (
-    <div className="max-w-lg">
-      {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
+    <div>
+      {error && <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
 
-      <div className="border border-gray-200 rounded overflow-hidden mb-6">
+      <div style={{ background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden" }}>
         {entities.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-gray-400">
+          <p style={{ padding: "32px 16px", textAlign: "center", fontSize: "13px", color: "rgba(0,0,0,0.35)" }}>
             No group entities yet.
           </p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {entities.map((entity) => (
-              <li key={entity.id} className="flex items-center gap-3 px-4 py-3 bg-white">
-                <span className="flex-1 text-sm text-gray-900">{entity.name}</span>
+              <li key={entity.id} className="group" style={ROW_STYLE}>
+                <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: "#171717" }}>
+                  {entity.name}
+                </span>
                 <button
                   onClick={() => handleDeactivate(entity.id, entity.name)}
                   disabled={isPending}
-                  className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{
+                    fontSize: "12px",
+                    color: "rgba(0,0,0,0.4)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#c0392b"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)"; }}
                 >
                   Deactivate
                 </button>
@@ -78,24 +100,39 @@ export default function GroupEntityList({ initialEntities }: GroupEntityListProp
             ))}
           </ul>
         )}
-      </div>
 
-      <form onSubmit={handleAdd} className="flex items-center gap-2">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="New group entity name"
-          className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 placeholder-gray-400"
-        />
-        <button
-          type="submit"
-          disabled={isPending || !newName.trim()}
-          className="px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
+        {/* Add form */}
+        <form
+          onSubmit={handleAdd}
+          style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", borderTop: "0.5px solid rgba(0,0,0,0.08)" }}
         >
-          {isPending ? "Adding…" : "Add"}
-        </button>
-      </form>
+          <input
+            type="text"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="New group entity name"
+            style={{ flex: 1, height: "30px", fontSize: "13px" }}
+          />
+          <button
+            type="submit"
+            disabled={isPending || !newName.trim()}
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              padding: "5px 12px",
+              background: "#1a7f4b",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "8px",
+              cursor: (isPending || !newName.trim()) ? "default" : "pointer",
+              opacity: (isPending || !newName.trim()) ? 0.4 : 1,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {isPending ? "Adding…" : "Add"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

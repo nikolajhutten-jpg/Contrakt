@@ -20,36 +20,50 @@ interface Props {
   usage: PlanUsage;
 }
 
-interface UsageMeterProps {
-  label: string;
-  used: number;
-  limit: number;
-}
-
-function UsageMeter({ label, used, limit }: UsageMeterProps) {
+function UsageMeter({ label, used, limit }: { label: string; used: number; limit: number }) {
   const pct = Math.min((used / limit) * 100, 100);
-  const isNearLimit = pct >= 80;
-  const isAtLimit = used >= limit;
+  const atLimit = used >= limit;
+  const nearLimit = pct >= 80;
+  const barColor = atLimit ? "#ef4444" : nearLimit ? "#d97706" : "#1a7f4b";
 
   return (
-    <div>
-      <div className="flex justify-between text-xs mb-1">
-        <span className="text-gray-600">{label}</span>
-        <span className={isAtLimit ? "text-red-600 font-medium" : "text-gray-500"}>
-          {used} / {limit}
-        </span>
+    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+      <span style={{ fontSize: "12px", color: atLimit ? "#c0392b" : "rgba(0,0,0,0.5)", width: "180px", flexShrink: 0 }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: "4px", borderRadius: "12px", background: "rgba(0,0,0,0.08)", overflow: "hidden" }}>
+        <div style={{ height: "100%", borderRadius: "12px", background: barColor, width: `${pct}%`, transition: "width 0.3s" }} />
       </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${
-            isAtLimit ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-green-500"
-          }`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      <span style={{ fontSize: "12px", color: atLimit ? "#c0392b" : "rgba(0,0,0,0.4)", width: "60px", textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+        {used} / {limit}
+      </span>
     </div>
   );
 }
+
+const BTN_PRIMARY: React.CSSProperties = {
+  fontSize: "13px",
+  fontWeight: 500,
+  padding: "7px 16px",
+  background: "#1a7f4b",
+  color: "#ffffff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  letterSpacing: "-0.01em",
+};
+
+const BTN_SECONDARY: React.CSSProperties = {
+  fontSize: "13px",
+  fontWeight: 500,
+  padding: "7px 16px",
+  background: "rgba(0,0,0,0.05)",
+  color: "inherit",
+  border: "0.5px solid rgba(0,0,0,0.1)",
+  borderRadius: "8px",
+  cursor: "pointer",
+  letterSpacing: "-0.01em",
+};
 
 export default function BillingSection({ tenant, usage }: Props) {
   const [error, setError] = useState("");
@@ -67,9 +81,7 @@ export default function BillingSection({ tenant, usage }: Props) {
     ? Math.max(0, Math.ceil((tenant.trialEndsAt.getTime() - Date.now()) / 86_400_000))
     : null;
 
-  const showUsageMeters =
-    tenant.plan === TenantPlan.Trial || tenant.plan === TenantPlan.Starter;
-
+  const showUsageMeters = tenant.plan === TenantPlan.Trial || tenant.plan === TenantPlan.Starter;
   const atContractLimit = usage.contracts >= STARTER_LIMITS.contracts;
   const atUserLimit = usage.users >= STARTER_LIMITS.users;
   const atExtractionLimit = usage.extractionsThisMonth >= STARTER_LIMITS.extractions;
@@ -78,118 +90,95 @@ export default function BillingSection({ tenant, usage }: Props) {
   function handlePortal() {
     setError("");
     startPortalTransition(async () => {
-      try {
-        await openBillingPortal();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong.");
-      }
+      try { await openBillingPortal(); }
+      catch (err) { setError(err instanceof Error ? err.message : "Something went wrong."); }
     });
   }
 
   function handleCheckout(plan: "starter" | "growth") {
     setError("");
     startCheckoutTransition(async () => {
-      try {
-        await startCheckout(plan);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong.");
-      }
+      try { await startCheckout(plan); }
+      catch (err) { setError(err instanceof Error ? err.message : "Something went wrong."); }
     });
   }
 
   return (
-    <div className="max-w-md">
-      <h2 className="text-base font-semibold text-gray-900 mb-4">Billing</h2>
+    <div style={{ maxWidth: "480px" }}>
+      <p style={{ fontSize: "13px", fontWeight: 600, color: "#171717", marginBottom: "16px" }}>Billing</p>
 
-      {/* Plan badge */}
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
+      {/* Plan + trial badge */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", borderRadius: "20px", padding: "2px 8px", fontSize: "11px", fontWeight: 500, background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" }}>
           {PLAN_LABELS[tenant.plan]}
         </span>
         {isTrialActive && daysLeft !== null && (
-          <span className={`text-xs ${daysLeft <= 3 ? "text-red-600" : "text-amber-600"}`}>
+          <span style={{ display: "inline-flex", alignItems: "center", borderRadius: "20px", padding: "2px 8px", fontSize: "11px", fontWeight: 500, background: daysLeft <= 3 ? "#fdecea" : "#fff3e0", color: daysLeft <= 3 ? "#c0392b" : "#b45309" }}>
             {daysLeft} {daysLeft === 1 ? "day" : "days"} left in trial
           </span>
         )}
         {tenant.plan !== TenantPlan.Trial && (
-          <span className="text-xs text-gray-500">{tenant.seatCount} seat{tenant.seatCount !== 1 ? "s" : ""}</span>
+          <span style={{ fontSize: "12px", color: "rgba(0,0,0,0.4)" }}>
+            {tenant.seatCount} seat{tenant.seatCount !== 1 ? "s" : ""}
+          </span>
         )}
       </div>
 
-      {/* Read-only banner (§15.4) */}
+      {/* Banners */}
       {isReadOnly && (
-        <div className="mb-4 p-3 border border-red-200 bg-red-50 rounded text-sm text-red-700">
+        <div style={{ marginBottom: "16px", padding: "10px 12px", background: "#fdecea", border: "0.5px solid rgba(192,57,43,0.2)", borderRadius: "8px", fontSize: "13px", color: "#c0392b" }}>
           Your account is in read-only mode. Choose a plan to restore full access.
         </div>
       )}
-
-      {/* Past-due banner */}
       {tenant.planStatus === TenantPlanStatus.PastDue && (
-        <div className="mb-4 p-3 border border-amber-200 bg-amber-50 rounded text-sm text-amber-700">
+        <div style={{ marginBottom: "16px", padding: "10px 12px", background: "#fff3e0", border: "0.5px solid rgba(180,83,9,0.2)", borderRadius: "8px", fontSize: "13px", color: "#b45309" }}>
           Your payment is past due. Update your payment method to avoid service interruption.
         </div>
       )}
 
-      {/* Usage meters — Starter / Trial only (§15.6) */}
+      {/* Usage meters */}
       {showUsageMeters && (
-        <div className="mb-4 space-y-3 p-4 border border-gray-200 rounded">
-          <p className="text-xs font-medium text-gray-500 mb-2">Plan usage</p>
+        <div style={{ marginBottom: "16px", padding: "14px 16px", background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+          <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(0,0,0,0.35)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Plan usage</p>
           <UsageMeter label="Contracts" used={usage.contracts} limit={STARTER_LIMITS.contracts} />
           <UsageMeter label="Users" used={usage.users} limit={STARTER_LIMITS.users} />
           <UsageMeter label="AI extractions this month" used={usage.extractionsThisMonth} limit={STARTER_LIMITS.extractions} />
         </div>
       )}
 
-      {/* Upgrade prompt (§15.5) */}
+      {/* Upgrade prompt */}
       {anyLimitReached && tenant.plan !== TenantPlan.Growth && tenant.plan !== TenantPlan.Enterprise && (
-        <div className="mb-4 p-3 border border-amber-200 bg-amber-50 rounded text-sm text-amber-800">
+        <div style={{ marginBottom: "16px", padding: "10px 12px", background: "#fff3e0", border: "0.5px solid rgba(180,83,9,0.2)", borderRadius: "8px", fontSize: "13px", color: "#b45309" }}>
           You&apos;ve reached a plan limit. Upgrade to Growth for unlimited contracts, users, and extractions.
         </div>
       )}
 
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+      {error && <p style={{ fontSize: "13px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
 
       {/* Action buttons */}
-      <div className="flex gap-2 flex-wrap">
+      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
         {(tenant.plan === TenantPlan.Trial || isReadOnly) && (
           <>
-            <button
-              type="button"
-              onClick={() => handleCheckout("starter")}
-              disabled={isCheckingOut}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
+            <button type="button" onClick={() => handleCheckout("starter")} disabled={isCheckingOut}
+              style={{ ...BTN_SECONDARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
               {isCheckingOut ? "Loading…" : "Starter — €49/mo"}
             </button>
-            <button
-              type="button"
-              onClick={() => handleCheckout("growth")}
-              disabled={isCheckingOut}
-              className="px-3 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50"
-            >
+            <button type="button" onClick={() => handleCheckout("growth")} disabled={isCheckingOut}
+              style={{ ...BTN_PRIMARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
               {isCheckingOut ? "Loading…" : "Growth — €15/user/mo"}
             </button>
           </>
         )}
-
         {tenant.plan !== TenantPlan.Trial && !isReadOnly && (
           <>
             {tenant.plan === TenantPlan.Starter && (
-              <button
-                type="button"
-                onClick={() => handleCheckout("growth")}
-                disabled={isCheckingOut}
-                className="px-3 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-700 transition-colors disabled:opacity-50"
-              >
+              <button type="button" onClick={() => handleCheckout("growth")} disabled={isCheckingOut}
+                style={{ ...BTN_PRIMARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
                 {isCheckingOut ? "Loading…" : "Upgrade to Growth"}
               </button>
             )}
-            <button
-              type="button"
-              onClick={handlePortal}
-              disabled={isOpeningPortal}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
+            <button type="button" onClick={handlePortal} disabled={isOpeningPortal}
+              style={{ ...BTN_SECONDARY, opacity: isOpeningPortal ? 0.5 : 1, cursor: isOpeningPortal ? "default" : "pointer" }}>
               {isOpeningPortal ? "Loading…" : "Manage billing"}
             </button>
           </>

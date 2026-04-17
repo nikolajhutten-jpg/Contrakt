@@ -9,6 +9,39 @@ interface ProfileFormProps {
   user: User;
 }
 
+const SECTION_DIVIDER: React.CSSProperties = {
+  borderBottom: "0.5px solid rgba(0,0,0,0.08)",
+  paddingBottom: "24px",
+  marginBottom: "24px",
+};
+
+const SECTION_LABEL: React.CSSProperties = {
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "#171717",
+  marginBottom: "4px",
+};
+
+const SECTION_DESC: React.CSSProperties = {
+  fontSize: "12px",
+  color: "rgba(0,0,0,0.4)",
+  marginBottom: "12px",
+};
+
+const FIELD_LABEL: React.CSSProperties = {
+  fontSize: "12px",
+  fontWeight: 500,
+  color: "#171717",
+  marginBottom: "4px",
+  display: "block",
+};
+
+const FIELD_HINT: React.CSSProperties = {
+  fontSize: "12px",
+  color: "rgba(0,0,0,0.4)",
+  marginTop: "5px",
+};
+
 export default function ProfileForm({ user }: ProfileFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -39,73 +72,71 @@ export default function ProfileForm({ user }: ProfileFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md space-y-5">
+    <form onSubmit={handleSubmit} style={{ maxWidth: "480px" }}>
       {/* Identity */}
-      <div>
-        <h2 className="text-base font-semibold text-gray-700 mb-3">Identity</h2>
-        <div className="space-y-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-500">Display name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400"
-            />
+      <div style={SECTION_DIVIDER}>
+        <p style={SECTION_LABEL}>Identity</p>
+        <p style={SECTION_DESC}>Your name and email as shown to teammates.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div>
+            <label style={FIELD_LABEL}>Display name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-500">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400"
-            />
+          <div>
+            <label style={FIELD_LABEL}>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
         </div>
       </div>
 
       {/* Slack */}
-      <div>
-        <h2 className="text-base font-semibold text-gray-700 mb-3">Slack</h2>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Slack user ID</label>
-          <input
-            type="text"
-            value={slackUserId}
-            onChange={(e) => setSlackUserId(e.target.value)}
-            placeholder="U012AB3CD (optional)"
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 placeholder-gray-400"
-          />
-          <p className="text-xs text-gray-400">
-            Used for personal Slack DM alerts. Find yours in your Slack profile.
-          </p>
-        </div>
+      <div style={SECTION_DIVIDER}>
+        <p style={SECTION_LABEL}>Slack</p>
+        <p style={SECTION_DESC}>Connect your Slack identity for personal DM alerts.</p>
+        <label style={FIELD_LABEL}>Slack user ID</label>
+        <input
+          type="text"
+          value={slackUserId}
+          onChange={(e) => setSlackUserId(e.target.value)}
+          placeholder="U012AB3CD (optional)"
+        />
+        <p style={FIELD_HINT}>Find yours in your Slack profile → More → Profile.</p>
       </div>
 
       {/* Notification preferences */}
-      <div>
-        <h2 className="text-base font-semibold text-gray-700 mb-1">
-          Notification preferences
-        </h2>
-        <p className="text-xs text-gray-400 mb-0">
-          Alert channels (email, Slack, or both) are configured per contract in
-          the Alerts tab on each contract's detail page.
+      <div style={{ marginBottom: "24px" }}>
+        <p style={SECTION_LABEL}>Notification preferences</p>
+        <p style={SECTION_DESC}>Alert channels are configured per contract.</p>
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", lineHeight: 1.5 }}>
+          To set up email or Slack alerts for a specific contract, open that
+          contract and use the <strong style={{ fontWeight: 500, color: "#171717" }}>Alerts</strong> tab
+          in the right panel.
         </p>
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
-      {saved && <p className="text-xs text-green-600">Profile saved.</p>}
+      {error && <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
+      {saved && <p style={{ fontSize: "12px", color: "#1a7f4b", marginBottom: "12px" }}>Profile saved.</p>}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="px-4 py-1.5 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
-      >
-        {isPending ? "Saving…" : "Save changes"}
-      </button>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          type="submit"
+          disabled={isPending}
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "7px 16px",
+            background: "#1a7f4b",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: isPending ? "default" : "pointer",
+            opacity: isPending ? 0.5 : 1,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {isPending ? "Saving…" : "Save changes"}
+        </button>
+      </div>
     </form>
   );
 }

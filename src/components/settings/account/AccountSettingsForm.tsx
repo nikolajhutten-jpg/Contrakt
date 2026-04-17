@@ -9,6 +9,33 @@ interface AccountSettingsFormProps {
   tenant: Tenant;
 }
 
+const SECTION_LABEL: React.CSSProperties = {
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "#171717",
+  marginBottom: "4px",
+};
+
+const SECTION_DESC: React.CSSProperties = {
+  fontSize: "12px",
+  color: "rgba(0,0,0,0.4)",
+  marginBottom: "12px",
+};
+
+const FIELD_LABEL: React.CSSProperties = {
+  fontSize: "12px",
+  fontWeight: 500,
+  color: "#171717",
+  marginBottom: "4px",
+  display: "block",
+};
+
+const SECTION_DIVIDER: React.CSSProperties = {
+  borderBottom: "0.5px solid rgba(0,0,0,0.08)",
+  paddingBottom: "24px",
+  marginBottom: "24px",
+};
+
 export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -51,70 +78,97 @@ export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps
   }
 
   return (
-    <form onSubmit={handleSave} className="max-w-md space-y-5">
-      {/* Tenant name */}
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500">Company name</label>
+    <form onSubmit={handleSave} style={{ maxWidth: "480px" }}>
+      {/* Company */}
+      <div style={SECTION_DIVIDER}>
+        <p style={SECTION_LABEL}>Company</p>
+        <p style={SECTION_DESC}>Your organisation name as it appears in Contrakt.</p>
+        <label style={FIELD_LABEL}>Company name</label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400"
         />
       </div>
 
-      {/* Slack webhook */}
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500">
-          Slack incoming webhook URL
-        </label>
-        <div className="flex items-center gap-2">
+      {/* Slack */}
+      <div style={SECTION_DIVIDER}>
+        <p style={SECTION_LABEL}>Slack integration</p>
+        <p style={SECTION_DESC}>Used for tenant-wide renewal and status change notifications.</p>
+        <label style={FIELD_LABEL}>Incoming webhook URL</label>
+        <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
           <input
             type="url"
             value={slackWebhookUrl}
-            onChange={(e) => setSlackWebhookUrl(e.target.value)}
+            onChange={(e) => { setSlackWebhookUrl(e.target.value); setTestResult(null); }}
             placeholder="https://hooks.slack.com/services/…"
-            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 placeholder-gray-400"
+            style={{ flex: 1 }}
           />
           <button
             type="button"
             onClick={handleTestSlack}
             disabled={isTesting || !slackWebhookUrl.trim()}
-            className="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 transition-colors whitespace-nowrap"
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              padding: "7px 12px",
+              background: "rgba(0,0,0,0.05)",
+              color: "inherit",
+              border: "0.5px solid rgba(0,0,0,0.1)",
+              borderRadius: "8px",
+              cursor: (isTesting || !slackWebhookUrl.trim()) ? "default" : "pointer",
+              opacity: (isTesting || !slackWebhookUrl.trim()) ? 0.5 : 1,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
           >
             {isTesting ? "Sending…" : "Send test"}
           </button>
         </div>
         {testResult === "success" && (
-          <p className="text-xs text-green-600">Test message sent successfully.</p>
-        )}
-        {testResult === "error" && (
-          <p className="text-xs text-red-600">
-            Test failed. Check that the webhook URL is correct.
+          <p className="fade-in" style={{ fontSize: "12px", color: "#1a7f4b", marginTop: "6px" }}>
+            ✓ Message sent
           </p>
         )}
-        <p className="text-xs text-gray-400">
-          Used for tenant-wide renewal and status change notifications.
-        </p>
+        {testResult === "error" && (
+          <p className="fade-in" style={{ fontSize: "12px", color: "#c0392b", marginTop: "6px" }}>
+            ✗ Failed — check the webhook URL
+          </p>
+        )}
       </div>
 
-      {/* Read-only info */}
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500">Tenant slug</label>
-        <p className="text-sm text-gray-500">{tenant.slug}</p>
+      {/* Tenant info */}
+      <div style={{ marginBottom: "24px" }}>
+        <p style={SECTION_LABEL}>Tenant</p>
+        <p style={SECTION_DESC}>Read-only identifier for your workspace.</p>
+        <label style={FIELD_LABEL}>Tenant slug</label>
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)" }}>{tenant.slug}</p>
       </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
-      {saved && <p className="text-xs text-green-600">Settings saved.</p>}
+      {error && <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
+      {saved && <p style={{ fontSize: "12px", color: "#1a7f4b", marginBottom: "12px" }}>Settings saved.</p>}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="px-4 py-1.5 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
-      >
-        {isPending ? "Saving…" : "Save changes"}
-      </button>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          type="submit"
+          disabled={isPending}
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "7px 16px",
+            background: "#1a7f4b",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: isPending ? "default" : "pointer",
+            opacity: isPending ? 0.5 : 1,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {isPending ? "Saving…" : "Save changes"}
+        </button>
+      </div>
     </form>
   );
 }

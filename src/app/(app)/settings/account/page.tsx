@@ -20,15 +20,18 @@ export default async function AccountSettingsPage() {
   if (!tenant) redirect("/dashboard");
 
   return (
-    <div className="px-8 py-6 max-w-screen-xl">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Account settings</h1>
+    <div style={{ padding: "28px 32px", maxWidth: "860px" }}>
+      <h1 style={{ fontSize: "18px", fontWeight: 600, letterSpacing: "-0.02em", color: "#171717" }}>
+        Account settings
+      </h1>
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginTop: "3px", marginBottom: "28px" }}>
+        Manage your company name and integrations
+      </p>
 
-      <div className="space-y-10">
-        <AccountSettingsForm tenant={tenant} />
+      <AccountSettingsForm tenant={tenant} />
 
-        <div className="border-t border-gray-200 pt-8">
-          <BillingSection tenant={tenant} usage={usage} />
-        </div>
+      <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.08)", marginTop: "32px", paddingTop: "32px" }}>
+        <BillingSection tenant={tenant} usage={usage} />
       </div>
     </div>
   );

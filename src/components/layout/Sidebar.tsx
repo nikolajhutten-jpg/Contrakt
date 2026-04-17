@@ -63,9 +63,10 @@ function NavLink({
       style={{
         paddingLeft: indent ? "28px" : "8px",
         borderRadius: "7px",
-        color: isActive ? "#171717" : "rgba(0,0,0,0.5)",
+        // Sub-nav items: active = #1a7f4b text, no background pill
+        color: isActive ? (indent ? "#1a7f4b" : "#171717") : "rgba(0,0,0,0.5)",
         fontWeight: isActive ? 500 : 400,
-        background: isActive ? "rgba(0,0,0,0.05)" : "transparent",
+        background: isActive && !indent ? "rgba(0,0,0,0.05)" : "transparent",
       }}
       onMouseEnter={(e) => {
         if (!isActive)

@@ -16,6 +16,14 @@ const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.BusinessOwner]: "Business owner",
 };
 
+const LABEL_STYLE: React.CSSProperties = {
+  fontSize: "12px",
+  fontWeight: 500,
+  color: "#171717",
+  marginBottom: "4px",
+  display: "block",
+};
+
 export default function InviteUserForm({ departments }: InviteUserFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -33,7 +41,6 @@ export default function InviteUserForm({ departments }: InviteUserFormProps) {
     e.preventDefault();
     setError(null);
     setSuccess(false);
-
     startTransition(async () => {
       try {
         await inviteUser({
@@ -57,51 +64,41 @@ export default function InviteUserForm({ departments }: InviteUserFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white border border-gray-200 rounded p-5 max-w-lg"
+      style={{
+        background: "#ffffff",
+        border: "0.5px solid rgba(0,0,0,0.08)",
+        borderRadius: "12px",
+        padding: "16px 20px",
+        maxWidth: "560px",
+      }}
     >
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Full name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            placeholder="Jane Smith"
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 placeholder-gray-400"
-          />
+      <h3 style={{ fontSize: "14px", fontWeight: 600, color: "#171717", marginBottom: "16px" }}>
+        Invite team member
+      </h3>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+        <div>
+          <label style={LABEL_STYLE}>Full name</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+            required placeholder="Jane Smith" />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Work email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="jane@company.com"
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 placeholder-gray-400"
-          />
+        <div>
+          <label style={LABEL_STYLE}>Work email</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+            required placeholder="jane@company.com" />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-500">Role</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as UserRole)}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-          >
+        <div>
+          <label style={LABEL_STYLE}>Role</label>
+          <select value={role} onChange={(e) => setRole(e.target.value as UserRole)}>
             {Object.values(UserRole).map((r) => (
               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
             ))}
           </select>
         </div>
         {showDeptSelect && (
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-500">Department</label>
-            <select
-              value={departmentId}
-              onChange={(e) => setDepartmentId(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-            >
+          <div className="fade-in">
+            <label style={LABEL_STYLE}>Department</label>
+            <select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
               <option value="">Select department</option>
               {departments.filter((d) => d.isActive).map((d) => (
                 <option key={d.id} value={d.id}>{d.name}</option>
@@ -111,18 +108,29 @@ export default function InviteUserForm({ departments }: InviteUserFormProps) {
         )}
       </div>
 
-      {error && <p className="text-xs text-red-600 mb-3">{error}</p>}
-      {success && (
-        <p className="text-xs text-green-600 mb-3">User invited successfully.</p>
-      )}
+      {error && <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "10px" }}>{error}</p>}
+      {success && <p style={{ fontSize: "12px", color: "#1a7f4b", marginBottom: "10px" }}>Invite sent successfully.</p>}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="px-4 py-1.5 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
-      >
-        {isPending ? "Inviting…" : "Send invite"}
-      </button>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          type="submit"
+          disabled={isPending}
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "7px 16px",
+            background: "#1a7f4b",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: isPending ? "default" : "pointer",
+            opacity: isPending ? 0.5 : 1,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {isPending ? "Inviting…" : "Send invite"}
+        </button>
+      </div>
     </form>
   );
 }

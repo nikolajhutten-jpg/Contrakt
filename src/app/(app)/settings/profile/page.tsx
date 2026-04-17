@@ -7,8 +7,13 @@ export default async function ProfilePage() {
   const { localUser } = await resolveAuthContext();
 
   return (
-    <div className="px-8 py-6 max-w-screen-xl">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Profile & notifications</h1>
+    <div style={{ padding: "28px 32px", maxWidth: "640px" }}>
+      <h1 style={{ fontSize: "18px", fontWeight: 600, letterSpacing: "-0.02em", color: "#171717" }}>
+        Profile
+      </h1>
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginTop: "3px", marginBottom: "28px" }}>
+        Update your personal details and notification preferences
+      </p>
       <ProfileForm user={localUser} />
     </div>
   );

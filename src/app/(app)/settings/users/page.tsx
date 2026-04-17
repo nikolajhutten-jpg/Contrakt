@@ -18,24 +18,23 @@ export default async function UsersSettingsPage() {
   ]);
 
   return (
-    <div className="px-8 py-6 max-w-screen-xl">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">User management</h1>
+    <div style={{ padding: "28px 32px", maxWidth: "1000px" }}>
+      <h1 style={{ fontSize: "18px", fontWeight: 600, letterSpacing: "-0.02em", color: "#171717" }}>
+        Users
+      </h1>
+      <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginTop: "3px", marginBottom: "28px" }}>
+        Invite and manage your team
+      </p>
 
-      <div className="mb-8">
-        <h2 className="text-base font-semibold text-gray-700 mb-3">Invite a user</h2>
+      <div style={{ marginBottom: "32px" }}>
         <InviteUserForm departments={departments} />
       </div>
 
-      <div>
-        <h2 className="text-base font-semibold text-gray-700 mb-3">
-          Team members ({users.length})
-        </h2>
-        <UserTable
-          initialUsers={users}
-          departments={departments}
-          currentUserId={localUser.id}
-        />
-      </div>
+      <UserTable
+        initialUsers={users}
+        departments={departments}
+        currentUserId={localUser.id}
+      />
     </div>
   );
 }
