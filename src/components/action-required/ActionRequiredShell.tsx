@@ -2,9 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import StatusBadge from "@/components/ui/StatusBadge";
-import EmptyState from "@/components/ui/EmptyState";
 import { confirmAction } from "@/lib/api/contracts";
 import { getDisplayStatus } from "@/lib/utils/contractStatus";
 import type { ContractSummary } from "@/types";
@@ -13,7 +11,6 @@ interface ActionRequiredShellProps {
   contracts: ContractSummary[];
   currentUserId: string;
   isAdmin: boolean;
-  /** True for business owners and admins; dept owners can view but not confirm. */
   canConfirm: boolean;
 }
 
@@ -31,6 +28,29 @@ function ownerNames(owners: { name: string }[]): string {
   if (owners.length === 1) return owners[0].name;
   return `${owners[0].name} +${owners.length - 1}`;
 }
+
+const TH_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "36px",
+  textAlign: "left",
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "rgba(0,0,0,0.4)",
+  letterSpacing: "0.02em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+};
+
+const TD_STYLE: React.CSSProperties = {
+  padding: "0 16px",
+  height: "40px",
+  fontSize: "13px",
+  color: "rgba(0,0,0,0.5)",
+  borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
 
 interface ConfirmButtonProps {
   contractId: string;
@@ -54,15 +74,35 @@ function ConfirmButton({ contractId, onConfirmed }: ConfirmButtonProps) {
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
       <button
         onClick={handleConfirm}
         disabled={isPending}
-        className="px-3 py-1 text-xs font-medium text-white bg-gray-900 rounded hover:bg-gray-700 disabled:opacity-50 transition-colors"
+        style={{
+          fontSize: "12px",
+          fontWeight: 500,
+          color: isPending ? "rgba(0,0,0,0.3)" : "#1a7f4b",
+          background: "transparent",
+          border: `0.5px solid ${isPending ? "rgba(0,0,0,0.1)" : "rgba(26,127,75,0.3)"}`,
+          borderRadius: "6px",
+          padding: "4px 10px",
+          cursor: isPending ? "default" : "pointer",
+          transition: "background 0.15s, color 0.15s",
+          whiteSpace: "nowrap",
+        }}
+        onMouseEnter={(e) => {
+          if (!isPending)
+            (e.currentTarget as HTMLElement).style.background = "rgba(26,127,75,0.06)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.background = "transparent";
+        }}
       >
-        {isPending ? "Confirming…" : "Confirm action"}
+        {isPending ? "Confirming…" : "Confirm"}
       </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && (
+        <span style={{ fontSize: "12px", color: "#c0392b" }}>{error}</span>
+      )}
     </div>
   );
 }
@@ -73,116 +113,153 @@ export default function ActionRequiredShell({
   isAdmin,
   canConfirm,
 }: ActionRequiredShellProps) {
-  const router = useRouter();
   const [contracts, setContracts] = useState(initialContracts);
+  const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
 
   function handleConfirmed(id: string) {
-    setContracts((prev) => prev.filter((c) => c.id !== id));
+    setFadingIds((prev) => new Set([...prev, id]));
+    setTimeout(() => {
+      setContracts((prev) => prev.filter((c) => c.id !== id));
+      setFadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 200);
   }
 
   return (
-    <div className="px-8 py-6 max-w-screen-xl">
-      <div className="flex items-center gap-2 mb-6">
-        <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
-        <h1 className="text-2xl font-semibold text-gray-900">Action required</h1>
-        {contracts.length > 0 && (
-          <span className="text-sm text-red-600 font-medium">
-            {contracts.length} contract{contracts.length !== 1 ? "s" : ""}
-          </span>
-        )}
+    <div style={{ padding: "28px 32px", maxWidth: "1280px" }}>
+      {/* Page header */}
+      <div style={{ marginBottom: "24px" }}>
+        <h1 style={{ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.03em", color: "#171717" }}>
+          Action required
+        </h1>
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginTop: "3px" }}>
+          Contracts that need your attention
+        </p>
       </div>
 
       {contracts.length === 0 ? (
-        <EmptyState
-          heading="No action required"
-          subtext="Contracts needing attention will appear here."
-          actionLabel="View all contracts"
-          onAction={() => router.push("/contracts")}
-        />
-      ) : (
-        <div className="border border-gray-200 rounded overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                  Supplier
-                </th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                  Department
-                </th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                  Owner
-                </th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                  End date
-                </th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                  Notice deadline
-                </th>
-                <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                  Status
-                </th>
-                {canConfirm && (
-                  <th className="px-4 py-2.5 text-left font-medium text-gray-600">
-                    Action
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {contracts.map((contract) => {
-                const isOwner = contract.owners.some(
-                  (o) => o.id === currentUserId,
-                );
-                // Admins can confirm any contract; business owners only their own
-                const showConfirm = canConfirm && (isAdmin || isOwner);
-
-                return (
-                  <tr
-                    key={contract.id}
-                    className="bg-white hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/contracts/${contract.id}`}
-                        className="font-medium text-gray-900 hover:underline"
-                      >
-                        {contract.vendor.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {contract.department.name}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {ownerNames(contract.owners)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {formatDate(contract.endDate)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {formatDate(contract.renewalNoticeDeadline)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={getDisplayStatus(contract)} />
-                    </td>
-                    {canConfirm && (
-                      <td className="px-4 py-3">
-                        {showConfirm ? (
-                          <ConfirmButton
-                            contractId={contract.id}
-                            onConfirmed={handleConfirmed}
-                          />
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        /* Inline empty state — no CTA needed here */
+        <div
+          style={{
+            background: "#ffffff",
+            border: "0.5px solid rgba(0,0,0,0.08)",
+            borderRadius: "12px",
+            padding: "48px 24px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "50%",
+              background: "rgba(0,0,0,0.05)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "14px",
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="rgba(0,0,0,0.3)" strokeWidth={1.5} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+          <p style={{ fontSize: "14px", fontWeight: 500, color: "#171717", marginBottom: "4px" }}>
+            No action required
+          </p>
+          <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)" }}>
+            All contracts are up to date
+          </p>
         </div>
+      ) : (
+        <>
+          {/* Row count */}
+          <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginBottom: "10px" }}>
+            {contracts.length} contract{contracts.length !== 1 ? "s" : ""} require attention
+          </p>
+
+          {/* Table */}
+          <div style={{ background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden" }}>
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col style={{ width: "20%" }} />
+                <col style={{ width: "15%" }} />
+                <col style={{ width: "15%" }} />
+                <col style={{ width: "12%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "13%" }} />
+                {canConfirm && <col style={{ width: "11%" }} />}
+              </colgroup>
+              <thead>
+                <tr style={{ borderBottom: "0.5px solid rgba(0,0,0,0.08)" }}>
+                  <th style={TH_STYLE}>Supplier</th>
+                  <th style={TH_STYLE}>Department</th>
+                  <th style={TH_STYLE}>Owner</th>
+                  <th style={TH_STYLE}>End date</th>
+                  <th style={TH_STYLE}>Notice deadline</th>
+                  <th style={TH_STYLE}>Status</th>
+                  {canConfirm && <th style={TH_STYLE}>Action</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {contracts.map((contract) => {
+                  const isOwner = contract.owners.some((o) => o.id === currentUserId);
+                  const showConfirm = canConfirm && (isAdmin || isOwner);
+                  const fading = fadingIds.has(contract.id);
+
+                  return (
+                    <tr
+                      key={contract.id}
+                      style={{
+                        opacity: fading ? 0 : 1,
+                        transition: "opacity 200ms ease-out",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!fading)
+                          (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                      }}
+                    >
+                      <td style={{ ...TD_STYLE, color: "#171717", fontWeight: 500 }}>
+                        <Link href={`/contracts/${contract.id}`}
+                          style={{ color: "inherit", textDecoration: "none" }}>
+                          {contract.vendor.name}
+                        </Link>
+                      </td>
+                      <td style={TD_STYLE}>{contract.department.name}</td>
+                      <td style={TD_STYLE}>{ownerNames(contract.owners)}</td>
+                      <td style={TD_STYLE}>{formatDate(contract.endDate)}</td>
+                      <td style={TD_STYLE}>{formatDate(contract.renewalNoticeDeadline)}</td>
+                      <td style={{ ...TD_STYLE, overflow: "visible" }}>
+                        <StatusBadge status={getDisplayStatus(contract)} />
+                      </td>
+                      {canConfirm && (
+                        <td style={TD_STYLE}>
+                          {showConfirm ? (
+                            <ConfirmButton contractId={contract.id} onConfirmed={handleConfirmed} />
+                          ) : (
+                            <span style={{ color: "rgba(0,0,0,0.25)" }}>—</span>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
