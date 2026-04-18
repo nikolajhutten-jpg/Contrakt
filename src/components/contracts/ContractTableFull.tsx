@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import StatusBadge from "@/components/ui/StatusBadge";
 import ContractCard from "@/components/contracts/ContractCard";
 import { getDisplayStatus } from "@/lib/utils/contractStatus";
@@ -52,6 +52,7 @@ const TD_STYLE: React.CSSProperties = {
 };
 
 export default function ContractTableFull({ contracts }: ContractTableFullProps) {
+  const router = useRouter();
   const [view, setView] = useState<"table" | "card">("table");
 
   useEffect(() => {
@@ -159,6 +160,7 @@ export default function ContractTableFull({ contracts }: ContractTableFullProps)
                   <tr
                     key={contract.id}
                     style={{ cursor: "pointer" }}
+                    onClick={() => router.push(`/contracts/${contract.id}`)}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)";
                     }}
@@ -167,12 +169,7 @@ export default function ContractTableFull({ contracts }: ContractTableFullProps)
                     }}
                   >
                     <td style={{ ...TD_STYLE, color: "#171717", fontWeight: 500 }}>
-                      <Link
-                        href={`/contracts/${contract.id}`}
-                        style={{ color: "inherit", textDecoration: "none" }}
-                      >
-                        {contract.vendor.name}
-                      </Link>
+                      {contract.vendor.name}
                     </td>
                     <td style={TD_STYLE}>{contract.department.name}</td>
                     <td style={TD_STYLE}>{ownerNames(contract.owners)}</td>

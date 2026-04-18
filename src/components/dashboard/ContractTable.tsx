@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { getDisplayStatus } from "@/lib/utils/contractStatus";
 import type { ContractSummary } from "@/types";
@@ -53,6 +53,7 @@ export default function ContractTable({
   contracts,
   showFilter = true,
 }: ContractTableProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -132,6 +133,7 @@ export default function ContractTable({
                 <tr
                   key={contract.id}
                   style={{ cursor: "pointer" }}
+                  onClick={() => router.push(`/contracts/${contract.id}`)}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)";
                   }}
@@ -140,12 +142,7 @@ export default function ContractTable({
                   }}
                 >
                   <td style={{ ...TD_STYLE, color: "#171717", fontWeight: 500 }}>
-                    <Link
-                      href={`/contracts/${contract.id}`}
-                      style={{ color: "inherit", textDecoration: "none" }}
-                    >
-                      {contract.vendor.name}
-                    </Link>
+                    {contract.vendor.name}
                   </td>
                   <td style={TD_STYLE}>{contract.department.name}</td>
                   <td style={TD_STYLE}>{ownerNames(contract.owners)}</td>

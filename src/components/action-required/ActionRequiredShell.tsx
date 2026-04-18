@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { confirmAction } from "@/lib/api/contracts";
 import { getDisplayStatus } from "@/lib/utils/contractStatus";
@@ -61,7 +61,8 @@ function ConfirmButton({ contractId, onConfirmed }: ConfirmButtonProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  function handleConfirm() {
+  function handleConfirm(e: React.MouseEvent) {
+    e.stopPropagation();
     setError(null);
     startTransition(async () => {
       try {
@@ -113,6 +114,7 @@ export default function ActionRequiredShell({
   isAdmin,
   canConfirm,
 }: ActionRequiredShellProps) {
+  const router = useRouter();
   const [contracts, setContracts] = useState(initialContracts);
   const [fadingIds, setFadingIds] = useState<Set<string>>(new Set());
 
@@ -223,6 +225,7 @@ export default function ActionRequiredShell({
                         transition: "opacity 200ms ease-out",
                         cursor: "pointer",
                       }}
+                      onClick={() => router.push(`/contracts/${contract.id}`)}
                       onMouseEnter={(e) => {
                         if (!fading)
                           (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)";
@@ -232,10 +235,7 @@ export default function ActionRequiredShell({
                       }}
                     >
                       <td style={{ ...TD_STYLE, color: "#171717", fontWeight: 500 }}>
-                        <Link href={`/contracts/${contract.id}`}
-                          style={{ color: "inherit", textDecoration: "none" }}>
-                          {contract.vendor.name}
-                        </Link>
+                        {contract.vendor.name}
                       </td>
                       <td style={TD_STYLE}>{contract.department.name}</td>
                       <td style={TD_STYLE}>{ownerNames(contract.owners)}</td>
