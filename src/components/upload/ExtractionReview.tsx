@@ -20,14 +20,14 @@ const SECTION_LABEL: React.CSSProperties = {
   color: "rgba(0,0,0,0.35)",
   textTransform: "uppercase",
   letterSpacing: "0.06em",
-  marginBottom: "12px",
 };
 
 const FIELD_LABEL: React.CSSProperties = {
+  display: "block",
   fontSize: "12px",
   fontWeight: 500,
   color: "#171717",
-  marginBottom: "4px",
+  marginBottom: "6px",
 };
 
 function str(v: string | number | boolean | null | undefined): string {
@@ -95,6 +95,10 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
 
   function handleSave() {
     setSaveError(null);
+    if (!vendorId) {
+      setSaveError("Please select or create a supplier.");
+      return;
+    }
     if (!fields.startDate || !fields.endDate || !fields.termType || !departmentId) {
       setSaveError("Start date, end date, term, and department are required.");
       return;
@@ -104,7 +108,7 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
       return;
     }
     startSave(async () => {
-      let resolvedVendorId = vendorId;
+      let resolvedVendorId = vendorId === "__new__" ? "" : vendorId;
       if (!resolvedVendorId) {
         if (!newVendorName.trim()) { setSaveError("Vendor name is required."); return; }
         const vRes = await fetch("/api/vendors", {
@@ -142,7 +146,7 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
         Review extracted details
       </h2>
       <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginTop: "4px", marginBottom: "24px" }}>
-        {fileName} · edit any field before saving
+        {fileName}
       </p>
 
       <div style={{ display: "flex" }}>
@@ -180,16 +184,17 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
         </div>
 
         {/* Right: editable form */}
-        <div style={{ width: "45%", paddingLeft: "32px", display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ width: "45%", paddingLeft: "32px", display: "flex", flexDirection: "column", gap: "20px" }}>
           <div style={SECTION_LABEL}>Contract details</div>
 
           <div>
             <label style={FIELD_LABEL}>Supplier / vendor</label>
             <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} style={{ marginBottom: "8px" }}>
-              <option value="">— Create new vendor —</option>
+              <option value="" disabled>Select supplier or vendor</option>
               {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+              <option value="__new__">Create new supplier or vendor</option>
             </select>
-            {!vendorId && (
+            {vendorId === "__new__" && (
               <input type="text" value={newVendorName} onChange={(e) => setNewVendorName(e.target.value)}
                 placeholder="New vendor name" />
             )}
@@ -198,7 +203,7 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
           <div>
             <label style={FIELD_LABEL}>Group entity</label>
             <select value={groupEntityId} onChange={(e) => setGroupEntityId(e.target.value)}>
-              <option value="">— None —</option>
+              <option value="">Select group entity</option>
               {groupEntities.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
             </select>
           </div>
@@ -234,11 +239,11 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
             style={{
               width: "100%",
               padding: "8px 0",
-              background: "#1a7f4b",
-              color: "#ffffff",
+              background: "rgba(0,0,0,0.05)",
+              color: "#171717",
               fontSize: "13px",
               fontWeight: 500,
-              border: "none",
+              border: "0.5px solid rgba(0,0,0,0.1)",
               borderRadius: "8px",
               cursor: saving ? "not-allowed" : "pointer",
               opacity: saving ? 0.5 : 1,

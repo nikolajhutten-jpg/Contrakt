@@ -157,5 +157,13 @@ function parseUpdateInput(
     );
   }
 
+  // Allow direct override of the notice deadline (e.g. edited manually on the detail page)
+  if ("renewalNoticeDeadline" in b) {
+    patch.renewalNoticeDeadline =
+      typeof b.renewalNoticeDeadline === "string"
+        ? new Date(b.renewalNoticeDeadline)
+        : null;
+  }
+
   return patch;
 }

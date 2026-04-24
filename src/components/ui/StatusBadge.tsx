@@ -33,7 +33,7 @@ const CONFIG: Record<StatusVariant, Config> = {
   renewal_due: {
     background: "#fff3e0",
     color: "#b45309",
-    label: "Renewal due",
+    label: "Action required",
   },
 };
 

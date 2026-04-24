@@ -1,5 +1,6 @@
 import { resolveAuthContext } from "@/lib/auth/session";
 import ProfileForm from "@/components/settings/profile/ProfileForm";
+import BackLink from "@/components/ui/BackLink";
 
 export const metadata = { title: "Profile — Contrakt" };
 
@@ -8,6 +9,7 @@ export default async function ProfilePage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: "640px" }}>
+      <BackLink href="/settings/account" />
       <h1 style={{ fontSize: "18px", fontWeight: 600, letterSpacing: "-0.02em", color: "#171717" }}>
         Profile
       </h1>

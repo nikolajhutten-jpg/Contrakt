@@ -2,10 +2,12 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import BackLink from "@/components/ui/BackLink";
 import StatusBadge from "@/components/ui/StatusBadge";
 import EmptyState from "@/components/ui/EmptyState";
 import VendorEditForm from "@/components/vendors/VendorEditForm";
 import { getDisplayStatus } from "@/lib/utils/contractStatus";
+import { useTablePreferences } from "@/lib/hooks/useTablePreferences";
 import { ContractStatus } from "@/types";
 import type { VendorWithContracts, VendorContractRow } from "@/lib/db/vendors";
 
@@ -14,13 +16,24 @@ interface VendorDetailProps {
   isAdmin: boolean;
 }
 
-const fmt = (d: Date | string | null) =>
-  d
-    ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
-    : "—";
+// ─── Column definitions ───────────────────────────────────────────────────────
+// This table is scoped to a single vendor (no Supplier column). Columns and
+// their order are fixed — global View Options visibility does not apply here
+// since the leading "Group entity" column plays the role of the row identifier.
 
-const owners = (os: VendorContractRow["owners"]) =>
-  os.length === 0 ? "—" : os.length === 1 ? os[0].user.name : `${os[0].user.name} +${os.length - 1}`;
+const VENDOR_COLS = [
+  { key: "groupEntity",           label: "Group entity",    weight: 16 },
+  { key: "department",            label: "Department",      weight: 14 },
+  { key: "owner",                 label: "Owner",           weight: 15 },
+  { key: "endDate",               label: "End date",        weight: 13 },
+  { key: "renewalNoticeDeadline", label: "Notice deadline", weight: 15 },
+  { key: "status",                label: "Status",          weight: 13 },
+] as const;
+
+type VendorColKey = (typeof VENDOR_COLS)[number]["key"];
+const TOTAL_WEIGHT = VENDOR_COLS.reduce((s, c) => s + c.weight, 0);
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const TH_STYLE: React.CSSProperties = {
   padding: "0 16px",
@@ -29,8 +42,11 @@ const TH_STYLE: React.CSSProperties = {
   fontSize: "11px",
   fontWeight: 500,
   color: "rgba(0,0,0,0.4)",
-  textTransform: "uppercase",
   letterSpacing: "0.02em",
+  textTransform: "uppercase",
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+  userSelect: "none",
 };
 
 const TD_STYLE: React.CSSProperties = {
@@ -39,32 +55,68 @@ const TD_STYLE: React.CSSProperties = {
   fontSize: "13px",
   color: "rgba(0,0,0,0.5)",
   borderBottom: "0.5px solid rgba(0,0,0,0.05)",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };
+
+// ─── Sort helpers ─────────────────────────────────────────────────────────────
+
+const fmt = (d: Date | string | null) =>
+  d
+    ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    : "—";
+
+const ownerLabel = (os: VendorContractRow["owners"]) =>
+  os.length === 0 ? "—" : os.length === 1 ? os[0].user.name : `${os[0].user.name} +${os.length - 1}`;
+
+function getCellValue(col: string, c: VendorContractRow): string | number | Date | null {
+  switch (col as VendorColKey) {
+    case "groupEntity":           return c.groupEntity?.name.toLowerCase() ?? null;
+    case "department":            return c.department.name.toLowerCase();
+    case "owner":                 return ownerLabel(c.owners).toLowerCase();
+    case "endDate":               return c.endDate;
+    case "renewalNoticeDeadline": return c.renewalNoticeDeadline;
+    case "status":                return c.status;
+    default:                      return null;
+  }
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
+
+  // Only sort state is used from the hook — column visibility is fixed for
+  // this vendor-scoped table.
+  const { sortColumn, sortDirection, setSort } = useTablePreferences("vendor_contracts");
 
   const filtered = useMemo(
     () => (!statusFilter ? vendor.contracts : vendor.contracts.filter((c) => c.status === statusFilter)),
     [vendor.contracts, statusFilter],
   );
 
+  const sorted = useMemo(() => {
+    if (!sortColumn) return filtered;
+    return [...filtered].sort((a, b) => {
+      const av = getCellValue(sortColumn, a);
+      const bv = getCellValue(sortColumn, b);
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;  // nulls last
+      if (bv == null) return -1;
+      const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+      return sortDirection === "desc" ? -cmp : cmp;
+    });
+  }, [filtered, sortColumn, sortDirection]);
+
   return (
     <div style={{ padding: "28px 32px", maxWidth: "960px" }}>
+      <BackLink href="/vendors" />
+
       {/* Vendor header */}
       <div style={{ marginBottom: "32px" }}>
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
-          <nav style={{ fontSize: "12px", color: "rgba(0,0,0,0.35)" }}>
-            <Link href="/vendors" style={{ color: "rgba(0,0,0,0.4)", textDecoration: "none" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#1a7f4b"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)"; }}
-            >
-              Vendors
-            </Link>
-            <span style={{ margin: "0 6px" }}>/</span>
-            <span style={{ color: "#171717" }}>{vendor.name}</span>
-          </nav>
           {isAdmin && !isEditing && (
             <button
               onClick={() => setIsEditing(true)}
@@ -140,22 +192,37 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
             onAction={() => window.location.assign("/contracts/new")}
           />
         ) : filtered.length === 0 ? (
-          <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.35)", padding: "32px 0", textAlign: "center" }}>No contracts match the selected status.</p>
+          <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.35)", padding: "32px 0", textAlign: "center" }}>
+            No contracts match the selected status.
+          </p>
         ) : (
           <div style={{ background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table className="w-full table-fixed">
+              <colgroup>
+                {VENDOR_COLS.map((c) => (
+                  <col key={c.key} style={{ width: `${((c.weight / TOTAL_WEIGHT) * 100).toFixed(1)}%` }} />
+                ))}
+              </colgroup>
               <thead>
                 <tr style={{ borderBottom: "0.5px solid rgba(0,0,0,0.08)" }}>
-                  <th style={TH_STYLE}>Group entity</th>
-                  <th style={TH_STYLE}>Department</th>
-                  <th style={TH_STYLE}>Owner</th>
-                  <th style={TH_STYLE}>End date</th>
-                  <th style={TH_STYLE}>Notice deadline</th>
-                  <th style={TH_STYLE}>Status</th>
+                  {VENDOR_COLS.map((col) => (
+                    <th
+                      key={col.key}
+                      style={TH_STYLE}
+                      onClick={() => setSort(col.key)}
+                    >
+                      {col.label}
+                      {sortColumn === col.key && (
+                        <span style={{ marginLeft: "3px", opacity: 0.55 }}>
+                          {sortDirection === "asc" ? "↑" : "↓"}
+                        </span>
+                      )}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((contract) => (
+                {sorted.map((contract) => (
                   <tr
                     key={contract.id}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.02)"; }}
@@ -167,11 +234,11 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
                       </Link>
                     </td>
                     <td style={TD_STYLE}>{contract.department.name}</td>
-                    <td style={TD_STYLE}>{owners(contract.owners)}</td>
+                    <td style={TD_STYLE}>{ownerLabel(contract.owners)}</td>
                     <td style={TD_STYLE}>{fmt(contract.endDate)}</td>
                     <td style={TD_STYLE}>{fmt(contract.renewalNoticeDeadline)}</td>
-                    <td style={{ ...TD_STYLE, paddingTop: "0", paddingBottom: "0" }}>
-                      <StatusBadge status={getDisplayStatus({ ...contract, status: contract.status as ContractStatus })} />
+                    <td style={{ ...TD_STYLE, overflow: "visible" }}>
+                      <StatusBadge status={getDisplayStatus(contract)} />
                     </td>
                   </tr>
                 ))}

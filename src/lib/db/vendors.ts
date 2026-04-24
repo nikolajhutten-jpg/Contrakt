@@ -11,6 +11,7 @@ export interface VendorContractRow {
   endDate: Date;
   renewalNoticeDeadline: Date | null;
   status: string;
+  autoRenewal: boolean;
   department: { id: string; name: string };
   owners: { user: { id: string; name: string } }[];
 }
@@ -67,6 +68,7 @@ export async function getVendorWithContracts(
           endDate: true,
           renewalNoticeDeadline: true,
           status: true,
+          autoRenewal: true,
           department: { select: { id: true, name: true } },
           owners: {
             select: { user: { select: { id: true, name: true } } },

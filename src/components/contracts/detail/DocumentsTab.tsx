@@ -173,7 +173,7 @@ export default function DocumentsTab({
         if (!docs || docs.length === 0) return null;
         return (
           <section key={type}>
-            <SectionLabel>{TYPE_LABELS[type]}s</SectionLabel>
+            <SectionLabel>{`${TYPE_LABELS[type]}s`}</SectionLabel>
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {docs.map((doc) => (
                 <DocRow

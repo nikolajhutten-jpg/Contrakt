@@ -12,9 +12,9 @@ const BASE =
 
 const VARIANT_STYLE: Record<NonNullable<ButtonProps["variant"]>, React.CSSProperties> = {
   primary: {
-    background: "#1a7f4b",
-    color: "#ffffff",
-    border: "none",
+    background: "rgba(0,0,0,0.05)",
+    color: "#171717",
+    border: "0.5px solid rgba(0,0,0,0.1)",
   },
   secondary: {
     background: "rgba(0,0,0,0.05)",

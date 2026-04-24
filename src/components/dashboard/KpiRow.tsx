@@ -14,7 +14,7 @@ export default function KpiRow({ kpis }: KpiRowProps) {
         href="/contracts"
       />
       <KpiCard
-        label="Action required"
+        label="Upcoming renewals"
         value={kpis.actionRequired}
         valueColor={kpis.actionRequired > 0 ? "red" : "default"}
         href="/action-required"

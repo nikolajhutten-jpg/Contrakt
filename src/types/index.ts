@@ -262,8 +262,11 @@ export interface ContractSummary {
   groupEntity: Pick<GroupEntity, "id" | "name"> | null;
   startDate: Date;
   endDate: Date;
+  durationMonths: number;
+  termType: TermType;
   renewalNoticeDeadline: Date | null;
   status: ContractStatus;
+  autoRenewal: boolean;
   vendor: Pick<Vendor, "id" | "name">;
   department: Pick<Department, "id" | "name">;
   owners: Pick<User, "id" | "name">[];

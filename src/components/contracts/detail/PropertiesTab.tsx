@@ -311,7 +311,17 @@ export default function PropertiesTab({ contract, canEdit }: PropertiesTabProps)
           />
         )}
 
-        <Field label="Notice deadline" value={fmt(contract.renewalNoticeDeadline)} />
+        {canEdit ? (
+          <EditableField
+            label="Notice deadline"
+            value={contract.renewalNoticeDeadline ? toISO(contract.renewalNoticeDeadline) : ""}
+            displayValue={fmt(contract.renewalNoticeDeadline)}
+            inputType="date"
+            onSave={(v) => patch({ renewalNoticeDeadline: v === "" ? null : v })}
+          />
+        ) : (
+          <Field label="Notice deadline" value={fmt(contract.renewalNoticeDeadline)} />
+        )}
 
         {contract.actionConfirmedAt && (
           <Field label="Action confirmed" value={fmt(contract.actionConfirmedAt)} />

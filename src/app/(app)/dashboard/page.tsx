@@ -2,8 +2,6 @@ import { redirect } from "next/navigation";
 import { resolveAuthContext } from "@/lib/auth/session";
 import {
   getDashboardKpis,
-  getActionRequiredContracts,
-  getActiveContracts,
   getUpcomingRenewalsContracts,
   getOnboardingState,
 } from "@/lib/db/dashboard";
@@ -22,10 +20,9 @@ export default async function DashboardPage() {
     tenantId,
   };
 
-  const [kpis, activeContracts, upcomingRenewals, onboarding] =
+  const [kpis, upcomingRenewals, onboarding] =
     await Promise.all([
       getDashboardKpis(ctx),
-      getActiveContracts(ctx),
       getUpcomingRenewalsContracts(ctx),
       getOnboardingState(tenantId),
     ]);
@@ -38,7 +35,6 @@ export default async function DashboardPage() {
   return (
     <DashboardShell
       kpis={kpis}
-      activeContracts={activeContracts}
       upcomingRenewals={upcomingRenewals}
       onboarding={onboarding}
       isAdmin={localUser.role === "admin"}

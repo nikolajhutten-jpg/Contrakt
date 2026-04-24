@@ -14,7 +14,7 @@ function formatBytes(bytes: number): string {
 }
 
 interface UploadZoneProps {
-  onUpload: (jobId: string, fileName: string) => void;
+  onUpload: (jobId: string, fileName: string, file: File) => void;
   onError: (message: string) => void;
 }
 
@@ -58,7 +58,7 @@ export default function UploadZone({ onUpload, onError }: UploadZoneProps) {
         onError(json.error ?? "Upload failed. Please try again.");
         return;
       }
-      onUpload(json.data!.jobId, json.data!.fileName);
+      onUpload(json.data!.jobId, json.data!.fileName, file);
     } catch {
       onError("Upload failed. Please try again.");
     } finally {
@@ -171,11 +171,11 @@ export default function UploadZone({ onUpload, onError }: UploadZoneProps) {
           width: "100%",
           marginTop: "16px",
           padding: "8px 0",
-          background: "#1a7f4b",
-          color: "#ffffff",
+          background: "rgba(0,0,0,0.05)",
+          color: "#171717",
           fontSize: "13px",
           fontWeight: 500,
-          border: "none",
+          border: "0.5px solid rgba(0,0,0,0.1)",
           borderRadius: "8px",
           cursor: file && !uploading ? "pointer" : "not-allowed",
           opacity: !file || uploading ? 0.4 : 1,

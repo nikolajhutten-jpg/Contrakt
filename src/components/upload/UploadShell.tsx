@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import UploadZone from "@/components/upload/UploadZone";
 import ExtractionReview from "@/components/upload/ExtractionReview";
+import UploadDocumentViewer from "@/components/upload/UploadDocumentViewer";
 import Button from "@/components/ui/Button";
+import BackLink from "@/components/ui/BackLink";
 import type { ExtractionOutput, ConfidenceRatings } from "@/types";
 
 type Phase = "upload" | "polling" | "review" | "error";
@@ -26,6 +28,7 @@ const POLL_TIMEOUT_MS = 60_000;
 function PageHeader() {
   return (
     <div style={{ marginBottom: "32px" }}>
+      <BackLink href="/contracts" />
       <h1 style={{ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.03em", color: "#171717" }}>
         Upload contract
       </h1>
@@ -49,6 +52,7 @@ export default function UploadShell() {
   const [phase, setPhase] = useState<Phase>("upload");
   const [jobId, setJobId] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [result, setResult] = useState<JobResult | null>(null);
   const [error, setError] = useState<ErrorState | null>(null);
   const pollStart = useRef<number>(0);
@@ -58,9 +62,10 @@ export default function UploadShell() {
     setPhase("error");
   }
 
-  function handleUploaded(id: string, name: string) {
+  function handleUploaded(id: string, name: string, file: File) {
     setJobId(id);
     setFileName(name);
+    setUploadedFile(file);
     pollStart.current = Date.now();
     setPhase("polling");
   }
@@ -171,11 +176,63 @@ export default function UploadShell() {
   }
 
   // phase === "review"
-  return wrapper(
-    <ExtractionReview
-      extracted={result?.extracted ?? null}
-      confidence={result?.confidence ?? null}
-      fileName={result?.fileName ?? fileName}
-    />,
+  return (
+    <div className="flex h-full">
+      {/* Left pane — document viewer (60%) */}
+      <div
+        style={{
+          flex: "0 0 60%",
+          borderRight: "0.5px solid rgba(0,0,0,0.08)",
+          background: "#f5f5f7",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Header row */}
+        <div style={{ padding: "16px 20px", borderBottom: "0.5px solid rgba(0,0,0,0.06)" }}>
+          <BackLink href="/contracts" />
+        </div>
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          {uploadedFile ? (
+            <UploadDocumentViewer file={uploadedFile} />
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                gap: "12px",
+                color: "rgba(0,0,0,0.3)",
+              }}
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
+              <p style={{ fontSize: "13px" }}>No document selected</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right pane — extraction review (40%) */}
+      <div style={{ flex: "0 0 40%", overflowY: "auto" }}>
+        <div style={{ padding: "28px 32px" }}>
+          <h1 style={{ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.03em", color: "#171717", marginBottom: "4px" }}>
+            Upload contract
+          </h1>
+          <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginBottom: "24px" }}>
+            Review and confirm the extracted details
+          </p>
+          <ExtractionReview
+            extracted={result?.extracted ?? null}
+            confidence={result?.confidence ?? null}
+            fileName={result?.fileName ?? fileName}
+          />
+        </div>
+      </div>
+    </div>
   );
 }

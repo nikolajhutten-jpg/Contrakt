@@ -118,7 +118,7 @@ export default function StepDepartments({ initial, onComplete }: Props) {
 
       {/* Added list */}
       {departments.length > 0 && (
-        <ul style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: "4px", marginBottom: "16px", listStyle: "none", padding: 0, margin: 0, marginBottom: "16px" }}>
+        <ul style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: "4px", listStyle: "none", padding: 0, margin: "0 0 16px 0" }}>
           {departments.map((d) => (
             <li key={d.id} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#1a7f4b", flexShrink: 0, display: "inline-block" }} />

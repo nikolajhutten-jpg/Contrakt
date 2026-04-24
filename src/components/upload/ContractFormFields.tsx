@@ -30,7 +30,7 @@ function FieldRow({
 }) {
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
         <label style={{ fontSize: "12px", fontWeight: 500, color: "#171717" }}>{label}</label>
         {confidence}
       </div>
@@ -45,7 +45,7 @@ export default function ContractFormFields({
   onChange,
 }: ContractFormFieldsProps) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       <FieldRow
         label="Start date"
         confidence={<ConfidenceIndicator level={confidence?.start_date} />}
@@ -111,7 +111,7 @@ export default function ContractFormFields({
       </FieldRow>
 
       {values.autoRenewal && (
-        <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <FieldRow label="Renewal period (months)">
             <input
               type="number"

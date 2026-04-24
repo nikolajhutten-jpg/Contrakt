@@ -2,7 +2,7 @@
  * Shared helpers used by both contracts.ts and dashboard.ts.
  * Kept in a separate file so neither module exceeds 200 lines.
  */
-import { UserRole, ContractStatus } from "@/types";
+import { UserRole, ContractStatus, TermType } from "@/types";
 import type { ContractSummary } from "@/types";
 
 export interface RoleContext {
@@ -39,8 +39,11 @@ export function toSummary(row: {
   groupEntity: { id: string; name: string } | null;
   startDate: Date;
   endDate: Date;
+  durationMonths: number;
+  termType: string;
   renewalNoticeDeadline: Date | null;
   status: string;
+  autoRenewal: boolean;
   vendor: { id: string; name: string };
   department: { id: string; name: string };
   owners: { user: { id: string; name: string } }[];
@@ -51,8 +54,11 @@ export function toSummary(row: {
     groupEntity: row.groupEntity,
     startDate: row.startDate,
     endDate: row.endDate,
+    durationMonths: row.durationMonths,
+    termType: row.termType as TermType,
     renewalNoticeDeadline: row.renewalNoticeDeadline,
     status: row.status as ContractStatus,
+    autoRenewal: row.autoRenewal,
     vendor: row.vendor,
     department: row.department,
     owners: row.owners.map((o) => o.user),

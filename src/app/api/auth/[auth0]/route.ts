@@ -15,3 +15,6 @@
  * Do NOT add GET/POST exports here — requests to /api/auth/* will never reach
  * this handler while the middleware is active.
  */
+
+// Required to satisfy the TypeScript module checker (TS2306).
+export {};

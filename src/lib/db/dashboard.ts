@@ -51,10 +51,9 @@ export async function getDashboardKpis(
     db.contract.count({
       where: {
         ...base,
-        status: ContractStatus.Active,
         OR: [
-          { renewalNoticeDeadline: { gte: now, lte: in60Days } },
-          { renewalNoticeDeadline: null, endDate: { gte: now, lte: in60Days } },
+          { renewalNoticeDeadline: { gt: now, lte: in60Days } },
+          { renewalNoticeDeadline: null, endDate: { gt: now, lte: in60Days } },
         ],
       },
     }),
@@ -74,10 +73,9 @@ export async function getActionRequiredContracts(
   const rows = await db.contract.findMany({
     where: {
       ...contractWhere(ctx),
-      status: ContractStatus.Active,
       OR: [
-        { renewalNoticeDeadline: { gte: now, lte: in60Days } },
-        { renewalNoticeDeadline: null, endDate: { gte: now, lte: in60Days } },
+        { renewalNoticeDeadline: { gt: now, lte: in60Days } },
+        { renewalNoticeDeadline: null, endDate: { gt: now, lte: in60Days } },
       ],
     },
     orderBy: [

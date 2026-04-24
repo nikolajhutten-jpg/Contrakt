@@ -50,7 +50,6 @@ function ChecklistItem({ done, label }: ChecklistItemProps) {
 
 interface DashboardShellProps {
   kpis: DashboardKpis;
-  activeContracts: ContractSummary[];
   upcomingRenewals: ContractSummary[];
   onboarding: OnboardingState;
   isAdmin: boolean;
@@ -58,7 +57,6 @@ interface DashboardShellProps {
 
 export default function DashboardShell({
   kpis,
-  activeContracts,
   upcomingRenewals,
   onboarding,
   isAdmin,
@@ -108,7 +106,7 @@ export default function DashboardShell({
               lineHeight: 1.2,
             }}
           >
-            Dashboard
+            Home
           </h1>
           {todayLabel && (
             <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.4)", marginTop: "3px" }}>
@@ -170,39 +168,7 @@ export default function DashboardShell({
         <KpiRow kpis={kpis} />
       </div>
 
-      {/* Recent contracts section */}
-      <section style={{ marginBottom: "24px" }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: "12px" }}>
-          <span
-            style={{
-              fontSize: "15px",
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              color: "#171717",
-            }}
-          >
-            Recent contracts
-          </span>
-          <Link
-            href="/contracts"
-            style={{ fontSize: "13px", color: "#1a7f4b", textDecoration: "none" }}
-          >
-            View all →
-          </Link>
-        </div>
-        {activeContracts.length === 0 ? (
-          <EmptyState
-            heading="No active contracts"
-            subtext="Your active contracts will appear here."
-            actionLabel="Upload a contract"
-            onAction={() => router.push("/contracts/new")}
-          />
-        ) : (
-          <ContractTable contracts={activeContracts} showFilter={false} />
-        )}
-      </section>
-
-      {/* Action required section */}
+      {/* Upcoming renewals section */}
       <section>
         <div className="flex items-center justify-between" style={{ marginBottom: "12px" }}>
           <span
@@ -213,11 +179,11 @@ export default function DashboardShell({
               color: "#171717",
             }}
           >
-            Action required
+            Upcoming renewals
           </span>
           <Link
             href="/action-required"
-            style={{ fontSize: "13px", color: "#1a7f4b", textDecoration: "none" }}
+            style={{ fontSize: "13px", color: "#171717", textDecoration: "none" }}
           >
             View all →
           </Link>
