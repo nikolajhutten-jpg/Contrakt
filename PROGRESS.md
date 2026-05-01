@@ -49,7 +49,7 @@ Files created to date, organised by layer.
 | File | Description |
 |---|---|
 | `src/lib/security/rateLimit.ts` | Upstash sliding-window rate limiter; three tiers: strict 5/min (auth), standard 60/min (mutations), relaxed 200/min (reads); lazy Redis init; fails open when Redis is unconfigured. |
-| `src/lib/security/headers.ts` | `getSecurityHeaders()` — returns the full set of security response headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions-Policy). |
+| `src/lib/security/headers.ts` | `getSecurityHeaders()` — returns the full set of security response headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions-Policy). CSP allows `*.r2.cloudflarestorage.com` and `*.eu.r2.cloudflarestorage.com` in `connect-src`, `frame-src`, and `img-src`; `blob:` in `frame-src`. |
 | `src/lib/security/sanitize.ts` | `sanitizeText` (strip HTML tags + entities), `sanitizeEmail` (validate + lowercase), `validateUUID` (UUID v4 regex) — boundary-level input sanitisation helpers. |
 | `src/lib/services/stripe.ts` | Stripe v22 singleton + helpers: `createCustomer`, `createCheckoutSession`, `createPortalSession`, `getSubscription`, `cancelSubscription`, `syncSeatCount`; imports `@/env` to trigger validation on startup. |
 | `src/lib/services/notifications.ts` | SendGrid email and Slack Incoming Webhook helpers; both retry up to 3 times with exponential backoff (§14.3); failures are logged but never thrown so a notification failure cannot crash the scheduler. |
@@ -203,8 +203,8 @@ Files created to date, organised by layer.
 | File | Description |
 |---|---|
 | `src/components/contracts/detail/ContractDetailShell.tsx` | Split-pane: left pane #f5f5f7 with 0.5px right border, right panel 380px white. 44px header. "← Contracts" muted/hover-green back button. |
-| `src/components/contracts/detail/DocumentViewer.tsx` | Fetches signed URL on mount; PDF in iframe; download button for DOCX; loading/error states use design-token colors. |
-| `src/components/contracts/detail/PropertiesPanel.tsx` | Tab bar with 0.5px bottom border. Active tab: #1a7f4b text + 2px solid underline. Content: 20px/24px padding. |
+| `src/components/contracts/detail/DocumentViewer.tsx` | Fetches signed R2 signed URL on mount; PDF in iframe (white bg, 0.5px border, 12px radius); download button for DOCX; loading/error states use design-token colors. |
+| `src/components/contracts/detail/PropertiesPanel.tsx` | Tab bar with 0.5px bottom border. Active tab: #1a7f4b text + 2px solid underline. Content: 20px/24px padding. Delete Contract button at bottom of Properties tab — two-step confirm; calls `DELETE /api/contracts/[id]`; hard-navigates to `/contracts` via `window.location.href` to bypass Next.js cache. Visible to `canEdit` users only. |
 | `src/components/contracts/detail/PropertiesTab.tsx` | Vendor name 16px/600/-0.02em. Field rows via `.prop-row` CSS class. SectionLabel dividers. Action banner: #fdecea bg. All date fields (start, end, notice deadline) are editable via `EditableField`. Notice deadline patches `renewalNoticeDeadline` directly; clearing sends `null`. |
 | `src/components/contracts/detail/EditableField.tsx` | Read mode: Edit button opacity-0 → group-hover → #1a7f4b. Edit mode: input + Save / Cancel. Toggle: #1a7f4b active pill / rgba inactive. |
 | `src/components/contracts/detail/EditableOwnersField.tsx` | Inline owner editor — names in read mode; `OwnerSelect` multi-select pill autocomplete in edit mode with Save/Cancel. |
@@ -218,7 +218,7 @@ Files created to date, organised by layer.
 |---|---|
 | `src/components/upload/UploadShell.tsx` | Phase state machine (`upload → polling → review / error`). PageHeader with `<BackLink href="/contracts" />`. PollingDots animation. 2 s polling, 60 s timeout. |
 | `src/components/upload/UploadZone.tsx` | 0.5px dashed border drop zone; solid #1a7f4b + rgba tint on drag-over. File pill with × remove. Secondary "Upload" button. |
-| `src/components/upload/ExtractionReview.tsx` | Two-column layout: 55% AI preview / 45% editable form. Section labels. Vendor is mandatory (validated before save). Vendor dropdown uses `"__new__"` sentinel for "Create new supplier" option. Group entity dropdown has "Select group entity" placeholder. Field gap 20px, label margin-bottom 6px. Secondary "Confirm & save" button. |
+| `src/components/upload/ExtractionReview.tsx` | Two-column layout: 55% AI preview / 45% editable form. Section labels. Vendor is mandatory (validated before save). Vendor dropdown uses `"__new__"` sentinel for "Create new supplier" option. Group entity dropdown has "Select group entity" placeholder. Field gap 20px, label margin-bottom 6px. Secondary "Confirm & save" button. Document record created with `type: "main"` after contract save. |
 | `src/components/upload/ContractFormFields.tsx` | Single-column 20px gap. 6px label margin. ConfidenceIndicator dot inline with label. Auto-renewal as Yes/No pill toggle (#1a7f4b active). Notice period wrapped in `.fade-in`. |
 | `src/components/upload/ConfidenceIndicator.tsx` | 6px dot: #1a7f4b (high), #d97706 (medium), rgba(0,0,0,0.2) (low/absent). Hover tooltip via useState. |
 | `src/components/upload/OwnerSelect.tsx` | rgba(0,0,0,0.06) pills with × remove. Dropdown: white card, 0.5px border, 8px radius, modal shadow. |

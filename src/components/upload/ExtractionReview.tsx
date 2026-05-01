@@ -12,6 +12,8 @@ interface ExtractionReviewProps {
   extracted: ExtractionOutput | null;
   confidence: ConfidenceRatings | null;
   fileName: string;
+  fileFormat: string;
+  filePath: string | null;
 }
 
 const SECTION_LABEL: React.CSSProperties = {
@@ -56,7 +58,7 @@ function ExRow({
   );
 }
 
-export default function ExtractionReview({ extracted, confidence, fileName }: ExtractionReviewProps) {
+export default function ExtractionReview({ extracted, confidence, fileName, fileFormat, filePath }: ExtractionReviewProps) {
   const router = useRouter();
   const [saving, startSave] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -136,7 +138,24 @@ export default function ExtractionReview({ extracted, confidence, fileName }: Ex
       });
       const json = await res.json() as { data?: { id: string }; error?: string };
       if (!res.ok) { setSaveError(json.error ?? "Failed to save contract."); return; }
-      router.push(`/contracts/${json.data!.id}`);
+
+      const contractId = json.data!.id;
+
+      // Create the document record if we have a stored file
+      if (filePath && fileFormat) {
+        await fetch(`/api/contracts/${contractId}/documents`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "main",
+            fileName,
+            filePath,
+            fileFormat,
+          }),
+        });
+      }
+
+      router.push(`/contracts/${contractId}`);
     });
   }
 

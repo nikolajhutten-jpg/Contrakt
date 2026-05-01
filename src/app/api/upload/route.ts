@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { resolveAuthContext } from "@/lib/auth/session";
 import { createJob, completeJob, failJob } from "@/lib/services/extractionJobs";
 import { convertToText, extractContractProperties, handleExtractionFailure } from "@/lib/services/extraction";
+import { uploadFile } from "@/lib/storage/r2";
 import { ok, badRequest, handleError } from "@/lib/api/response";
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB — §14.1
@@ -49,11 +50,9 @@ async function runExtractionPipeline(
 
 /**
  * POST /api/upload
- * Validates format (PDF/DOCX) and size (≤ 25 MB), creates an extraction job,
- * fires the extraction pipeline in the background, and returns the jobId immediately.
- *
- * GCS upload is a placeholder — the buffer is read into memory only.
- * Wire in GCS upload before the extraction call in production.
+ * Validates format (PDF/DOCX) and size (≤ 25 MB), uploads the file to R2,
+ * creates an extraction job, fires the extraction pipeline in the background,
+ * and returns the jobId immediately.
  */
 export async function POST(request: NextRequest): Promise<Response> {
   try {
@@ -81,12 +80,11 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     const fileFormat = FORMAT_NAMES[file.type];
     const jobId = randomUUID();
-
-    // TODO: upload buffer to GCS before extraction
-    // const filePath = await uploadToGcs(tenantId, file.name, buffer);
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    createJob(jobId, tenantId, file.name, fileFormat);
+    const filePath = await uploadFile(tenantId, jobId, file.name, buffer, file.type);
+
+    createJob(jobId, tenantId, file.name, fileFormat, filePath);
 
     // Fire-and-forget — response is returned immediately; pipeline runs in background
     void runExtractionPipeline(jobId, buffer, fileFormat);

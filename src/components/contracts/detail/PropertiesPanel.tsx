@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import PropertiesTab from "@/components/contracts/detail/PropertiesTab";
 import DocumentsTab from "@/components/contracts/detail/DocumentsTab";
 import AlertsTab from "@/components/contracts/detail/AlertsTab";
@@ -27,7 +28,21 @@ export default function PropertiesPanel({
   selectedDoc,
   onSelectDoc,
 }: PropertiesPanelProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("properties");
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, startDelete] = useTransition();
+
+  function handleDeleteClick() {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    startDelete(async () => {
+      await fetch(`/api/contracts/${contract.id}`, { method: "DELETE" });
+      window.location.href = "/contracts";
+    });
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -39,7 +54,7 @@ export default function PropertiesPanel({
         {TABS.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => { setActiveTab(tab.id); setConfirming(false); }}
             style={{
               padding: "12px 16px",
               fontSize: "13px",
@@ -81,6 +96,77 @@ export default function PropertiesPanel({
             contractId={contract.id}
             canEdit={canEdit}
           />
+        )}
+
+        {/* Delete button — properties tab only, admins only */}
+        {activeTab === "properties" && canEdit && (
+          <div style={{ marginTop: "32px", paddingTop: "16px", borderTop: "0.5px solid rgba(0,0,0,0.08)" }}>
+            {confirming ? (
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={handleDeleteClick}
+                  disabled={deleting}
+                  style={{
+                    flex: 1,
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    padding: "8px 0",
+                    background: "#c0392b",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: deleting ? "not-allowed" : "pointer",
+                    opacity: deleting ? 0.6 : 1,
+                  }}
+                >
+                  {deleting ? "Deleting…" : "Yes, delete contract"}
+                </button>
+                <button
+                  onClick={() => setConfirming(false)}
+                  disabled={deleting}
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    padding: "8px 14px",
+                    background: "transparent",
+                    color: "rgba(0,0,0,0.5)",
+                    border: "0.5px solid rgba(0,0,0,0.15)",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleDeleteClick}
+                style={{
+                  width: "100%",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  padding: "8px 0",
+                  background: "transparent",
+                  color: "rgba(0,0,0,0.35)",
+                  border: "0.5px solid rgba(0,0,0,0.12)",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget;
+                  el.style.color = "#c0392b";
+                  el.style.borderColor = "rgba(192,57,43,0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget;
+                  el.style.color = "rgba(0,0,0,0.35)";
+                  el.style.borderColor = "rgba(0,0,0,0.12)";
+                }}
+              >
+                Delete contract
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

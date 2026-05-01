@@ -30,6 +30,7 @@ export async function GET(
       confidence: job.confidence,
       fileName: job.fileName,
       fileFormat: job.fileFormat,
+      filePath: job.filePath,
     });
   } catch (error) {
     return handleError(error);

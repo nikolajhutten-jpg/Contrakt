@@ -14,6 +14,7 @@ export interface ExtractionJob {
   tenantId: string;
   fileName: string;
   fileFormat: string;
+  filePath: string | null;
   createdAt: number;
   status: JobStatus;
   extracted: ExtractionOutput | null;
@@ -29,12 +30,14 @@ export function createJob(
   tenantId: string,
   fileName: string,
   fileFormat: string,
+  filePath: string | null,
 ): ExtractionJob {
   const job: ExtractionJob = {
     id,
     tenantId,
     fileName,
     fileFormat,
+    filePath,
     createdAt: Date.now(),
     status: "processing",
     extracted: null,

@@ -15,6 +15,7 @@ interface JobResult {
   confidence: ConfidenceRatings | null;
   fileName: string;
   fileFormat: string;
+  filePath: string | null;
 }
 
 interface ErrorState {
@@ -163,7 +164,7 @@ export default function UploadShell() {
             variant="secondary"
             size="sm"
             onClick={() => {
-              setResult({ extracted: null, confidence: null, fileName, fileFormat: "" });
+              setResult({ extracted: null, confidence: null, fileName, fileFormat: "", filePath: null });
               setPhase("review");
               setError(null);
             }}
@@ -230,6 +231,8 @@ export default function UploadShell() {
             extracted={result?.extracted ?? null}
             confidence={result?.confidence ?? null}
             fileName={result?.fileName ?? fileName}
+            fileFormat={result?.fileFormat ?? ""}
+            filePath={result?.filePath ?? null}
           />
         </div>
       </div>

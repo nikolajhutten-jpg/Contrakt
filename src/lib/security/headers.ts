@@ -4,8 +4,8 @@
  * Content-Security-Policy notes:
  *   - 'unsafe-inline' in script-src is required by Next.js's hydration scripts.
  *     TODO: replace with nonce-based CSP before go-live for stronger security.
- *   - storage.googleapis.com is allowed in connect-src and frame-src for the
- *     GCS-hosted document viewer (signed URLs served via DocumentViewer).
+ *   - storage.googleapis.com and *.r2.cloudflarestorage.com are allowed in
+ *     connect-src, frame-src, and img-src for signed-URL document loading.
  *   - form-action includes Auth0 to permit the Universal Login redirect form.
  *   - No Stripe or Slack domains are needed in client CSP — those integrations
  *     are server-to-server only. Auth0 login is redirect-based (no embedded JS).
@@ -24,11 +24,11 @@ const CSP = [
   // 'unsafe-eval' is added only in development for React's error overlay.
   scriptSrc,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  // GCS signed URLs for document fetching; Auth0 for token refresh calls
-  "connect-src 'self' https://storage.googleapis.com https://*.auth0.com",
-  // PDF iframe viewer loads GCS signed URLs in an iframe
-  "frame-src 'self' https://storage.googleapis.com",
+  "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
+  // GCS signed URLs for document fetching; Auth0 for token refresh calls; R2 for Cloudflare-hosted documents
+  "connect-src 'self' https://storage.googleapis.com https://*.auth0.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
+  // PDF iframe viewer loads signed URLs in an iframe
+  "frame-src 'self' blob: https://storage.googleapis.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
   // Prevents this app from being embedded in iframes (clickjacking defence)
   "frame-ancestors 'none'",
   "font-src 'self' data:",

@@ -43,6 +43,13 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_URL:   z.string().url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 
+    // ── Cloudflare R2 ────────────────────────────────────────────────────────
+    R2_ACCOUNT_ID:        z.string().min(1),
+    R2_ACCESS_KEY_ID:     z.string().min(1),
+    R2_SECRET_ACCESS_KEY: z.string().min(1),
+    R2_BUCKET_NAME:       z.string().min(1),
+    R2_ENDPOINT:          z.string().url(),
+
     // ── Sentry (optional — error tracking skipped when absent) ───────────────
     SENTRY_DSN: z.string().url().optional(),
   },

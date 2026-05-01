@@ -102,7 +102,14 @@ export default function DocumentViewer({ document }: DocumentViewerProps) {
     <iframe
       src={state.url}
       title={document.fileName}
-      className="w-full h-full border-0"
+      style={{
+        width: "100%",
+        height: "100%",
+        border: "0.5px solid rgba(0,0,0,0.1)",
+        borderRadius: "12px",
+        background: "#ffffff",
+        display: "block",
+      }}
     />
   );
 }
