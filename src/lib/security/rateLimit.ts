@@ -5,7 +5,7 @@ import { Redis } from "@upstash/redis";
 
 /**
  * Three rate limit tiers (requests per minute, sliding window):
- *   strict   — 50/min  for auth endpoints (/api/auth/signup, etc.) [TEMP: raised from 5 for testing]
+ *   strict   — 5/min   for auth endpoints (/api/auth/signup, etc.)
  *   standard — 60/min  for mutating API routes (POST, PATCH, DELETE)
  *   relaxed  — 200/min for read-only API routes (GET)
  *
@@ -16,7 +16,7 @@ export type RateLimitTier = "strict" | "standard" | "relaxed";
 
 const TIER_CONFIG: Record<RateLimitTier, { requests: number; window: "1 m" }> =
   {
-    strict:   { requests: 50,  window: "1 m" },
+    strict:   { requests: 5,   window: "1 m" },
     standard: { requests: 60,  window: "1 m" },
     relaxed:  { requests: 200, window: "1 m" },
   };

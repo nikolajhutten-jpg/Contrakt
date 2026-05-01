@@ -83,7 +83,6 @@ export async function requireAuth(): Promise<SessionData> {
 export function getTenantFromSession(session: SessionData): string {
   if (IS_DEV) return DEV_TENANT_ID;
   const user = session.user as Auth0SessionUser;
-  console.log("[DEBUG] session.user claims:", JSON.stringify(user, null, 2));
   const tenantId = user[`${AUTH0_CLAIM_NS}/tenant_id`];
   if (typeof tenantId !== "string" || tenantId === "") {
     throw Object.assign(
