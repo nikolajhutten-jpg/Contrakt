@@ -80,6 +80,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // ── Auth0 ──────────────────────────────────────────────────────────────────
   // Auth0 handles /api/auth/* routes and rolls sessions on all other routes.
+  if (pathname === "/api/auth/callback") {
+    const cookieNames = request.cookies.getAll().map((c) => c.name);
+    console.log("[DEBUG] callback cookie names:", JSON.stringify(cookieNames));
+    console.log("[DEBUG] x-forwarded-host:", request.headers.get("x-forwarded-host"));
+    console.log("[DEBUG] x-forwarded-proto:", request.headers.get("x-forwarded-proto"));
+  }
   return auth0.middleware(request);
 }
 
