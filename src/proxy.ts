@@ -31,8 +31,8 @@ function getTier(pathname: string, method: string): RateLimitTier {
 /** Extracts the best-available client IP from the request headers. */
 function getClientIp(request: NextRequest): string {
   return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     request.headers.get("x-real-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ??
     "anonymous"
   );
 }
