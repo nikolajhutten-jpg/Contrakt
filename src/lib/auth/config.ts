@@ -6,6 +6,12 @@ export const auth0 = new Auth0Client({
     logout: "/api/auth/logout",
     callback: "/api/auth/callback",
   },
+  session: {
+    cookie: {
+      sameSite: "lax",
+      secure: true,
+    },
+  },
 });
 
 export const AUTH0_CLAIM_NS = "https://contrakt.io";
