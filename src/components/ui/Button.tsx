@@ -49,6 +49,7 @@ export default function Button({
         fontSize: "13px",
         letterSpacing: "-0.01em",
         fontFamily: "inherit",
+        cursor: "pointer",
         ...SIZE_STYLE[size],
         ...VARIANT_STYLE[variant],
         ...style,

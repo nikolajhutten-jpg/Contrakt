@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 import { getSecurityHeaders } from "./src/lib/security/headers";
 
 const nextConfig: NextConfig = {
+  // Keep pdf-parse (and its pdfjs-dist dependency) out of the turbopack server
+  // bundle so it is required lazily at runtime, after instrumentation.ts has
+  // polyfilled the browser globals pdfjs-dist expects (DOMMatrix etc.).
+  serverExternalPackages: ["pdf-parse"],
   /**
    * Apply security headers to every route (§ security hardening).
    * Headers are defined in src/lib/security/headers.ts so they can be

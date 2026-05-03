@@ -4,7 +4,6 @@
  * extract structured contract properties per §12.3 and §12.4.
  */
 import Anthropic from "@anthropic-ai/sdk";
-import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
 import type { ExtractionOutput, ConfidenceRatings, ConfidenceLevel } from "@/types";
 
@@ -47,9 +46,10 @@ The JSON object must have exactly these fields:
 
 /** Converts a PDF buffer to plain text. Throws if the file has no text layer. */
 async function pdfToText(buffer: Buffer): Promise<string> {
-  const parser = new PDFParse({ data: buffer });
-  const result = await parser.getText();
-  await parser.destroy();
+  // Dynamic import keeps pdfjs-dist out of the server chunk evaluated at startup.
+  // The DOMMatrix/ImageData/Path2D stubs are in src/instrumentation.ts.
+  const { default: pdfParse } = await import("pdf-parse");
+  const result = await pdfParse(buffer);
   if (!result.text.trim()) {
     throw new Error("No text layer found — the PDF may be a scanned image.");
   }

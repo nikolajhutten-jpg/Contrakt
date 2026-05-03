@@ -39,7 +39,7 @@ export default function ContractsShell({
         >
           Contracts
         </h1>
-        <Button variant="secondary" size="sm" style={{ cursor: "pointer" }} onClick={() => router.push("/contracts/new")}>
+        <Button variant="secondary" size="sm" onClick={() => router.push("/contracts/new")}>
           Add contract
         </Button>
       </div>
