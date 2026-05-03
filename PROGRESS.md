@@ -8,15 +8,15 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `prisma/schema.prisma` | Full Prisma schema — 10 tables (added `GroupEntity`); `internalGroupEntity` made nullable on `Contract`; `groupEntityId` FK added to `Contract`; `TenantPlan` + `TenantPlanStatus` enums and 6 billing fields on `Tenant` (§15). |
+| `prisma/schema.prisma` | Full Prisma schema — 10 tables (added `GroupEntity`); `internalGroupEntity` made nullable on `Contract`; `groupEntityId` FK added to `Contract`; `TenantPlan` + `TenantPlanStatus` enums and 6 billing fields on `Tenant` (§15). `User.auth0Id` renamed to `User.clerkId` (DB column `clerk_id`). |
 | `prisma.config.ts` | Prisma 7 external config; moves the database URL out of the schema file. |
-| `src/types/index.ts` | All TypeScript interfaces and `const`+union enums. Added `GroupEntity` interface. `Contract` gains `groupEntityId: string | null` and `internalGroupEntity: string | null`. `ContractSummary` replaces `internalGroupEntity: string` with `groupEntity: { id; name } | null` and adds `autoRenewal: boolean` (required by `getDisplayStatus`). `ContractWithRelations` gains `groupEntity: GroupEntity | null`. `CreateContractInput` uses `groupEntityId` instead of `internalGroupEntity`. |
-| `src/env.ts` | `@t3-oss/env-nextjs` + Zod schema validating all 18 required env vars at startup; optional vars (Upstash, Sentry) use `.optional()` so dev runs without them; imported by `client.ts` and `stripe.ts`. |
-| `src/proxy.ts` | Auth0 session handling + per-route rate limiting: strict for /api/auth/signup, relaxed for GET, standard for all other mutations; 429 response with Retry-After when exceeded. (Renamed from `middleware.ts` per Next.js 16 deprecation.) |
+| `src/types/index.ts` | All TypeScript interfaces and `const`+union enums. Added `GroupEntity` interface. `Contract` gains `groupEntityId: string | null` and `internalGroupEntity: string | null`. `ContractSummary` replaces `internalGroupEntity: string` with `groupEntity: { id; name } | null` and adds `autoRenewal: boolean`. `ContractWithRelations` gains `groupEntity: GroupEntity | null`. `CreateContractInput` uses `groupEntityId`. `User.auth0Id` renamed to `User.clerkId`. |
+| `src/env.ts` | `@t3-oss/env-nextjs` + Zod schema validating all required env vars at startup. Clerk vars: `CLERK_SECRET_KEY` (server), `CLERK_WEBHOOK_SECRET` (optional), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (client). Optional vars (Upstash, Sentry, Stripe, SendGrid) use `.optional()` so dev runs without them. |
+| `src/proxy.ts` | Clerk middleware via `clerkMiddleware()` from `@clerk/nextjs/server`. Public routes: `/sign-in(.*)`, `/sign-up(.*)`, `/api/billing/webhook`, `/api/webhooks/clerk`. All other routes require authentication via `auth.protect()`. Named `proxy` export per Next.js 16 convention. |
 | `next.config.ts` | Applies `getSecurityHeaders()` to all routes via the Next.js `headers()` config hook. |
 | `sentry.client.config.ts` | Sentry browser-side init — reads `NEXT_PUBLIC_SENTRY_DSN`; 10 % trace sampling; replay integration with full text+media masking; no-op when DSN is absent. |
 | `sentry.server.config.ts` | Sentry Node.js-side init — reads `SENTRY_DSN`; 10 % trace sampling; no-op when DSN is absent. |
-| `.env.local` | Placeholder env vars — Auth0, PostgreSQL, Anthropic, Stripe (§15), Upstash Redis (rate limiting), Sentry DSN. |
+| `.env.local` | Clerk keys (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`), Clerk redirect URLs, `APP_BASE_URL`, PostgreSQL, Anthropic, Stripe (§15), Upstash Redis, Sentry DSN, Cloudflare R2. |
 | `src/app/globals.css` | Design system foundation. System font stack (`-apple-system`, SF Pro Display), CSS custom properties (`--primary: #1a7f4b`, `--green-900` through `--green-100`), global input/select/textarea styles with #1a7f4b focus ring, `.fade-in` keyframe (120 ms), `.prop-row` border utility. |
 
 ---
@@ -26,21 +26,21 @@ Files created to date, organised by layer.
 | File | Description |
 |---|---|
 | `src/lib/db/client.ts` | Prisma 7 singleton using `PrismaPg` adapter; pinned to `globalThis` for hot-reload safety; imports `@/env` to trigger validation on startup. |
-| `src/lib/db/tenants.ts` | `getTenantById`, `updateTenant` — tenant record queries. |
-| `src/lib/db/users.ts` | `getUserById`, `getUserByAuth0Id`, `getUsersByTenant`, `createUser`, `updateUser`, `deactivateUser`. |
-| `src/lib/db/contracts.ts` | Core contract CRUD. `CreateContractData` and `UpdateContractData` use `groupEntityId: string | null` instead of `internalGroupEntity`. `contractWithRelations` include now fetches `groupEntity`. |
+| `src/lib/db/tenants.ts` | `getTenantById`, `getTenantBySlug`, `createTenant`, `updateTenant` — tenant record queries. |
+| `src/lib/db/users.ts` | `getUserById`, `getUserByClerkId`, `getUsersByTenant`, `createUser`, `updateUser`, `deactivateUser`. All `auth0Id` references renamed to `clerkId`. |
+| `src/lib/db/contracts.ts` | Core contract CRUD. `CreateContractData` and `UpdateContractData` use `groupEntityId: string | null`. `contractWithRelations` include fetches `groupEntity`. |
 | `src/lib/db/contractHelpers.ts` | Shared helpers used by `dashboard.ts` and `contractsFiltered.ts`. `summaryInclude` fetches `groupEntity: { select: { id, name } }`. `toSummary` maps `groupEntity` and `autoRenewal` into `ContractSummary`. |
 | `src/lib/db/contractsFiltered.ts` | `getContractsFiltered` — role-aware query with status, department, term type, auto-renewal, date range, and free-text search filters. |
-| `src/lib/db/dashboard.ts` | `getDashboardKpis` (total + actionRequired KPIs — actionRequired counts contracts with deadline/endDate within 60 days, no autoRenewal filter), `getActiveContracts` (take 15), `getActionRequiredContracts` (upcoming renewals within 60-day window, no autoRenewal filter), `getUpcomingRenewalsContracts` (take 15), `getBadgeCounts` (actionRequired by DB status), `getOnboardingState`. |
-| `src/lib/db/notifications.ts` | **New.** `AlertWithContract` interface with computed `alertDate` field. `getUpcomingAlerts` (unsent, within N days), `getAllUpcomingAlerts` (all unsent), `getSentAlerts` (last N days), `getAllSentAlerts` (all sent). `getContractOptions` for the alert form dropdown. Role filtering via `contractRelationFilter` (produces nested contract relation filter for use inside `notificationAlert` queries). |
-| `src/lib/db/groupEntities.ts` | `getGroupEntitiesByTenant` (active only), `createGroupEntity`, `deactivateGroupEntity` — full CRUD for the GroupEntity model. |
-| `src/lib/db/vendors.ts` | `VendorContractRow` now uses `groupEntity: { id; name } | null` and `autoRenewal: boolean` (replacing `internalGroupEntity`). Prisma select updated to fetch both relations. |
+| `src/lib/db/dashboard.ts` | `getDashboardKpis`, `getActiveContracts`, `getActionRequiredContracts`, `getUpcomingRenewalsContracts`, `getBadgeCounts`, `getOnboardingState`. |
+| `src/lib/db/notifications.ts` | `AlertWithContract` interface with computed `alertDate` field. `getUpcomingAlerts`, `getAllUpcomingAlerts`, `getSentAlerts`, `getAllSentAlerts`, `getContractOptions`. Role filtering via `contractRelationFilter`. |
+| `src/lib/db/groupEntities.ts` | `getGroupEntitiesByTenant` (active only), `createGroupEntity`, `deactivateGroupEntity`. |
+| `src/lib/db/vendors.ts` | `VendorContractRow` uses `groupEntity: { id; name } | null` and `autoRenewal: boolean`. |
 | `src/lib/db/departments.ts` | `getDepartmentsByTenant`, `getDepartmentById`, `createDepartment`, `renameDepartment`, `deactivateDepartment`. |
 | `src/lib/db/documents.ts` | `getDocumentsByContract`, `getDocumentById`, `createDocument`, `deleteDocument`, `getLatestRenewalVersion`. |
-| `src/lib/db/alerts.ts` | `getAlertsByContract`, `getAlertById`, `createAlert`, `updateAlert`, `deleteAlert`; casts Prisma `Json` channels back to `AlertChannel[]`. |
-| `src/lib/db/settings.ts` | `getTenantSettings`, `updateTenantSettings` — account-level settings queries. |
-| `src/lib/db/billing.ts` | `updateTenantBilling`, `getTenantByStripeCustomerId`, `getTenantByStripeSubscriptionId` — billing DB queries used by the webhook handler and checkout flow. |
-| `src/lib/db/extractionResults.ts` | `saveExtractionResult`, `getExtractionResultByDocument` — persists Claude extraction output linked to a document record. |
+| `src/lib/db/alerts.ts` | `getAlertsByContract`, `getAlertById`, `createAlert`, `updateAlert`, `deleteAlert`. |
+| `src/lib/db/settings.ts` | `getTenantSettings`, `updateTenantSettings`. |
+| `src/lib/db/billing.ts` | `updateTenantBilling`, `getTenantByStripeCustomerId`, `getTenantByStripeSubscriptionId`. |
+| `src/lib/db/extractionResults.ts` | `saveExtractionResult`, `getExtractionResultByDocument`. |
 
 ---
 
@@ -48,19 +48,18 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/lib/security/rateLimit.ts` | Upstash sliding-window rate limiter; three tiers: strict 5/min (auth), standard 60/min (mutations), relaxed 200/min (reads); lazy Redis init; fails open when Redis is unconfigured. |
-| `src/lib/security/headers.ts` | `getSecurityHeaders()` — returns the full set of security response headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions-Policy). CSP allows `*.r2.cloudflarestorage.com` and `*.eu.r2.cloudflarestorage.com` in `connect-src`, `frame-src`, and `img-src`; `blob:` in `frame-src`. Strict rate limit tier raised to 20/min for testing (was 5). |
-| `src/lib/security/sanitize.ts` | `sanitizeText` (strip HTML tags + entities), `sanitizeEmail` (validate + lowercase), `validateUUID` (UUID v4 regex) — boundary-level input sanitisation helpers. |
-| `src/lib/services/stripe.ts` | Stripe v22 singleton + helpers: `createCustomer`, `createCheckoutSession`, `createPortalSession`, `getSubscription`, `cancelSubscription`, `syncSeatCount`; imports `@/env` to trigger validation on startup. |
-| `src/lib/services/notifications.ts` | SendGrid email and Slack Incoming Webhook helpers; both retry up to 3 times with exponential backoff (§14.3); failures are logged but never thrown so a notification failure cannot crash the scheduler. |
-| `src/lib/services/planLimits.ts` | `getPlanUsage`, `checkContractLimit`, `checkUserLimit`, `checkExtractionLimit` — server-side limit enforcement per §15.2 and §15.6. |
-| `src/lib/auth/config.ts` | Auth0 client singleton with route configuration and `AUTH0_CLAIM_NS` constant. |
-| `src/lib/auth/session.ts` | `getSession`, `requireAuth`, `getTenantFromSession`, `resolveAuthContext`, `requireRole` — auth helpers used by every API route. |
-| `src/lib/api/response.ts` | `ok`, `created`, `notFound`, `forbidden`, `badRequest`, `handleError` — typed Next.js response helpers. |
-| `src/lib/services/contracts.ts` | `calculateDurationMonths`, `calculateNoticeDeadline`, `determineInitialStatus`, `buildCreateContractData` (passes `groupEntityId`). |
-| `src/lib/services/extraction.ts` | `convertToText` (pdf-parse / mammoth), `extractContractProperties` (Claude API, §12.3 prompt, §12.4 schema), `handleExtractionFailure` (§12.6 all-null fallback). |
-| `src/lib/services/extractionJobs.ts` | In-memory job store (`createJob`, `getJob`, `completeJob`, `failJob`) for tracking async extraction pipeline status. |
-| `src/lib/utils/contractStatus.ts` | `getDisplayStatus(contract)` — derives display badge from `autoRenewal`, `renewalNoticeDeadline`, and `endDate`. Four ordered rules: (1) Auto-renewed: autoRenewal + deadline passed + end date future; (2) Expired: end date passed + no autoRenewal; (3) Action required (`"renewal_due"`): deadline or end date within 60 days (no autoRenewal filter — applies to all contracts); (4) Active: everything else. DB `status` field is never used. |
+| `src/lib/security/rateLimit.ts` | Upstash sliding-window rate limiter; three tiers: strict 20/min (auth), standard 60/min (mutations), relaxed 200/min (reads); lazy Redis init; fails open when Redis is unconfigured. |
+| `src/lib/security/headers.ts` | `getSecurityHeaders()` — X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions-Policy. CSP `script-src` includes `*.clerk.com`, `*.clerk.accounts.dev`, `challenges.cloudflare.com`. `connect-src` and `frame-src` include same Clerk + Cloudflare domains. |
+| `src/lib/security/sanitize.ts` | `sanitizeText`, `sanitizeEmail`, `validateUUID` — boundary-level input sanitisation helpers. |
+| `src/lib/services/stripe.ts` | Stripe v22 singleton + helpers: `createCustomer`, `createCheckoutSession`, `createPortalSession`, `getSubscription`, `cancelSubscription`, `syncSeatCount`. |
+| `src/lib/services/notifications.ts` | SendGrid email and Slack Incoming Webhook helpers; both retry up to 3 times with exponential backoff; failures logged but never thrown. |
+| `src/lib/services/planLimits.ts` | `getPlanUsage`, `checkContractLimit`, `checkUserLimit`, `checkExtractionLimit`. |
+| `src/lib/auth/session.ts` | Clerk-based auth helpers. `resolveAuthContext()` — gets `userId` from `auth()`, looks up DB user by `clerkId`, resolves tenant from `user.tenantId`; returns `{ localUser, tenant, tenantId }`. `requireAuth()` — returns `userId` or throws. `requireRole(role)` — resolves context and asserts role; accepts single role or array. |
+| `src/lib/api/response.ts` | `ok`, `created`, `notFound`, `forbidden`, `badRequest`, `handleError`. |
+| `src/lib/services/contracts.ts` | `calculateDurationMonths`, `calculateNoticeDeadline`, `determineInitialStatus`, `buildCreateContractData`. |
+| `src/lib/services/extraction.ts` | `convertToText` (pdf-parse / mammoth), `extractContractProperties` (Claude API), `handleExtractionFailure`. |
+| `src/lib/services/extractionJobs.ts` | In-memory job store: `createJob`, `getJob`, `completeJob`, `failJob`. |
+| `src/lib/utils/contractStatus.ts` | `getDisplayStatus(contract)` — derives display badge from `autoRenewal`, `renewalNoticeDeadline`, and `endDate`. |
 
 ---
 
@@ -68,14 +67,14 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/lib/api/auth.ts` | `signup(input)` — POST to `/api/auth/signup`; used by `SignupForm`. |
-| `src/lib/hooks/useToast.ts` | `useToast()` hook — reads `ToastContext`; provides `showToast(message, variant?)` to any client component inside `<ToastProvider>`. |
-| `src/lib/api/billing.ts` | `startCheckout(plan)`, `openBillingPortal()` — redirect helpers that call the billing API and forward the browser to Stripe-hosted pages. |
-| `src/lib/api/contracts.ts` | `confirmAction(contractId)` — POST to confirm-action endpoint; used by `ActionRequiredShell`. |
-| `src/lib/api/vendors.ts` | `updateVendor(id, data)` — PATCH vendor name and contact details; used by `VendorEditForm`. |
-| `src/lib/api/users.ts` | `inviteUser`, `updateUserRole`, `deactivateUser`, `updateMyProfile` — called from settings components. |
-| `src/lib/api/departments.ts` | `createDepartment`, `renameDepartment`, `deactivateDepartment` — called from `DepartmentList`. |
-| `src/lib/api/settings.ts` | `updateAccountSettings`, `testSlackWebhook` — called from `AccountSettingsForm`. |
+| `src/lib/api/auth.ts` | `signup(input)` — POST to `/api/auth/signup`; legacy onboarding helper. |
+| `src/lib/hooks/useToast.ts` | `useToast()` hook — provides `showToast(message, variant?)`. |
+| `src/lib/api/billing.ts` | `startCheckout(plan)`, `openBillingPortal()`. |
+| `src/lib/api/contracts.ts` | `confirmAction(contractId)`. |
+| `src/lib/api/vendors.ts` | `updateVendor(id, data)`. |
+| `src/lib/api/users.ts` | `inviteUser`, `updateUserRole`, `deactivateUser`, `updateMyProfile`. |
+| `src/lib/api/departments.ts` | `createDepartment`, `renameDepartment`, `deactivateDepartment`. |
+| `src/lib/api/settings.ts` | `updateAccountSettings`, `testSlackWebhook`. |
 
 ---
 
@@ -83,33 +82,33 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/app/api/auth/[auth0]/route.ts` | Auth0 v4 stub — authentication is handled by middleware; this file exists as a placeholder only. |
-| `src/app/api/auth/signup/route.ts` | `POST` — Stage 1+2 onboarding (§13.2–13.3): validates input, creates `Tenant` + admin `User` records; sets `trialEndsAt` (+14 days); Auth0 org creation, GCP bucket, and SendGrid are mocked with TODOs. |
-| `src/app/api/billing/checkout/route.ts` | `POST` — admin only; provisions Stripe customer on first checkout, creates a hosted Checkout Session for plan selection; returns redirect URL. |
-| `src/app/api/billing/portal/route.ts` | `POST` — admin only; creates a Stripe Customer Portal session; returns redirect URL for subscription and invoice management. |
-| `src/app/api/billing/webhook/route.ts` | `POST` — Stripe webhook receiver; verifies signature with raw body; handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`. |
-| `src/app/api/contracts/route.ts` | `GET` list (role-filtered) and `POST` create. Input parser accepts `groupEntityId: string | null`. |
-| `src/app/api/contracts/[id]/route.ts` | `GET` single contract, `PATCH` update, `DELETE` (admin only). PATCH parser accepts all editable fields including direct `renewalNoticeDeadline` override (placed after derived-field calculation so manual value wins). |
+| `src/app/api/auth/signup/route.ts` | `POST` — legacy onboarding: validates input, creates `Tenant` + admin `User` with placeholder `clerkId`; sets `trialEndsAt` (+14 days). Superseded by the Clerk webhook for new signups. |
+| `src/app/api/webhooks/clerk/route.ts` | `POST` — Clerk webhook receiver. Verifies Svix signature. On `user.created`: idempotency check, then provisions a new `Tenant` (name from user's name, unique slug, 14-day trial) and admin `User` with the real Clerk `userId` as `clerkId`. |
+| `src/app/api/billing/checkout/route.ts` | `POST` — admin only; provisions Stripe customer, creates hosted Checkout Session. |
+| `src/app/api/billing/portal/route.ts` | `POST` — admin only; creates Stripe Customer Portal session. |
+| `src/app/api/billing/webhook/route.ts` | `POST` — Stripe webhook receiver; handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`. |
+| `src/app/api/contracts/route.ts` | `GET` list (role-filtered) and `POST` create. |
+| `src/app/api/contracts/[id]/route.ts` | `GET` single contract, `PATCH` update, `DELETE` (admin only). |
 | `src/app/api/contracts/[id]/confirm-action/route.ts` | `POST` — marks action taken, resets status to Active; idempotent. |
-| `src/app/api/contracts/[id]/documents/route.ts` | `GET` list and `POST` upload linked documents for a contract. |
-| `src/app/api/contracts/[id]/alerts/route.ts` | `GET` list and `POST` create notification alerts for a contract. |
+| `src/app/api/contracts/[id]/documents/route.ts` | `GET` list and `POST` upload linked documents. |
+| `src/app/api/contracts/[id]/alerts/route.ts` | `GET` list and `POST` create notification alerts. |
 | `src/app/api/contracts/[id]/alerts/[alertId]/route.ts` | `PATCH` update and `DELETE` remove a specific alert. |
-| `src/app/api/documents/[docId]/url/route.ts` | `GET` — returns a signed R2 URL for viewing a document (Cloudflare R2 via AWS SDK presigner, 1-hour expiry). |
-| `src/app/api/group-entities/route.ts` | `GET` list active group entities for tenant. `POST` create (admin only). |
+| `src/app/api/documents/[docId]/url/route.ts` | `GET` — returns a signed R2 URL (1-hour expiry). |
+| `src/app/api/group-entities/route.ts` | `GET` list active group entities. `POST` create (admin only). |
 | `src/app/api/group-entities/[id]/route.ts` | `DELETE` soft-deactivates a group entity (admin only). |
 | `src/app/api/vendors/route.ts` | `GET` list and `POST` create vendors. |
 | `src/app/api/vendors/[id]/route.ts` | `GET` vendor with contracts and `PATCH` update (admin only). |
-| `src/app/api/users/route.ts` | `GET` all users in tenant (admin only). |
-| `src/app/api/users/invite/route.ts` | `POST` — creates a local user record for an invited user; generates placeholder `auth0Id` until Auth0 Management API is wired. |
+| `src/app/api/users/route.ts` | `GET` all users in tenant (admin only). `POST` create user with `clerkId`. |
+| `src/app/api/users/invite/route.ts` | `POST` — creates a local user record with placeholder `clerkId` until Clerk Backend API is wired. |
 | `src/app/api/users/[id]/route.ts` | `PATCH` update role/department and `DELETE` deactivate (admin only). |
-| `src/app/api/users/me/route.ts` | `PATCH` — update own profile and notification preferences. |
+| `src/app/api/users/me/route.ts` | `PATCH` — update own profile. |
 | `src/app/api/departments/route.ts` | `GET` list and `POST` create departments. |
-| `src/app/api/departments/[id]/route.ts` | `PATCH` rename and `DELETE` deactivate a department (admin only). |
+| `src/app/api/departments/[id]/route.ts` | `PATCH` rename and `DELETE` deactivate (admin only). |
 | `src/app/api/settings/account/route.ts` | `GET` and `PATCH` tenant account settings (admin only). |
-| `src/app/api/settings/account/test-slack/route.ts` | `POST` — reads tenant webhook URL and sends a test message to Slack; returns 400 if unconfigured or Slack rejects. |
-| `src/app/api/upload/route.ts` | `POST` — validates file (format + size), reads buffer, creates extraction job, fires extraction pipeline fire-and-forget. |
-| `src/app/api/upload/[jobId]/status/route.ts` | `GET` — returns current job status (`processing` / `complete` / `failed`) for polling. |
-| `src/app/api/upload/[jobId]/result/route.ts` | `GET` — returns extracted fields and confidence ratings once the job is complete. |
+| `src/app/api/settings/account/test-slack/route.ts` | `POST` — sends a test Slack message. |
+| `src/app/api/upload/route.ts` | `POST` — validates file, creates extraction job, fires pipeline. |
+| `src/app/api/upload/[jobId]/status/route.ts` | `GET` — returns job status for polling. |
+| `src/app/api/upload/[jobId]/result/route.ts` | `GET` — returns extracted fields once job is complete. |
 
 ---
 
@@ -117,185 +116,197 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/app/layout.tsx` | Root HTML shell; Geist font removed, system font inherited from globals.css; `h-full antialiased` className. |
+| `src/app/layout.tsx` | Root HTML shell. `<ClerkProvider>` wraps `<html>/<body>`. System font, `h-full antialiased`. |
 | `src/app/page.tsx` | Root redirect to `/dashboard`. |
-| `src/app/not-found.tsx` | Global 404 page — #f5f5f7 background, 22px/600 heading, "Go to dashboard" CTA. |
-| `src/app/error.tsx` | Root Next.js error page (§14.6) — same shell as not-found; captures to Sentry; "Try again" button calls `unstable_retry`. |
-| `src/app/(auth)/layout.tsx` | Minimal centred layout for public auth pages — #f5f5f7 background, white 0.5px-border 12px-radius card, 32px padding. |
-| `src/app/(auth)/signup/page.tsx` | Sign-up page (§13.2) — redirects to `/dashboard` if already authenticated; renders `SignupForm`. |
+| `src/app/not-found.tsx` | Global 404 page. |
+| `src/app/error.tsx` | Root error page — captures to Sentry; "Try again" button. |
+| `src/app/sign-in/[[...sign-in]]/page.tsx` | Clerk-hosted sign-in page — renders `<SignIn />` centered on `#f5f5f7`. |
+| `src/app/sign-up/[[...sign-up]]/page.tsx` | Clerk-hosted sign-up page — renders `<SignUp />` centered on `#f5f5f7`. |
+| `src/app/(auth)/layout.tsx` | Minimal centred layout for public auth pages. |
 | `src/app/(app)/layout.tsx` | Authenticated route group layout — wraps every protected page in `AppLayout`. |
-| `src/app/(app)/dashboard/page.tsx` | Home page — fetches KPIs, active contracts, upcoming renewals, and onboarding state in parallel; passes both contract lists to `DashboardShell`. |
-| `src/app/(app)/setup/page.tsx` | Workspace setup wizard page (§13.4) — admin only; redirects non-admins; skips to dashboard if setup already complete; renders `SetupWizard`. |
-| `src/app/(app)/contracts/page.tsx` | All Contracts page — reads URL search params, calls `getContractsFiltered`, passes data to `ContractsShell`. |
-| `src/app/(app)/contracts/[id]/page.tsx` | Contract Detail page — fetches full contract with relations, computes `canEdit`, renders `ContractDetailShell`. |
-| `src/app/(app)/contracts/new/page.tsx` | Upload Contract page — renders `UploadShell` which orchestrates the full upload → extract → review flow. Has `<BackLink href="/contracts" />`. |
-| `src/app/(app)/action-required/page.tsx` | Upcoming Renewals page (URL stays `/action-required`) — fetches action-required contracts; passes `isAdmin` and `canConfirm` flags to `ActionRequiredShell`. |
-| `src/app/(app)/notifications/page.tsx` | Notifications overview page — fetches all upcoming + all sent alerts, slices to 10 each for the summary view. Full lists live on sub-pages. |
-| `src/app/(app)/notifications/upcoming/page.tsx` | All upcoming alerts — `getAllUpcomingAlerts`, no slice; `<BackLink href="/notifications" />`. |
-| `src/app/(app)/notifications/sent/page.tsx` | All sent alerts — `getAllSentAlerts`, no slice; `<BackLink href="/notifications" />`. |
-| `src/app/(app)/vendors/page.tsx` | Vendor Directory page — fetches all vendors with contract counts. |
-| `src/app/(app)/vendors/[id]/page.tsx` | Vendor Detail page — fetches vendor with full contract list (including department + owners); 404s via `notFound()`. |
-| `src/app/(app)/settings/page.tsx` | Role-based redirect — admins land on `/settings/account`, all others on `/settings/profile`. |
-| `src/app/(app)/settings/users/page.tsx` | User Management page — admin only; redirects non-admins; fetches all users and departments in parallel. Has `<BackLink href="/settings/account" />`. |
-| `src/app/(app)/settings/departments/page.tsx` | Department Management page — admin only; redirects non-admins; fetches all departments. Has `<BackLink href="/settings/account" />`. |
-| `src/app/(app)/settings/group-entities/page.tsx` | Group Entity Management page — admin only; fetches active group entities; renders `GroupEntityList`. Has `<BackLink href="/settings/account" />`. |
-| `src/app/(app)/settings/account/page.tsx` | Account Settings page — admin only; redirects non-admins; fetches tenant settings. |
-| `src/app/(app)/settings/profile/page.tsx` | Profile & Notifications page — accessible by all users; fetches current user via `resolveAuthContext`. Has `<BackLink href="/settings/account" />`. |
+| `src/app/(app)/dashboard/page.tsx` | Home page — fetches KPIs, active contracts, upcoming renewals, and onboarding state. |
+| `src/app/(app)/setup/page.tsx` | Setup wizard — requires only a valid Clerk session (no DB user needed). If DB user exists: admin-only, skips to dashboard if complete. If no DB user: renders wizard with empty state for fresh signups. |
+| `src/app/(app)/contracts/page.tsx` | All Contracts page — role-filtered, passes data to `ContractsShell`. |
+| `src/app/(app)/contracts/[id]/page.tsx` | Contract Detail page. |
+| `src/app/(app)/contracts/new/page.tsx` | Upload Contract page — renders `UploadShell`. |
+| `src/app/(app)/action-required/page.tsx` | Upcoming Renewals page. |
+| `src/app/(app)/notifications/page.tsx` | Notifications overview. |
+| `src/app/(app)/notifications/upcoming/page.tsx` | All upcoming alerts. |
+| `src/app/(app)/notifications/sent/page.tsx` | All sent alerts. |
+| `src/app/(app)/vendors/page.tsx` | Vendor Directory. |
+| `src/app/(app)/vendors/[id]/page.tsx` | Vendor Detail. |
+| `src/app/(app)/settings/page.tsx` | Role-based redirect to account or profile settings. |
+| `src/app/(app)/settings/users/page.tsx` | User Management — admin only. |
+| `src/app/(app)/settings/departments/page.tsx` | Department Management — admin only. |
+| `src/app/(app)/settings/group-entities/page.tsx` | Group Entity Management — admin only. |
+| `src/app/(app)/settings/account/page.tsx` | Account Settings — admin only. |
+| `src/app/(app)/settings/profile/page.tsx` | Profile & Notifications — all users. |
 
 ---
 
 ## Components
 
-### Auth
-
-| File | Description |
-|---|---|
-| `src/components/auth/SignupForm.tsx` | Client sign-up form — company name, name, email, password; phases: idle → submitting → success / error. Secondary "Create account" button. |
-
 ### Setup wizard (§13.4)
 
 | File | Description |
 |---|---|
-| `src/components/setup/SetupWizard.tsx` | #f5f5f7 full-screen shell with white 0.5px-border 12px-radius card. Step indicator: #171717 circle (current), #1a7f4b circle (done), rgba inactive; 0.5px hairline connectors. |
-| `src/components/setup/StepDepartments.tsx` | Suggestion chips: rgba(26,127,75,0.06) bg + #1a7f4b text when added. |
-| `src/components/setup/StepInviteUsers.tsx` | 2-col grid for name/email. Invited list: #1a7f4b dot + muted text. |
-| `src/components/setup/StepSlack.tsx` | "Send test notification" button. #1a7f4b text on success, #c0392b on failure. |
+| `src/components/setup/SetupWizard.tsx` | #f5f5f7 full-screen shell with white 0.5px-border 12px-radius card. Step indicator. |
+| `src/components/setup/StepDepartments.tsx` | Suggestion chips. |
+| `src/components/setup/StepInviteUsers.tsx` | 2-col grid for name/email. |
+| `src/components/setup/StepSlack.tsx` | "Send test notification" button. |
 
 ### Layout
 
 | File | Description |
 |---|---|
-| `src/components/layout/AppLayout.tsx` | Server component — resolves session, fetches local user and badge counts; wraps content in `ToastProvider`, `OfflineBanner`, and `ErrorBoundary`. Page background #f5f5f7. |
-| `src/components/layout/Sidebar.tsx` | White sidebar, dark text. Nav items: Home, All contracts, Upcoming renewals (was "Action required"), Notifications. Main nav active state: rgba(0,0,0,0.05) background + #171717 text. Settings sub-nav active state: #1a7f4b text only. Live `actionRequired` amber badge count on "Upcoming renewals". |
+| `src/components/layout/AppLayout.tsx` | Server component — calls `auth()` from Clerk, looks up DB user by `clerkId`. Redirects to `/sign-in` if no Clerk session; to `/setup` if authenticated but no DB user yet. Fetches badge counts and renders sidebar. |
+| `src/components/layout/Sidebar.tsx` | White sidebar. Nav: Home, All contracts, Upcoming renewals, Notifications. Live `actionRequired` amber badge. |
 
 ### UI primitives
 
 | File | Description |
 |---|---|
-| `src/components/ui/StatusBadge.tsx` | Pill badge. Active: #e6f4ec/#1a7f4b. Auto-renewed: #e8f0fe/#1a56db. Expired: rgba muted. `renewal_due` variant: #fff3e0/#b45309, label "Action required". All via inline `CONFIG` record keyed by `StatusVariant = ContractStatus \| "renewal_due"`. |
-| `src/components/ui/Button.tsx` | `primary`: rgba(0,0,0,0.05) bg + #171717 text + 0.5px border (gray, not green). `secondary`: same style. `danger`: rgba bg + #c0392b text. Padding via `SIZE_STYLE` (sm/md). |
-| `src/components/ui/BackLink.tsx` | `"use client"` component. Renders `← Back` as a plain link; color rgba(0,0,0,0.4) → #1a7f4b on hover; `marginBottom: "16px"`. Accepts `href` prop. Used on all sub-pages. |
-| `src/components/ui/KpiCard.tsx` | White card, 0.5px border, 12px radius. Label 12px muted, value 28px/600/-0.04em. Hover darkens border. |
-| `src/components/ui/EmptyState.tsx` | White card, 0.5px border, 12px radius, 48px padding. Muted document icon, 14px/500 heading, 13px muted subtext, secondary CTA button. |
-| `src/components/ui/Toast.tsx` | White card per toast, 0.5px border, 12px radius, modal shadow. Variant colour on icon only; message text always #171717. Auto-dismisses after 4 s. |
-| `src/components/ui/OfflineBanner.tsx` | #fff3e0 background, #b45309 text, 0.5px border-bottom. Sticky top, appears on `window offline`, auto-dismisses on `window online`. |
-| `src/components/ui/ErrorBoundary.tsx` | React class error boundary; rgba(0,0,0,0.05) icon circle, 14px/500 heading, "Try again" button; captures to Sentry via `componentDidCatch`. |
+| `src/components/ui/StatusBadge.tsx` | Pill badge for contract status. |
+| `src/components/ui/Button.tsx` | `primary`, `secondary`, `danger` variants; `sm`/`md` sizes. |
+| `src/components/ui/BackLink.tsx` | `← Back` link. |
+| `src/components/ui/KpiCard.tsx` | White card with label and value. |
+| `src/components/ui/EmptyState.tsx` | White card with icon, heading, subtext, CTA. |
+| `src/components/ui/Toast.tsx` | Auto-dismissing toast (4 s). |
+| `src/components/ui/OfflineBanner.tsx` | Sticky offline indicator. |
+| `src/components/ui/ErrorBoundary.tsx` | React class error boundary; captures to Sentry. |
 
-### Dashboard (Home)
+### Dashboard
 
 | File | Description |
 |---|---|
-| `src/components/dashboard/DashboardShell.tsx` | 28px/32px padding. 22px/600/-0.03em page title, client-side date subtitle. Secondary "Add contract" button top-right. Two sections: "All contracts" and "Upcoming renewals" (was "Action required"), each with 15px/600 header and "View all →" link in #171717. Onboarding checklist card (localStorage dismissal, admin-only). |
-| `src/components/dashboard/KpiRow.tsx` | Two KpiCard tiles: Total contracts and Action required, both linking to their respective pages. |
-| `src/components/dashboard/ContractTable.tsx` | White card table, 0.5px border, 12px radius. TH: 11px/500/muted/uppercase. TD: 13px/40px height/0.5px row borders. Row hover rgba(0,0,0,0.02). Full-row click to open contract. Uses `getDisplayStatus()` for badge. |
+| `src/components/dashboard/DashboardShell.tsx` | KPIs, contract tables, onboarding checklist. |
+| `src/components/dashboard/KpiRow.tsx` | Total contracts and Action required tiles. |
+| `src/components/dashboard/ContractTable.tsx` | White card table with `StatusBadge`. |
 
 ### All Contracts
 
 | File | Description |
 |---|---|
-| `src/components/contracts/ContractsShell.tsx` | Page shell — 22px/600 title, secondary "Add contract" button top-right, filter bar, empty states. |
-| `src/components/contracts/ContractFilters.tsx` | Single flex row, 8px gap. 280px search input, 34px-height selects. "Clear filters" as plain muted text button. No label wrappers. |
-| `src/components/contracts/ContractTableFull.tsx` | Same table pattern as ContractTable + Apple segmented control (gray pill / white active tab) for table/card toggle. Row count left-aligned muted text. |
-| `src/components/contracts/ContractCard.tsx` | White card, 0.5px border, 12px radius. Hover border darkens. Vendor 13px/500, group entity 11px muted, metadata as dl grid. |
+| `src/components/contracts/ContractsShell.tsx` | Page shell — title, "Add contract" button, filter bar, empty states. |
+| `src/components/contracts/ContractFilters.tsx` | Search + filter row. |
+| `src/components/contracts/ContractTableFull.tsx` | Table with table/card toggle. |
+| `src/components/contracts/ContractCard.tsx` | Card view per contract. |
 
 ### Contract Detail
 
 | File | Description |
 |---|---|
-| `src/components/contracts/detail/ContractDetailShell.tsx` | Split-pane: left pane #f5f5f7 with 0.5px right border, right panel 380px white. 44px header. "← Contracts" muted/hover-green back button. |
-| `src/components/contracts/detail/DocumentViewer.tsx` | Fetches signed R2 signed URL on mount; PDF in iframe (white bg, 0.5px border, 12px radius); download button for DOCX; loading/error states use design-token colors. |
-| `src/components/contracts/detail/PropertiesPanel.tsx` | Tab bar with 0.5px bottom border. Active tab: #1a7f4b text + 2px solid underline. Content: 20px/24px padding. Delete Contract button at bottom of Properties tab — two-step confirm; calls `DELETE /api/contracts/[id]`; hard-navigates to `/contracts` via `window.location.href` to bypass Next.js cache. Visible to `canEdit` users only. |
-| `src/components/contracts/detail/PropertiesTab.tsx` | Vendor name 16px/600/-0.02em. Field rows via `.prop-row` CSS class. SectionLabel dividers. Action banner: #fdecea bg. All date fields (start, end, notice deadline) are editable via `EditableField`. Notice deadline patches `renewalNoticeDeadline` directly; clearing sends `null`. |
-| `src/components/contracts/detail/EditableField.tsx` | Read mode: Edit button opacity-0 → group-hover → #1a7f4b. Edit mode: input + Save / Cancel. Toggle: #1a7f4b active pill / rgba inactive. |
-| `src/components/contracts/detail/EditableOwnersField.tsx` | Inline owner editor — names in read mode; `OwnerSelect` multi-select pill autocomplete in edit mode with Save/Cancel. |
-| `src/components/contracts/detail/DocumentsTab.tsx` | Three-column rows (filename/TypeBadge pill/date). Selected: rgba(26,127,75,0.06) bg + #1a7f4b text. Renewal versions indented with left border. |
-| `src/components/contracts/detail/AlertsTab.tsx` | Timing left + ChannelPill components + sent date. Remove button: opacity-0 → group-hover → #c0392b. |
-| `src/components/contracts/detail/AddAlertForm.tsx` | Inline with 0.5px top border. Flex row controls. Save / Cancel. |
+| `src/components/contracts/detail/ContractDetailShell.tsx` | Split-pane layout. |
+| `src/components/contracts/detail/DocumentViewer.tsx` | Fetches signed R2 URL; PDF iframe or DOCX download. |
+| `src/components/contracts/detail/PropertiesPanel.tsx` | Tab bar. Delete Contract (two-step, admin). |
+| `src/components/contracts/detail/PropertiesTab.tsx` | Editable contract fields. |
+| `src/components/contracts/detail/EditableField.tsx` | Inline edit with Save/Cancel. |
+| `src/components/contracts/detail/EditableOwnersField.tsx` | Inline owner multi-select. |
+| `src/components/contracts/detail/DocumentsTab.tsx` | Document list with type badges. |
+| `src/components/contracts/detail/AlertsTab.tsx` | Alert list with remove. |
+| `src/components/contracts/detail/AddAlertForm.tsx` | Inline add alert form. |
 
 ### Upload
 
 | File | Description |
 |---|---|
-| `src/components/upload/UploadShell.tsx` | Phase state machine (`upload → polling → review / error`). PageHeader with `<BackLink href="/contracts" />`. PollingDots animation. 2 s polling, 60 s timeout. |
-| `src/components/upload/UploadZone.tsx` | 0.5px dashed border drop zone; solid #1a7f4b + rgba tint on drag-over. File pill with × remove. Secondary "Upload" button. |
-| `src/components/upload/ExtractionReview.tsx` | Two-column layout: 55% AI preview / 45% editable form. Section labels. Vendor is mandatory (validated before save). Vendor dropdown uses `"__new__"` sentinel for "Create new supplier" option. Group entity dropdown has "Select group entity" placeholder. Field gap 20px, label margin-bottom 6px. Secondary "Confirm & save" button. Document record created with `type: "main"` after contract save. |
-| `src/components/upload/ContractFormFields.tsx` | Single-column 20px gap. 6px label margin. ConfidenceIndicator dot inline with label. Auto-renewal as Yes/No pill toggle (#1a7f4b active). Notice period wrapped in `.fade-in`. |
-| `src/components/upload/ConfidenceIndicator.tsx` | 6px dot: #1a7f4b (high), #d97706 (medium), rgba(0,0,0,0.2) (low/absent). Hover tooltip via useState. |
-| `src/components/upload/OwnerSelect.tsx` | rgba(0,0,0,0.06) pills with × remove. Dropdown: white card, 0.5px border, 8px radius, modal shadow. |
+| `src/components/upload/UploadShell.tsx` | Phase state machine: upload → polling → review / error. |
+| `src/components/upload/UploadZone.tsx` | Drag-and-drop zone. |
+| `src/components/upload/ExtractionReview.tsx` | Two-column AI preview / editable form. |
+| `src/components/upload/ContractFormFields.tsx` | Form fields with confidence indicators. |
+| `src/components/upload/ConfidenceIndicator.tsx` | Coloured dot with hover tooltip. |
+| `src/components/upload/OwnerSelect.tsx` | Multi-select pill autocomplete. |
 
-### Upcoming Renewals (was Action Required)
+### Upcoming Renewals
 
 | File | Description |
 |---|---|
-| `src/components/action-required/ActionRequiredShell.tsx` | Page header "Upcoming renewals". Same TH/TD table constants. ConfirmButton: #1a7f4b text + rgba(26,127,75,0.3) border + hover rgba fill. `fadingIds` Set for 200 ms opacity fade before row removal. Empty state: "No upcoming renewals". |
+| `src/components/action-required/ActionRequiredShell.tsx` | "Upcoming renewals" table with confirm and fade-out. |
 
 ### Notifications
 
 | File | Description |
 |---|---|
-| `src/components/notifications/NotificationsShell.tsx` | Overview shell with two sections (upcoming / sent). `SectionHeader` shows title, count, and always-visible "View all →" link. Manages add/edit form state via `FormMode` union type. |
-| `src/components/notifications/AlertsListShell.tsx` | Full-list shell used by `/notifications/upcoming` and `/notifications/sent`. Accepts `backHref` prop, renders `<BackLink>`. Client-side vendor name search filter. Same add/edit form pattern. |
-| `src/components/notifications/AlertsTable.tsx` | Client component. Columns: Supplier, Alert date, Notice deadline, End date, Trigger, Status, Actions. `DeleteButton` calls `DELETE /api/contracts/[id]/alerts/[alertId]` then `router.refresh()`. `onEdit` callback surfaces to parent shell. |
-| `src/components/notifications/AddEditAlertForm.tsx` | Add mode: contract `<select>` from `ContractOption[]`. Edit mode: contract name read-only, fields pre-filled. POSTs or PATCHes the alert API endpoint. |
+| `src/components/notifications/NotificationsShell.tsx` | Overview with upcoming/sent sections. |
+| `src/components/notifications/AlertsListShell.tsx` | Full-list shell with search filter. |
+| `src/components/notifications/AlertsTable.tsx` | Columns: Supplier, Alert date, Notice deadline, End date, Trigger, Status, Actions. |
+| `src/components/notifications/AddEditAlertForm.tsx` | Add/edit alert form. |
 
 ### Vendors
 
 | File | Description |
 |---|---|
-| `src/components/vendors/VendorList.tsx` | 28px/32px padding. 22px/600 title. 280px search input. White card table, consistent TH/TD constants. Row hover. |
-| `src/components/vendors/VendorDetail.tsx` | `<BackLink href="/vendors" />` replaces old breadcrumb nav. 22px/600 vendor name. dl metadata. Contract table with `StatusBadge` using `getDisplayStatus` (passes `autoRenewal` from `VendorContractRow`). |
-| `src/components/vendors/VendorEditForm.tsx` | 12px/500 field labels. Inline inputs. Secondary "Save changes" button + muted "Cancel" text button. |
+| `src/components/vendors/VendorList.tsx` | Vendor directory table with search. |
+| `src/components/vendors/VendorDetail.tsx` | Vendor name, metadata, contract table. |
+| `src/components/vendors/VendorEditForm.tsx` | Inline edit for vendor fields. |
 
 ### Settings — Users
 
 | File | Description |
 |---|---|
-| `src/components/settings/users/UserTable.tsx` | Row count above table. Compact selects (height 30px). Name + email stacked in one cell. Deactivate: opacity-0 group-hover → #c0392b. |
-| `src/components/settings/users/InviteUserForm.tsx` | White card, 0.5px border, 12px radius. 2-col name/email grid. Department field `.fade-in` when role=DepartmentOwner. Secondary "Send invite" submit button. |
+| `src/components/settings/users/UserTable.tsx` | User list with role selects and deactivate. |
+| `src/components/settings/users/InviteUserForm.tsx` | Invite form with role-conditional department field. |
 
 ### Settings — Departments
 
 | File | Description |
 |---|---|
-| `src/components/settings/departments/DepartmentList.tsx` | White card, ROW_STYLE (flex, 40px, 0.5px border-bottom). Hover-only Rename/Deactivate. Inline rename: Save / Cancel. Inactive: strikethrough muted. Secondary "Add department" button. |
+| `src/components/settings/departments/DepartmentList.tsx` | Department list with inline rename and deactivate. |
 
 ### Settings — Group Entities
 
 | File | Description |
 |---|---|
-| `src/components/settings/group-entities/GroupEntityList.tsx` | Same card/row pattern as DepartmentList without rename. Deactivate: opacity-0 group-hover → #c0392b. Secondary "Add" button. |
+| `src/components/settings/group-entities/GroupEntityList.tsx` | Group entity list with deactivate. |
 
 ### Settings — Account
 
 | File | Description |
 |---|---|
-| `src/components/settings/account/AccountSettingsForm.tsx` | Three SECTION_DIVIDER sections (Company / Slack / Tenant). Test result uses `.fade-in`. Secondary "Save" button. |
-| `src/components/settings/account/BillingSection.tsx` | Plan + trial pill badges. UsageMeter: 180px label / flex 4px bar (#1a7f4b fill, red at limit) / 60px count. |
+| `src/components/settings/account/AccountSettingsForm.tsx` | Company, Slack, and tenant settings. |
+| `src/components/settings/account/BillingSection.tsx` | Plan badges and usage meters. |
 
 ### Settings — Profile
 
 | File | Description |
 |---|---|
-| `src/components/settings/profile/ProfileForm.tsx` | Three SECTION_DIVIDER sections (Identity / Slack / Notification Preferences). Secondary "Save" button. |
+| `src/components/settings/profile/ProfileForm.tsx` | Identity, Slack, and notification preferences. |
 
 ---
 
-## Infrastructure & Auth (2026-05-01)
+## Infrastructure & Auth (2026-05-03)
 
-### Files changed
+### Auth0 → Clerk migration
+
+Full replacement of `@auth0/nextjs-auth0` with `@clerk/nextjs@7.3.0`.
 
 | File | Change |
 |---|---|
-| `src/proxy.ts` | Client IP extraction fixed for Vercel — `x-real-ip` checked first, then last entry of `x-forwarded-for` (first entry was a Vercel proxy IP, causing all users to share one rate-limit bucket). Temporary debug logging added and removed. |
-| `src/lib/auth/config.ts` | `appBaseUrl: process.env.APP_BASE_URL` added explicitly — Auth0 SDK v4 reads `APP_BASE_URL`, not `AUTH0_BASE_URL`; without it the SDK enters dynamic mode and state cookies can mismatch. Session cookie config (`secure`/`sameSite`) was added then reverted — SDK manages these automatically and explicit config broke state validation on Vercel's edge. |
-| `src/lib/security/rateLimit.ts` | Strict tier raised from 5 → 20/min for testing. Lower before go-live. |
-| `src/middleware.ts` | Created then deleted — Next.js 16 uses `proxy.ts`, not `middleware.ts`. Both cannot coexist. |
-| `package.json` | Build script updated to `prisma generate && next build`. |
+| `src/proxy.ts` | Replaced Auth0 + rate-limiting middleware with `clerkMiddleware()`. Public routes: `/sign-in(.*)`, `/sign-up(.*)`, `/api/billing/webhook`, `/api/webhooks/clerk`. |
+| `src/app/layout.tsx` | Added `<ClerkProvider>` wrapping `<html>/<body>`. |
+| `src/app/sign-in/[[...sign-in]]/page.tsx` | New — Clerk `<SignIn />` component. |
+| `src/app/sign-up/[[...sign-up]]/page.tsx` | New — Clerk `<SignUp />` component. |
+| `src/app/api/webhooks/clerk/route.ts` | New — `user.created` webhook provisions Tenant + Admin User. Verifies Svix signature. |
+| `src/lib/auth/session.ts` | Rewritten — `resolveAuthContext()` uses `auth()` from Clerk + `getUserByClerkId`. No longer requires Clerk org ID; resolves tenant from `user.tenantId`. |
+| `src/lib/db/users.ts` | `getUserByAuth0Id` replaced with `getUserByClerkId`. All `auth0Id` → `clerkId`. |
+| `src/types/index.ts` | `User.auth0Id` → `User.clerkId`. |
+| `prisma/schema.prisma` | `User.auth0Id` → `User.clerkId` (`@map("clerk_id")`). |
+| `src/env.ts` | Auth0 vars removed; Clerk vars added. |
+| `src/lib/security/headers.ts` | CSP updated: `*.clerk.com`, `*.clerk.accounts.dev`, `challenges.cloudflare.com` added to `script-src`, `connect-src`, `frame-src`. Auth0 domains removed. |
+| `src/lib/auth/config.ts` | **Deleted** — Auth0 client config no longer needed. |
+| `src/app/api/auth/[auth0]/route.ts` | **Deleted** — Auth0 route handler. |
+| `src/app/(auth)/signup/page.tsx` | **Deleted** — replaced by Clerk's `/sign-up`. |
+| `src/components/auth/SignupForm.tsx` | **Deleted** — replaced by Clerk's hosted UI. |
+
+### DB migration
+
+| Migration | Description |
+|---|---|
+| `prisma/migrations/20260501000000_rename_auth0id_to_clerkid` | `ALTER TABLE "users" RENAME COLUMN "auth0_id" TO "clerk_id"` — applied to Neon via `prisma migrate deploy`. |
 
 ### Production deployment notes (Vercel)
 
-- **Always access via `contrakt-zeta.vercel.app`**, never via Vercel preview deployment URLs. The transaction cookie is domain-scoped; if login happens on a preview URL but the Auth0 callback is registered for `contrakt-zeta.vercel.app`, the cookie won't be sent and the state fails.
-- **Required Vercel env vars**: `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET`, `APP_BASE_URL` (= `https://contrakt-zeta.vercel.app`), `AUTH0_BASE_URL` (same value, used by some tooling), plus all R2, DB, and optional service vars.
-- **Auth0 Post Login Action** must be deployed and added to the Login flow. It sets `https://contrakt.io/tenant_id` on the ID and access tokens from `event.user.app_metadata.tenant_id`. Without it, `AppLayout` sees no tenant claim and redirect-loops to login.
-- **`app_metadata.tenant_id`** must be set on each Auth0 user to the matching `Tenant.id` from the database. The signup route creates the DB row but does not yet write back to Auth0 app_metadata (TODO).
-- **Next.js 16**: middleware file is `proxy.ts` (not `middleware.ts`); exported function must be named `proxy`; runs in Node.js runtime.
+- **Required env vars**: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL` (`/sign-in`), `NEXT_PUBLIC_CLERK_SIGN_UP_URL` (`/sign-up`), `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` (`/dashboard`), `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` (`/setup`), `APP_BASE_URL`, `DATABASE_URL`, plus all R2 vars.
+- **Clerk webhook**: register `https://your-domain.vercel.app/api/webhooks/clerk` in the Clerk dashboard → Webhooks, subscribe to `user.created`, copy the signing secret to `CLERK_WEBHOOK_SECRET`.
+- **New user flow**: Clerk signup → `user.created` webhook → Tenant + User provisioned in DB → user redirected to `/setup` to configure workspace.
+- **`AppLayout` redirect logic**: no Clerk session → `/sign-in`; authenticated but no DB user → `/setup`; authenticated + DB user → renders app normally.
