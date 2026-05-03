@@ -48,8 +48,10 @@ The JSON object must have exactly these fields:
 async function pdfToText(buffer: Buffer): Promise<string> {
   // Dynamic import keeps pdfjs-dist out of the server chunk evaluated at startup.
   // The DOMMatrix/ImageData/Path2D stubs are in src/instrumentation.ts.
-  const { default: pdfParse } = await import("pdf-parse");
-  const result = await pdfParse(buffer);
+  const { PDFParse } = await import("pdf-parse");
+  const parser = new PDFParse({ data: buffer });
+  const result = await parser.getText();
+  await parser.destroy();
   if (!result.text.trim()) {
     throw new Error("No text layer found — the PDF may be a scanned image.");
   }
