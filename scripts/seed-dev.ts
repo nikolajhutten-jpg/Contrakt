@@ -5,11 +5,7 @@ config({ path: ".env.local" });
  * Development seed script.
  *
  * Inserts a local dev tenant and admin user into the database so the app's
- * local dev bypass (NODE_ENV === "development") has real rows to query.
- *
- * IDs match the constants in src/lib/auth/session.ts:
- *   DEV_AUTH0_ID  = "local-dev-user"
- *   DEV_TENANT_ID = "local-dev-tenant"
+ * local dev bypass has real rows to query.
  *
  * Usage:
  *   npm run seed:dev
@@ -21,7 +17,7 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const DEV_TENANT_ID = "local-dev-tenant";
-const DEV_AUTH0_ID  = "local-dev-user";
+const DEV_CLERK_ID  = "local-dev-user";
 const DEV_USER_ID   = "local-dev-user";
 
 async function main() {
@@ -56,23 +52,23 @@ async function main() {
 
     // ── User ─────────────────────────────────────────────────────────────────
     const existingUser = await db.user.findUnique({
-      where: { auth0Id: DEV_AUTH0_ID },
+      where: { clerkId: DEV_CLERK_ID },
     });
 
     if (existingUser) {
-      console.log(`✓ User already exists (auth0Id: ${DEV_AUTH0_ID})`);
+      console.log(`✓ User already exists (clerkId: ${DEV_CLERK_ID})`);
     } else {
       await db.user.create({
         data: {
           id:       DEV_USER_ID,
           tenantId: DEV_TENANT_ID,
-          auth0Id:  DEV_AUTH0_ID,
+          clerkId:  DEV_CLERK_ID,
           name:     "Dev User",
           email:    "dev@localhost.com",
           role:     "admin",
         },
       });
-      console.log(`✓ Created user (auth0Id: ${DEV_AUTH0_ID})`);
+      console.log(`✓ Created user (clerkId: ${DEV_CLERK_ID})`);
     }
 
     console.log("\nDone. You can now run `npm run dev`.");

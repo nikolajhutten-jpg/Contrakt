@@ -49,7 +49,7 @@ Files created to date, organised by layer.
 | File | Description |
 |---|---|
 | `src/lib/security/rateLimit.ts` | Upstash sliding-window rate limiter; three tiers: strict 5/min (auth), standard 60/min (mutations), relaxed 200/min (reads); lazy Redis init; fails open when Redis is unconfigured. |
-| `src/lib/security/headers.ts` | `getSecurityHeaders()` — returns the full set of security response headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions-Policy). CSP allows `*.r2.cloudflarestorage.com` and `*.eu.r2.cloudflarestorage.com` in `connect-src`, `frame-src`, and `img-src`; `blob:` in `frame-src`. |
+| `src/lib/security/headers.ts` | `getSecurityHeaders()` — returns the full set of security response headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions-Policy). CSP allows `*.r2.cloudflarestorage.com` and `*.eu.r2.cloudflarestorage.com` in `connect-src`, `frame-src`, and `img-src`; `blob:` in `frame-src`. Strict rate limit tier raised to 20/min for testing (was 5). |
 | `src/lib/security/sanitize.ts` | `sanitizeText` (strip HTML tags + entities), `sanitizeEmail` (validate + lowercase), `validateUUID` (UUID v4 regex) — boundary-level input sanitisation helpers. |
 | `src/lib/services/stripe.ts` | Stripe v22 singleton + helpers: `createCustomer`, `createCheckoutSession`, `createPortalSession`, `getSubscription`, `cancelSubscription`, `syncSeatCount`; imports `@/env` to trigger validation on startup. |
 | `src/lib/services/notifications.ts` | SendGrid email and Slack Incoming Webhook helpers; both retry up to 3 times with exponential backoff (§14.3); failures are logged but never thrown so a notification failure cannot crash the scheduler. |
@@ -94,7 +94,7 @@ Files created to date, organised by layer.
 | `src/app/api/contracts/[id]/documents/route.ts` | `GET` list and `POST` upload linked documents for a contract. |
 | `src/app/api/contracts/[id]/alerts/route.ts` | `GET` list and `POST` create notification alerts for a contract. |
 | `src/app/api/contracts/[id]/alerts/[alertId]/route.ts` | `PATCH` update and `DELETE` remove a specific alert. |
-| `src/app/api/documents/[docId]/url/route.ts` | `GET` — returns a signed GCS URL for viewing a document (placeholder; GCS not yet wired). |
+| `src/app/api/documents/[docId]/url/route.ts` | `GET` — returns a signed R2 URL for viewing a document (Cloudflare R2 via AWS SDK presigner, 1-hour expiry). |
 | `src/app/api/group-entities/route.ts` | `GET` list active group entities for tenant. `POST` create (admin only). |
 | `src/app/api/group-entities/[id]/route.ts` | `DELETE` soft-deactivates a group entity (admin only). |
 | `src/app/api/vendors/route.ts` | `GET` list and `POST` create vendors. |
@@ -277,3 +277,25 @@ Files created to date, organised by layer.
 | File | Description |
 |---|---|
 | `src/components/settings/profile/ProfileForm.tsx` | Three SECTION_DIVIDER sections (Identity / Slack / Notification Preferences). Secondary "Save" button. |
+
+---
+
+## Infrastructure & Auth (2026-05-01)
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `src/proxy.ts` | Client IP extraction fixed for Vercel — `x-real-ip` checked first, then last entry of `x-forwarded-for` (first entry was a Vercel proxy IP, causing all users to share one rate-limit bucket). Temporary debug logging added and removed. |
+| `src/lib/auth/config.ts` | `appBaseUrl: process.env.APP_BASE_URL` added explicitly — Auth0 SDK v4 reads `APP_BASE_URL`, not `AUTH0_BASE_URL`; without it the SDK enters dynamic mode and state cookies can mismatch. Session cookie config (`secure`/`sameSite`) was added then reverted — SDK manages these automatically and explicit config broke state validation on Vercel's edge. |
+| `src/lib/security/rateLimit.ts` | Strict tier raised from 5 → 20/min for testing. Lower before go-live. |
+| `src/middleware.ts` | Created then deleted — Next.js 16 uses `proxy.ts`, not `middleware.ts`. Both cannot coexist. |
+| `package.json` | Build script updated to `prisma generate && next build`. |
+
+### Production deployment notes (Vercel)
+
+- **Always access via `contrakt-zeta.vercel.app`**, never via Vercel preview deployment URLs. The transaction cookie is domain-scoped; if login happens on a preview URL but the Auth0 callback is registered for `contrakt-zeta.vercel.app`, the cookie won't be sent and the state fails.
+- **Required Vercel env vars**: `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET`, `APP_BASE_URL` (= `https://contrakt-zeta.vercel.app`), `AUTH0_BASE_URL` (same value, used by some tooling), plus all R2, DB, and optional service vars.
+- **Auth0 Post Login Action** must be deployed and added to the Login flow. It sets `https://contrakt.io/tenant_id` on the ID and access tokens from `event.user.app_metadata.tenant_id`. Without it, `AppLayout` sees no tenant claim and redirect-loops to login.
+- **`app_metadata.tenant_id`** must be set on each Auth0 user to the matching `Tenant.id` from the database. The signup route creates the DB row but does not yet write back to Auth0 app_metadata (TODO).
+- **Next.js 16**: middleware file is `proxy.ts` (not `middleware.ts`); exported function must be named `proxy`; runs in Node.js runtime.

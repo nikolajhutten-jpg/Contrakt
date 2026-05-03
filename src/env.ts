@@ -13,12 +13,10 @@ import { z } from "zod";
  */
 export const env = createEnv({
   server: {
-    // ── Auth0 ────────────────────────────────────────────────────────────────
-    AUTH0_DOMAIN:        z.string().min(1),
-    AUTH0_CLIENT_ID:     z.string().min(1),
-    AUTH0_CLIENT_SECRET: z.string().min(1),
-    AUTH0_SECRET:        z.string().min(1),
-    APP_BASE_URL:        z.string().url(),
+    // ── Clerk ────────────────────────────────────────────────────────────────
+    CLERK_SECRET_KEY:        z.string().min(1),
+    CLERK_WEBHOOK_SECRET:    z.string().min(1).optional(),
+    APP_BASE_URL:     z.string().url(),
 
     // ── Database ─────────────────────────────────────────────────────────────
     DATABASE_URL: z.string().url(),
@@ -55,11 +53,15 @@ export const env = createEnv({
   },
 
   client: {
+    // ── Clerk (client-side, must be NEXT_PUBLIC_) ────────────────────────────
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+
     // ── Sentry (client-side, must be NEXT_PUBLIC_) ────────────────────────────
     NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   },
 
   experimental__runtimeEnv: {
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
 });

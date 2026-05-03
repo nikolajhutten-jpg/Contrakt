@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { resolveAuthContext } from "@/lib/auth/session";
+import { auth } from "@clerk/nextjs/server";
+import { getUserByClerkId } from "@/lib/db/users";
 import { getDepartmentsByTenant } from "@/lib/db/departments";
 import { getOnboardingState } from "@/lib/db/dashboard";
 import SetupWizard from "@/components/setup/SetupWizard";
@@ -9,30 +10,38 @@ export const metadata = { title: "Workspace setup — Contrakt" };
 
 /**
  * Setup wizard page (§13.4).
- * Admin-only. Shown once after sign-up until the workspace is configured.
- * Non-admins are redirected to the dashboard.
- * If setup is already complete (departments exist) redirect to dashboard.
+ * Requires only a valid Clerk session — no DB user needed yet.
+ * If a DB user exists and is not admin, redirect to dashboard.
+ * If setup is already complete, redirect to dashboard.
  */
 export default async function SetupPage() {
-  const { localUser, tenantId } = await resolveAuthContext();
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-  if (localUser.role !== UserRole.Admin) {
-    redirect("/dashboard");
+  const localUser = await getUserByClerkId(userId);
+
+  // If DB user exists, apply role and completion checks
+  if (localUser) {
+    if (localUser.role !== UserRole.Admin) {
+      redirect("/dashboard");
+    }
+
+    const [departments, onboarding] = await Promise.all([
+      getDepartmentsByTenant(localUser.tenantId),
+      getOnboardingState(localUser.tenantId),
+    ]);
+
+    if (
+      onboarding.departmentsAdded &&
+      onboarding.firstUserInvited &&
+      onboarding.slackConnected
+    ) {
+      redirect("/dashboard");
+    }
+
+    return <SetupWizard initialDepartments={departments} />;
   }
 
-  const [departments, onboarding] = await Promise.all([
-    getDepartmentsByTenant(tenantId),
-    getOnboardingState(tenantId),
-  ]);
-
-  // If all setup steps are already done, skip wizard
-  if (
-    onboarding.departmentsAdded &&
-    onboarding.firstUserInvited &&
-    onboarding.slackConnected
-  ) {
-    redirect("/dashboard");
-  }
-
-  return <SetupWizard initialDepartments={departments} />;
+  // No DB user yet — fresh Clerk signup, show wizard with empty state
+  return <SetupWizard initialDepartments={[]} />;
 }

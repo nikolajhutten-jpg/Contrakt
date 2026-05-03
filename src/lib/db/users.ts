@@ -1,26 +1,23 @@
-import { db } from "@/lib/db/client";
+import { db as prisma } from "@/lib/db/client";
 import type { User, UserRole } from "@/types";
 
 export async function getUserById(
   userId: string,
   tenantId: string,
 ): Promise<User | null> {
-  return db.user.findFirst({
+  return prisma.user.findFirst({
     where: { id: userId, tenantId },
   });
 }
 
-export async function getUserByAuth0Id(
-  auth0Id: string,
-  tenantId: string,
-): Promise<User | null> {
-  return db.user.findFirst({
-    where: { auth0Id, tenantId },
-  });
+export async function getUserByClerkId(clerkId: string) {
+  return prisma.user.findFirst({
+    where: { clerkId },
+  })
 }
 
 export async function getUsersByTenant(tenantId: string): Promise<User[]> {
-  return db.user.findMany({
+  return prisma.user.findMany({
     where: { tenantId },
     orderBy: { name: "asc" },
   });
@@ -28,7 +25,7 @@ export async function getUsersByTenant(tenantId: string): Promise<User[]> {
 
 export interface CreateUserInput {
   tenantId: string;
-  auth0Id: string;
+  clerkId: string;
   name: string;
   email: string;
   role: UserRole;
@@ -36,10 +33,10 @@ export interface CreateUserInput {
 }
 
 export async function createUser(input: CreateUserInput): Promise<User> {
-  return db.user.create({
+  return prisma.user.create({
     data: {
       tenantId: input.tenantId,
-      auth0Id: input.auth0Id,
+      clerkId: input.clerkId,
       name: input.name,
       email: input.email,
       role: input.role,
@@ -61,7 +58,7 @@ export async function updateUser(
   tenantId: string,
   input: UpdateUserInput,
 ): Promise<User> {
-  return db.user.update({
+  return prisma.user.update({
     where: { id: userId, tenantId },
     data: input,
   });
@@ -75,7 +72,7 @@ export async function deactivateUser(
   userId: string,
   tenantId: string,
 ): Promise<void> {
-  await db.user.delete({
+  await prisma.user.delete({
     where: { id: userId, tenantId },
   });
 }

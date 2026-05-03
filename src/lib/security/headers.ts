@@ -6,17 +6,16 @@
  *     TODO: replace with nonce-based CSP before go-live for stronger security.
  *   - storage.googleapis.com and *.r2.cloudflarestorage.com are allowed in
  *     connect-src, frame-src, and img-src for signed-URL document loading.
- *   - form-action includes Auth0 to permit the Universal Login redirect form.
  *   - No Stripe or Slack domains are needed in client CSP — those integrations
- *     are server-to-server only. Auth0 login is redirect-based (no embedded JS).
+ *     are server-to-server only.
  */
 
 // In development, React's error overlay and fast-refresh use eval internally.
 // 'unsafe-eval' is only added to script-src in that environment.
 const scriptSrc =
   process.env.NODE_ENV === "development"
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : "script-src 'self' 'unsafe-inline'";
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com"
+    : "script-src 'self' 'unsafe-inline' https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com";
 
 const CSP = [
   "default-src 'self'",
@@ -25,17 +24,16 @@ const CSP = [
   scriptSrc,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
-  // GCS signed URLs for document fetching; Auth0 for token refresh calls; R2 for Cloudflare-hosted documents
-  "connect-src 'self' https://storage.googleapis.com https://*.auth0.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
+  // GCS signed URLs for document fetching; Clerk for auth API calls; R2 for Cloudflare-hosted documents
+  "connect-src 'self' https://storage.googleapis.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
   // PDF iframe viewer loads signed URLs in an iframe
-  "frame-src 'self' blob: https://storage.googleapis.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
+  "frame-src 'self' blob: https://storage.googleapis.com https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
   // Prevents this app from being embedded in iframes (clickjacking defence)
   "frame-ancestors 'none'",
   "font-src 'self' data:",
   "object-src 'none'",
   "base-uri 'self'",
-  // Auth0 Universal Login receives form submissions during the OAuth flow
-  "form-action 'self' https://*.auth0.com",
+  "form-action 'self'",
 ]
   .join("; ");
 

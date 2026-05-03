@@ -16,8 +16,8 @@ export async function GET(): Promise<Response> {
 }
 
 // POST /api/users — invite user by email (admin only)
-// Creates the local user record. Auth0 invite email is sent via a separate
-// Auth0 Management API call (to be wired up in the service layer).
+// Creates the local user record. Clerk invite email is sent via a separate
+// Clerk Backend API call (to be wired up in the service layer).
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const { tenantId } = await requireRole([UserRole.Admin]);
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     const user = await createUser({
       tenantId,
-      auth0Id: input.auth0Id,
+      clerkId: input.clerkId,
       name: input.name,
       email: input.email,
       role: input.role,
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 }
 
 type ParsedInput = {
-  auth0Id: string;
+  clerkId: string;
   name: string;
   email: string;
   role: UserRole;
@@ -55,8 +55,8 @@ function parseInput(body: unknown): ParsedInput | string {
   if (typeof body !== "object" || body === null) return "Body must be JSON.";
   const b = body as Record<string, unknown>;
 
-  if (typeof b.auth0Id !== "string" || b.auth0Id.trim() === "")
-    return "auth0Id is required.";
+  if (typeof b.clerkId !== "string" || b.clerkId.trim() === "")
+    return "clerkId is required.";
   if (typeof b.name !== "string" || b.name.trim() === "")
     return "name is required.";
   if (typeof b.email !== "string" || b.email.trim() === "")
@@ -65,7 +65,7 @@ function parseInput(body: unknown): ParsedInput | string {
     return `role must be one of: ${VALID_ROLES.join(", ")}.`;
 
   return {
-    auth0Id: b.auth0Id.trim(),
+    clerkId: b.clerkId.trim(),
     name: b.name.trim(),
     email: b.email.trim(),
     role: b.role as UserRole,

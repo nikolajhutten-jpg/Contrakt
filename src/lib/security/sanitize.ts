@@ -32,7 +32,7 @@ const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
  * Returns the lowercase-trimmed email if valid, or null if invalid.
  *
  * Validation is intentionally lenient — a strict regex rejects valid addresses.
- * Auth0 and SendGrid perform authoritative validation at send time.
+ * SendGrid performs authoritative validation at send time.
  *
  * @example sanitizeEmail("  Jane@Example.COM  ") → "jane@example.com"
  * @example sanitizeEmail("not-an-email")         → null

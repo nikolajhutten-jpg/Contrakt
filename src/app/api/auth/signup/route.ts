@@ -25,15 +25,12 @@ function toSlug(name: string): string {
  *   4. Returns the new tenant and user IDs.
  *
  * TODO (production wiring):
- *   - Call Auth0 Management API to create an Auth0 organisation and user,
- *     then use the returned Auth0 user ID as `auth0Id` instead of the placeholder.
- *   - Send a verification email via SendGrid; block sign-in until verified.
+ *   - Wire up a Clerk webhook (svix) to receive user.created events and use
+ *     the Clerk user ID as clerkId instead of the placeholder.
  *   - Provision a real GCS bucket: Storage.createBucket(`contrakt-${slug}-documents`)
  *     and lock it to the tenant's service account.
  *   - Seed a default notification alert template (2 months before renewal notice
  *     deadline, via email) once a contract management flow exists for global defaults.
- *   - After email verification, Auth0 redirects to /api/auth/callback which should
- *     detect a new tenant and redirect to /setup.
  */
 export async function POST(request: NextRequest): Promise<Response> {
   try {
@@ -67,12 +64,12 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     const tenant = await createTenant({ name: companyName, slug, gcsBucket, trialEndsAt });
 
-    // TODO: replace placeholder with real Auth0 user ID returned by Management API
-    const auth0Id = `signup:${crypto.randomUUID()}`;
+    // TODO: replace placeholder with real Clerk user ID from webhook
+    const clerkId = `signup:${crypto.randomUUID()}`;
 
     const user = await createUser({
       tenantId: tenant.id,
-      auth0Id,
+      clerkId,
       name,
       email,
       role: UserRole.Admin,

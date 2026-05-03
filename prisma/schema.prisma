@@ -102,7 +102,7 @@ model Tenant {
 model User {
   id           String    @id @default(uuid())
   tenantId     String    @map("tenant_id")
-  auth0Id      String    @unique @map("auth0_id")
+  clerkId      String    @unique @map("clerk_id")
   name         String
   email        String
   role         UserRole

@@ -9,9 +9,9 @@ const VALID_ROLES = Object.values(UserRole) as string[];
 /**
  * POST /api/users/invite
  * Creates a local user record for an invited user.
- * In production: call Auth0 Management API first to provision the user and
- * send the invite email; use the returned auth0Id here.
- * For now a placeholder auth0Id is generated so the record can be created
+ * In production: call Clerk Backend API first to provision the user and
+ * send the invite email; use the returned Clerk user ID here.
+ * For now a placeholder clerkId is generated so the record can be created
  * immediately.
  */
 export async function POST(request: NextRequest): Promise<Response> {
@@ -34,12 +34,12 @@ export async function POST(request: NextRequest): Promise<Response> {
     const email = b.email.trim();
     const role = b.role as UserRole;
 
-    // Placeholder until Auth0 Management API is wired up
-    const auth0Id = `invite:${crypto.randomUUID()}`;
+    // Placeholder until Clerk Backend API is wired up
+    const clerkId = `invite:${crypto.randomUUID()}`;
 
     const user = await createUser({
       tenantId,
-      auth0Id,
+      clerkId,
       name: b.name.trim(),
       email,
       role,

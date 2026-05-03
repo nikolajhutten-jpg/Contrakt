@@ -101,7 +101,7 @@ export interface Tenant {
 export interface User {
   id: string;
   tenantId: string;
-  auth0Id: string;
+  clerkId: string;
   name: string;
   email: string;
   role: UserRole;
