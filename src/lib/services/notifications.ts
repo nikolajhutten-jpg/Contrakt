@@ -1,13 +1,13 @@
 /**
- * Outbound notification helpers — email via SendGrid and Slack via Incoming Webhooks.
+ * Outbound notification helpers — email via Resend and Slack via Incoming Webhooks.
  * Both functions retry up to 3 times with exponential backoff per §14.3.
  * Failures are logged but never thrown — a notification failure must not crash the scheduler.
  */
-import sgMail from "@sendgrid/mail";
+import { Resend } from "resend";
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY ?? "");
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL ?? "noreply@contrakt.io";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "noreply@contrakt.io";
 const BASE_RETRY_MS = 1_000;
 
 function sleep(ms: number): Promise<void> {
@@ -41,7 +41,7 @@ async function retryWithBackoff(
 }
 
 /**
- * Sends a plain-text email via SendGrid.
+ * Sends a plain-text email via Resend.
  * §14.3: retries up to 3 times. Returns true on success, false on final failure.
  */
 export async function sendEmailNotification(
@@ -50,7 +50,8 @@ export async function sendEmailNotification(
   body: string,
 ): Promise<boolean> {
   return retryWithBackoff(async () => {
-    await sgMail.send({ to, from: FROM_EMAIL, subject, text: body });
+    const { error } = await resend.emails.send({ from: FROM_EMAIL, to, subject, text: body });
+    if (error) throw new Error(error.message);
   }, `email → ${to} "${subject}"`);
 }
 

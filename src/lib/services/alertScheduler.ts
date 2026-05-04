@@ -132,10 +132,12 @@ async function dispatch(alert: AlertRow, now: Date): Promise<void> {
  *
  * Pass `tenantId` to scope the run to a single tenant; omit to run across all tenants.
  * §6: covers the "X months/days before renewal notice deadline" and "before end date" triggers.
+ * Returns the number of alerts that were fired.
  */
-export async function checkAndFireAlerts(tenantId?: string): Promise<void> {
+export async function checkAndFireAlerts(tenantId?: string): Promise<number> {
   const now = new Date();
   const alerts = await queryPendingAlerts(tenantId);
+  let fired = 0;
 
   for (const alert of alerts) {
     const { contract } = alert;
@@ -151,5 +153,8 @@ export async function checkAndFireAlerts(tenantId?: string): Promise<void> {
     if (!triggerDate || triggerDate > now) continue;
 
     await dispatch(alert, now);
+    fired++;
   }
+
+  return fired;
 }

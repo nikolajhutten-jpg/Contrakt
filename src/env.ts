@@ -21,9 +21,9 @@ export const env = createEnv({
     // ── Database ─────────────────────────────────────────────────────────────
     DATABASE_URL: z.string().url(),
 
-    // ── SendGrid (optional in local dev) ─────────────────────────────────────
-    SENDGRID_API_KEY:    z.string().startsWith("SG.").optional(),
-    SENDGRID_FROM_EMAIL: z.string().email().optional(),
+    // ── Resend (optional in local dev) ───────────────────────────────────────
+    RESEND_API_KEY:    z.string().min(1).optional(),
+    RESEND_FROM_EMAIL: z.string().email().optional(),
 
     // ── Scheduler (optional in local dev) ────────────────────────────────────
     SCHEDULER_SECRET: z.string().min(1).optional(),
