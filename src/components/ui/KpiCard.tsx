@@ -18,7 +18,6 @@ const VALUE_COLOR: Record<NonNullable<KpiCardProps["valueColor"]>, string> = {
 
 const CARD_STYLE: React.CSSProperties = {
   background: "#ffffff",
-  border: "0.5px solid rgba(0,0,0,0.08)",
   borderRadius: "12px",
   padding: "14px 16px",
 };
@@ -53,22 +52,13 @@ export default function KpiCard({
     return (
       <Link
         href={href}
-        className="block transition-colors"
-        style={{
-          ...CARD_STYLE,
-          textDecoration: "none",
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.14)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.08)";
-        }}
+        className="kpi-card block"
+        style={{ ...CARD_STYLE, textDecoration: "none" }}
       >
         {inner}
       </Link>
     );
   }
 
-  return <div style={CARD_STYLE}>{inner}</div>;
+  return <div className="kpi-card" style={CARD_STYLE}>{inner}</div>;
 }

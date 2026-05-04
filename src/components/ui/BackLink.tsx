@@ -10,18 +10,12 @@ export default function BackLink({ href }: BackLinkProps) {
   return (
     <Link
       href={href}
+      className="back-link"
       style={{
         fontSize: "13px",
-        color: "rgba(0,0,0,0.4)",
         textDecoration: "none",
         display: "inline-block",
         marginBottom: "16px",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.color = "#1a7f4b";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)";
       }}
     >
       ← Back

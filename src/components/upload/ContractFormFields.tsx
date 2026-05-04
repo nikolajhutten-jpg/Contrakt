@@ -1,9 +1,29 @@
 "use client";
 
+import ComboSelect from "@/components/ui/ComboSelect";
+import OwnerSelect from "@/components/upload/OwnerSelect";
 import ConfidenceIndicator from "@/components/upload/ConfidenceIndicator";
-import type { ConfidenceRatings } from "@/types";
+import type { ConfidenceRatings, User } from "@/types";
+
+async function postUser(name: string): Promise<User> {
+  const res = await fetch("/api/users/invite", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name,
+      email: `invite-${Date.now()}@placeholder.local`,
+      role: "business_owner",
+    }),
+  });
+  const json = await res.json() as { data?: User; error?: string };
+  if (!res.ok) throw new Error(json.error ?? "Failed to create user.");
+  return json.data!;
+}
 
 export interface FieldValues {
+  vendorId: string | null;
+  groupEntityId: string | null;
+  departmentId: string | null;
   startDate: string;
   endDate: string;
   termType: string;
@@ -13,10 +33,18 @@ export interface FieldValues {
   renewalNoticePeriodUnit: string;
 }
 
+interface Option { id: string; name: string; }
+
 interface ContractFormFieldsProps {
   values: FieldValues;
   confidence: ConfidenceRatings | null;
   onChange: (patch: Partial<FieldValues>) => void;
+  vendors: Option[];
+  groupEntities: Option[];
+  departments: Option[];
+  users: User[];
+  ownerIds: string[];
+  onOwnersChange: (ids: string[]) => void;
 }
 
 function FieldRow({
@@ -39,13 +67,68 @@ function FieldRow({
   );
 }
 
+async function postOption(path: string, name: string): Promise<Option> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  const json = await res.json() as { data?: Option; error?: string };
+  if (!res.ok) throw new Error(json.error ?? `Failed to create entry.`);
+  return json.data!;
+}
+
 export default function ContractFormFields({
   values,
   confidence,
   onChange,
+  vendors,
+  groupEntities,
+  departments,
+  users,
+  ownerIds,
+  onOwnersChange,
 }: ContractFormFieldsProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      <FieldRow label="Supplier / vendor">
+        <ComboSelect
+          options={vendors}
+          value={values.vendorId}
+          onChange={(id) => onChange({ vendorId: id })}
+          onCreateNew={(name) => postOption("/api/vendors", name)}
+          placeholder="Search or create vendor…"
+        />
+      </FieldRow>
+
+      <FieldRow label="Group entity">
+        <select
+          value={values.groupEntityId ?? ""}
+          onChange={(e) => onChange({ groupEntityId: e.target.value || null })}
+        >
+          <option value="">Select group entity</option>
+          {groupEntities.map((g) => (
+            <option key={g.id} value={g.id}>{g.name}</option>
+          ))}
+        </select>
+      </FieldRow>
+
+      <FieldRow label="Department">
+        <select
+          value={values.departmentId ?? ""}
+          onChange={(e) => onChange({ departmentId: e.target.value || null })}
+        >
+          <option value="">Select department</option>
+          {departments.map((d) => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+      </FieldRow>
+
+      <FieldRow label="Business owners">
+        <OwnerSelect users={users} selected={ownerIds} onChange={onOwnersChange} onCreateNew={postUser} />
+      </FieldRow>
+
       <FieldRow
         label="Start date"
         confidence={<ConfidenceIndicator level={confidence?.start_date} />}

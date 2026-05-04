@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import ContractFormFields from "@/components/upload/ContractFormFields";
-import OwnerSelect from "@/components/upload/OwnerSelect";
 import ConfidenceIndicator from "@/components/upload/ConfidenceIndicator";
 import type { FieldValues } from "@/components/upload/ContractFormFields";
 import type { ExtractionOutput, ConfidenceRatings, Vendor, Department, User, GroupEntity } from "@/types";
@@ -14,6 +13,10 @@ interface ExtractionReviewProps {
   fileName: string;
   fileFormat: string;
   filePath: string | null;
+  vendors: Vendor[];
+  departments: Department[];
+  groupEntities: GroupEntity[];
+  users: User[];
 }
 
 const SECTION_LABEL: React.CSSProperties = {
@@ -24,27 +27,11 @@ const SECTION_LABEL: React.CSSProperties = {
   letterSpacing: "0.06em",
 };
 
-const FIELD_LABEL: React.CSSProperties = {
-  display: "block",
-  fontSize: "12px",
-  fontWeight: 500,
-  color: "#171717",
-  marginBottom: "6px",
-};
-
 function str(v: string | number | boolean | null | undefined): string {
   return v === null || v === undefined ? "" : String(v);
 }
 
-function ExRow({
-  label,
-  value,
-  conf,
-}: {
-  label: string;
-  value: string;
-  conf?: React.ReactNode;
-}) {
+function ExRow({ label, value, conf }: { label: string; value: string; conf?: React.ReactNode }) {
   return (
     <div style={{ display: "flex", alignItems: "center", padding: "8px 0", borderBottom: "0.5px solid rgba(0,0,0,0.05)" }}>
       <span style={{ width: "45%", fontSize: "11px", fontWeight: 500, color: "rgba(0,0,0,0.4)", flexShrink: 0 }}>
@@ -58,20 +45,18 @@ function ExRow({
   );
 }
 
-export default function ExtractionReview({ extracted, confidence, fileName, fileFormat, filePath }: ExtractionReviewProps) {
+export default function ExtractionReview({
+  extracted, confidence, fileName, fileFormat, filePath,
+  vendors, departments, groupEntities, users,
+}: ExtractionReviewProps) {
   const router = useRouter();
   const [saving, startSave] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [groupEntities, setGroupEntities] = useState<GroupEntity[]>([]);
-  const [vendorId, setVendorId] = useState("");
-  const [newVendorName, setNewVendorName] = useState(str(extracted?.vendor_name));
-  const [departmentId, setDepartmentId] = useState("");
-  const [groupEntityId, setGroupEntityId] = useState("");
   const [ownerIds, setOwnerIds] = useState<string[]>([]);
   const [fields, setFields] = useState<FieldValues>({
+    vendorId: null,
+    groupEntityId: null,
+    departmentId: null,
     startDate: str(extracted?.start_date),
     endDate: str(extracted?.end_date),
     termType: str(extracted?.term_type),
@@ -81,27 +66,13 @@ export default function ExtractionReview({ extracted, confidence, fileName, file
     renewalNoticePeriodUnit: str(extracted?.renewal_notice_period_unit),
   });
 
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/vendors").then((r) => r.json()) as Promise<{ data: Vendor[] }>,
-      fetch("/api/departments").then((r) => r.json()) as Promise<{ data: Department[] }>,
-      fetch("/api/users").then((r) => r.json()) as Promise<{ data: User[] }>,
-      fetch("/api/group-entities").then((r) => r.json()) as Promise<{ data: GroupEntity[] }>,
-    ]).then(([v, d, u, g]) => {
-      setVendors(v.data ?? []);
-      setDepartments(d.data ?? []);
-      setUsers(u.data ?? []);
-      setGroupEntities(g.data ?? []);
-    });
-  }, []);
-
   function handleSave() {
     setSaveError(null);
-    if (!vendorId) {
+    if (!fields.vendorId) {
       setSaveError("Please select or create a supplier.");
       return;
     }
-    if (!fields.startDate || !fields.endDate || !fields.termType || !departmentId) {
+    if (!fields.startDate || !fields.endDate || !fields.termType || !fields.departmentId) {
       setSaveError("Start date, end date, term, and department are required.");
       return;
     }
@@ -110,26 +81,17 @@ export default function ExtractionReview({ extracted, confidence, fileName, file
       return;
     }
     startSave(async () => {
-      let resolvedVendorId = vendorId === "__new__" ? "" : vendorId;
-      if (!resolvedVendorId) {
-        if (!newVendorName.trim()) { setSaveError("Vendor name is required."); return; }
-        const vRes = await fetch("/api/vendors", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: newVendorName.trim() }),
-        });
-        const vJson = await vRes.json() as { data?: Vendor; error?: string };
-        if (!vRes.ok) { setSaveError(vJson.error ?? "Failed to create vendor."); return; }
-        resolvedVendorId = vJson.data!.id;
-      }
       const res = await fetch("/api/contracts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          vendorId: resolvedVendorId, departmentId,
-          groupEntityId: groupEntityId || null,
-          startDate: fields.startDate, endDate: fields.endDate,
-          termType: fields.termType, autoRenewal: fields.autoRenewal,
+          vendorId: fields.vendorId,
+          departmentId: fields.departmentId,
+          groupEntityId: fields.groupEntityId || null,
+          startDate: fields.startDate,
+          endDate: fields.endDate,
+          termType: fields.termType,
+          autoRenewal: fields.autoRenewal,
           renewalPeriodMonths: fields.renewalPeriodMonths ? Number(fields.renewalPeriodMonths) : null,
           renewalNoticePeriodValue: fields.renewalNoticePeriodValue ? Number(fields.renewalNoticePeriodValue) : null,
           renewalNoticePeriodUnit: fields.renewalNoticePeriodUnit || null,
@@ -141,17 +103,11 @@ export default function ExtractionReview({ extracted, confidence, fileName, file
 
       const contractId = json.data!.id;
 
-      // Create the document record if we have a stored file
       if (filePath && fileFormat) {
         await fetch(`/api/contracts/${contractId}/documents`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "main",
-            fileName,
-            filePath,
-            fileFormat,
-          }),
+          body: JSON.stringify({ type: "main", fileName, filePath, fileFormat }),
         });
       }
 
@@ -206,46 +162,16 @@ export default function ExtractionReview({ extracted, confidence, fileName, file
         <div style={{ width: "45%", paddingLeft: "32px", display: "flex", flexDirection: "column", gap: "20px" }}>
           <div style={SECTION_LABEL}>Contract details</div>
 
-          <div>
-            <label style={FIELD_LABEL}>Supplier / vendor</label>
-            <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} style={{ marginBottom: "8px" }}>
-              <option value="" disabled>Select supplier or vendor</option>
-              {vendors.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-              <option value="__new__">Create new supplier or vendor</option>
-            </select>
-            {vendorId === "__new__" && (
-              <input type="text" value={newVendorName} onChange={(e) => setNewVendorName(e.target.value)}
-                placeholder="New vendor name" />
-            )}
-          </div>
-
-          <div>
-            <label style={FIELD_LABEL}>Group entity</label>
-            <select value={groupEntityId} onChange={(e) => setGroupEntityId(e.target.value)}>
-              <option value="">Select group entity</option>
-              {groupEntities.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label style={FIELD_LABEL}>Department</label>
-            <select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
-              <option value="">Select department</option>
-              {departments.filter((d) => d.isActive).map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label style={FIELD_LABEL}>Business owners</label>
-            <OwnerSelect users={users} selected={ownerIds} onChange={setOwnerIds} />
-          </div>
-
           <ContractFormFields
             values={fields}
             confidence={confidence}
             onChange={(patch) => setFields((prev) => ({ ...prev, ...patch }))}
+            vendors={vendors}
+            groupEntities={groupEntities}
+            departments={departments.filter((d) => d.isActive)}
+            users={users}
+            ownerIds={ownerIds}
+            onOwnersChange={setOwnerIds}
           />
 
           {saveError && (

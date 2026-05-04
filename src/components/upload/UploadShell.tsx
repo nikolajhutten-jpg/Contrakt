@@ -6,7 +6,7 @@ import ExtractionReview from "@/components/upload/ExtractionReview";
 import UploadDocumentViewer from "@/components/upload/UploadDocumentViewer";
 import Button from "@/components/ui/Button";
 import BackLink from "@/components/ui/BackLink";
-import type { ExtractionOutput, ConfidenceRatings } from "@/types";
+import type { ExtractionOutput, ConfidenceRatings, Vendor, Department, GroupEntity, User } from "@/types";
 
 type Phase = "upload" | "polling" | "review" | "error";
 
@@ -57,6 +57,25 @@ export default function UploadShell() {
   const [result, setResult] = useState<JobResult | null>(null);
   const [error, setError] = useState<ErrorState | null>(null);
   const pollStart = useRef<number>(0);
+
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [groupEntities, setGroupEntities] = useState<GroupEntity[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/vendors").then((r) => r.json()) as Promise<{ data: Vendor[] }>,
+      fetch("/api/departments").then((r) => r.json()) as Promise<{ data: Department[] }>,
+      fetch("/api/group-entities").then((r) => r.json()) as Promise<{ data: GroupEntity[] }>,
+      fetch("/api/users").then((r) => r.json()) as Promise<{ data: User[] }>,
+    ]).then(([v, d, g, u]) => {
+      setVendors(v.data ?? []);
+      setDepartments(d.data ?? []);
+      setGroupEntities(g.data ?? []);
+      setUsers(u.data ?? []);
+    });
+  }, []);
 
   function handleUploadError(message: string) {
     setError({ message, canRetry: true });
@@ -233,6 +252,10 @@ export default function UploadShell() {
             fileName={result?.fileName ?? fileName}
             fileFormat={result?.fileFormat ?? ""}
             filePath={result?.filePath ?? null}
+            vendors={vendors}
+            departments={departments}
+            groupEntities={groupEntities}
+            users={users}
           />
         </div>
       </div>

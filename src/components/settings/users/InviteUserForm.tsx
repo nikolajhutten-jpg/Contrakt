@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { inviteUser } from "@/lib/api/users";
+import Spinner from "@/components/ui/Spinner";
 import { UserRole } from "@/types";
 import type { Department } from "@/types";
 
@@ -116,6 +117,9 @@ export default function InviteUserForm({ departments }: InviteUserFormProps) {
           type="submit"
           disabled={isPending}
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
             fontSize: "13px",
             fontWeight: 500,
             padding: "7px 16px",
@@ -128,6 +132,7 @@ export default function InviteUserForm({ departments }: InviteUserFormProps) {
             letterSpacing: "-0.01em",
           }}
         >
+          {isPending && <Spinner />}
           {isPending ? "Inviting…" : "Send invite"}
         </button>
       </div>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateAccountSettings, testSlackWebhook } from "@/lib/api/settings";
+import Spinner from "@/components/ui/Spinner";
 import type { Tenant } from "@/types";
 
 interface AccountSettingsFormProps {
@@ -110,6 +111,9 @@ export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps
             onClick={handleTestSlack}
             disabled={isTesting || !slackWebhookUrl.trim()}
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
               fontSize: "13px",
               fontWeight: 500,
               padding: "7px 12px",
@@ -123,6 +127,7 @@ export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps
               flexShrink: 0,
             }}
           >
+            {isTesting && <Spinner />}
             {isTesting ? "Sending…" : "Send test"}
           </button>
         </div>
@@ -154,6 +159,9 @@ export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps
           type="submit"
           disabled={isPending}
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
             fontSize: "13px",
             fontWeight: 500,
             padding: "7px 16px",
@@ -166,6 +174,7 @@ export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps
             letterSpacing: "-0.01em",
           }}
         >
+          {isPending && <Spinner />}
           {isPending ? "Saving…" : "Save changes"}
         </button>
       </div>

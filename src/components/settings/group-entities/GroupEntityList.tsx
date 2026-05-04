@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Modal from "@/components/ui/Modal";
 import type { GroupEntity } from "@/types";
 
 interface GroupEntityListProps {
@@ -23,6 +24,7 @@ export default function GroupEntityList({ initialEntities }: GroupEntityListProp
   const [newName, setNewName] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [pendingDeactivate, setPendingDeactivate] = useState<{ id: string; name: string } | null>(null);
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -47,7 +49,13 @@ export default function GroupEntityList({ initialEntities }: GroupEntityListProp
   }
 
   function handleDeactivate(id: string, name: string) {
-    if (!confirm(`Deactivate "${name}"? It will no longer be available for new contracts.`)) return;
+    setPendingDeactivate({ id, name });
+  }
+
+  function confirmDeactivate() {
+    const id = pendingDeactivate?.id;
+    if (!id) return;
+    setPendingDeactivate(null);
     setError(null);
     startTransition(async () => {
       try {
@@ -100,6 +108,16 @@ export default function GroupEntityList({ initialEntities }: GroupEntityListProp
             ))}
           </ul>
         )}
+
+      <Modal
+        isOpen={!!pendingDeactivate}
+        title={`Deactivate "${pendingDeactivate?.name}"?`}
+        body="It will no longer be available for new contracts."
+        confirmLabel="Deactivate"
+        variant="danger"
+        onConfirm={confirmDeactivate}
+        onCancel={() => setPendingDeactivate(null)}
+      />
 
         {/* Add form */}
         <form

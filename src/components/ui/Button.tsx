@@ -8,24 +8,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed";
 
-const VARIANT_STYLE: Record<NonNullable<ButtonProps["variant"]>, React.CSSProperties> = {
-  primary: {
-    background: "rgba(0,0,0,0.05)",
-    color: "#171717",
-    border: "0.5px solid rgba(0,0,0,0.1)",
-  },
-  secondary: {
-    background: "rgba(0,0,0,0.05)",
-    color: "inherit",
-    border: "0.5px solid rgba(0,0,0,0.1)",
-  },
-  danger: {
-    background: "rgba(0,0,0,0.05)",
-    color: "#c0392b",
-    border: "0.5px solid rgba(0,0,0,0.1)",
-  },
+const VARIANT_CLASS: Record<NonNullable<ButtonProps["variant"]>, string> = {
+  primary:   "btn-primary",
+  secondary: "btn-secondary",
+  danger:    "btn-danger",
 };
 
 const SIZE_STYLE: Record<NonNullable<ButtonProps["size"]>, React.CSSProperties> = {
@@ -43,7 +31,7 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`${BASE} ${className}`}
+      className={`${BASE} ${VARIANT_CLASS[variant]} ${className}`}
       style={{
         borderRadius: "8px",
         fontSize: "13px",
@@ -51,7 +39,6 @@ export default function Button({
         fontFamily: "inherit",
         cursor: "pointer",
         ...SIZE_STYLE[size],
-        ...VARIANT_STYLE[variant],
         ...style,
       }}
       {...rest}

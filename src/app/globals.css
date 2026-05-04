@@ -8,12 +8,39 @@
 }
 
 :root {
+  /* ── Colors ──────────────────────────────────────────────────────── */
   --green-900: #1B4332;
   --green-800: #2D6A4F;
   --green-700: #40916C;
   --green-500: #74C69D;
   --green-100: #D8F3DC;
-  --primary: #1a7f4b;
+  --primary:   #1a7f4b;
+
+  /* ── Opacity scale ───────────────────────────────────────────────── */
+  --opacity-xs: 0.04;
+  --opacity-sm: 0.06;
+  --opacity-md: 0.08;
+  --opacity-lg: 0.12;
+  --opacity-xl: 0.16;
+
+  /* ── Spacing (4 px increments) ───────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  /* ── Border radius ───────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* ── Shadows ─────────────────────────────────────────────────────── */
+  --shadow-card:     0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-dropdown: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
 html,
@@ -46,7 +73,7 @@ textarea {
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
 select:focus,
 textarea:focus {
-  border-color: #1a7f4b;
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(26, 127, 75, 0.12);
 }
 
@@ -68,4 +95,67 @@ textarea:focus {
 }
 .prop-row:last-child {
   border-bottom: none;
+}
+
+/* ── Button variants ─────────────────────────────────────────────── */
+/* Base: normalises <button> and <a>/<Link> so variant classes work on either */
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 8px;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+}
+/* :not(:disabled) is always true on <a>, so hover applies to all <a> — correct behaviour */
+.btn-primary:hover:not(:disabled) { filter: brightness(0.9); }
+
+.btn-secondary {
+  background: #ffffff;
+  color: #171717;
+  border: 0.5px solid rgba(0, 0, 0, 0.15);
+}
+.btn-secondary:hover:not(:disabled) { background: rgba(0, 0, 0, 0.04); }
+
+.btn-danger {
+  background: #c0392b;
+  color: #ffffff;
+  border: none;
+}
+.btn-danger:hover:not(:disabled) { filter: brightness(0.9); }
+
+/* ── BackLink ────────────────────────────────────────────────────── */
+.back-link {
+  color: rgba(0, 0, 0, 0.4);
+  transition: color 0.15s;
+}
+.back-link:hover { color: var(--primary); }
+
+/* ── KpiCard ─────────────────────────────────────────────────────── */
+.kpi-card {
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  transition: border-color 0.15s;
+}
+a.kpi-card:hover { border-color: rgba(0, 0, 0, 0.14); }
+
+/* ── Spinner ─────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  animation: spin 0.7s linear infinite;
+  transform-origin: center;
 }

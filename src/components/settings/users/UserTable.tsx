@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateUserRole, deactivateUser } from "@/lib/api/users";
+import Modal from "@/components/ui/Modal";
 import { UserRole } from "@/types";
 import type { User, Department } from "@/types";
 
@@ -54,6 +55,7 @@ function UserRow({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   function handleRoleChange(newRole: UserRole) {
     setError(null);
@@ -81,7 +83,11 @@ function UserRow({
   }
 
   function handleDeactivate() {
-    if (!confirm(`Deactivate ${user.name}? This cannot be undone.`)) return;
+    setConfirmOpen(true);
+  }
+
+  function doDeactivate() {
+    setConfirmOpen(false);
     setError(null);
     startTransition(async () => {
       try {
@@ -103,6 +109,7 @@ function UserRow({
   };
 
   return (
+    <>
     <tr
       className="group"
       style={{ height: "48px" }}
@@ -166,6 +173,16 @@ function UserRow({
         )}
       </td>
     </tr>
+    <Modal
+      isOpen={confirmOpen}
+      title={`Deactivate ${user.name}?`}
+      body="This cannot be undone."
+      confirmLabel="Deactivate"
+      variant="danger"
+      onConfirm={doDeactivate}
+      onCancel={() => setConfirmOpen(false)}
+    />
+    </>
   );
 }
 

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateMyProfile } from "@/lib/api/users";
+import Spinner from "@/components/ui/Spinner";
 import type { User } from "@/types";
 
 interface ProfileFormProps {
@@ -122,6 +123,9 @@ export default function ProfileForm({ user }: ProfileFormProps) {
           type="submit"
           disabled={isPending}
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
             fontSize: "13px",
             fontWeight: 500,
             padding: "7px 16px",
@@ -134,6 +138,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
             letterSpacing: "-0.01em",
           }}
         >
+          {isPending && <Spinner />}
           {isPending ? "Saving…" : "Save changes"}
         </button>
       </div>
