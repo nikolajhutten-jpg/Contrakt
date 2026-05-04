@@ -38,7 +38,7 @@ export default async function AppLayout({ children }: AppLayoutProps) {
           user={{ name: localUser.name, role: localUser.role }}
           badgeCounts={badgeCounts}
         />
-        <main className="flex-1 min-w-0 overflow-y-auto">
+        <main className="flex-1 min-w-0 overflow-y-auto flex flex-col">
           <OfflineBanner />
           <ErrorBoundary>
             {children}

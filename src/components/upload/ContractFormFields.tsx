@@ -31,6 +31,11 @@ export interface FieldValues {
   renewalPeriodMonths: string;
   renewalNoticePeriodValue: string;
   renewalNoticePeriodUnit: string;
+  alertEnabled: boolean;
+  alertTriggerValue: number;
+  alertTriggerUnit: 'months' | 'days';
+  alertTriggerReference: 'renewal_notice_deadline' | 'end_date';
+  alertChannels: string[];
 }
 
 interface Option { id: string; name: string; }
@@ -206,27 +211,103 @@ export default function ContractFormFields({
           </FieldRow>
 
           <FieldRow
-            label="Notice period value"
+            label="Notice period"
             confidence={<ConfidenceIndicator level={confidence?.renewal_notice_period_value} />}
           >
-            <input
-              type="number"
-              min={1}
-              value={values.renewalNoticePeriodValue}
-              onChange={(e) => onChange({ renewalNoticePeriodValue: e.target.value })}
-              placeholder="e.g. 2"
-            />
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <input
+                type="number"
+                min={1}
+                value={values.renewalNoticePeriodValue}
+                onChange={(e) => onChange({ renewalNoticePeriodValue: e.target.value })}
+                placeholder="e.g. 2"
+              />
+              <select
+                value={values.renewalNoticePeriodUnit}
+                onChange={(e) => onChange({ renewalNoticePeriodUnit: e.target.value })}
+              >
+                <option value="">Select unit</option>
+                <option value="months">Months</option>
+                <option value="days">Days</option>
+              </select>
+            </div>
+          </FieldRow>
+        </div>
+      )}
+
+      <FieldRow label="Set up alert">
+        <div style={{ display: "flex", gap: "4px" }}>
+          {[true, false].map((v) => (
+            <button
+              key={String(v)}
+              type="button"
+              onClick={() => onChange({ alertEnabled: v })}
+              style={{
+                padding: "3px 12px",
+                fontSize: "12px",
+                fontWeight: 500,
+                borderRadius: "20px",
+                border: "0.5px solid rgba(0,0,0,0.1)",
+                cursor: "pointer",
+                background: values.alertEnabled === v ? "#1a7f4b" : "rgba(0,0,0,0.05)",
+                color: values.alertEnabled === v ? "#ffffff" : "rgba(0,0,0,0.5)",
+                transition: "background 0.15s, color 0.15s",
+              }}
+            >
+              {v ? "Yes" : "No"}
+            </button>
+          ))}
+        </div>
+      </FieldRow>
+
+      {values.alertEnabled && (
+        <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <FieldRow label="Send alert">
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <input
+                type="number"
+                min={1}
+                value={values.alertTriggerValue}
+                onChange={(e) => onChange({ alertTriggerValue: Math.max(1, Number(e.target.value)) })}
+              />
+              <select
+                value={values.alertTriggerUnit}
+                onChange={(e) => onChange({ alertTriggerUnit: e.target.value as 'months' | 'days' })}
+              >
+                <option value="months">Months</option>
+                <option value="days">Days</option>
+              </select>
+            </div>
           </FieldRow>
 
-          <FieldRow label="Notice period unit">
+          <FieldRow label="Before">
             <select
-              value={values.renewalNoticePeriodUnit}
-              onChange={(e) => onChange({ renewalNoticePeriodUnit: e.target.value })}
+              value={values.alertTriggerReference}
+              onChange={(e) => onChange({ alertTriggerReference: e.target.value as 'renewal_notice_deadline' | 'end_date' })}
             >
-              <option value="">Select unit</option>
-              <option value="months">Months</option>
-              <option value="days">Days</option>
+              <option value="renewal_notice_deadline">Renewal notice deadline</option>
+              <option value="end_date">Contract end date</option>
             </select>
+          </FieldRow>
+
+          <FieldRow label="Notify via">
+            <div style={{ display: "flex", gap: "12px" }}>
+              {(["email", "slack"] as const).map((ch) => (
+                <label key={ch} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={values.alertChannels.includes(ch)}
+                    onChange={(e) => {
+                      const next = e.target.checked
+                        ? [...values.alertChannels, ch]
+                        : values.alertChannels.filter((c) => c !== ch);
+                      onChange({ alertChannels: next });
+                    }}
+                  />
+                  {ch.charAt(0).toUpperCase() + ch.slice(1)}
+                </label>
+              ))}
+            </div>
           </FieldRow>
         </div>
       )}

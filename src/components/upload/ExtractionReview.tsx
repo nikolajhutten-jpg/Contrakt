@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import ContractFormFields from "@/components/upload/ContractFormFields";
 import ConfidenceIndicator from "@/components/upload/ConfidenceIndicator";
+import { useToast } from "@/lib/hooks/useToast";
 import type { FieldValues } from "@/components/upload/ContractFormFields";
 import type { ExtractionOutput, ConfidenceRatings, Vendor, Department, User, GroupEntity } from "@/types";
 
@@ -17,6 +18,10 @@ interface ExtractionReviewProps {
   departments: Department[];
   groupEntities: GroupEntity[];
   users: User[];
+  fields: FieldValues;
+  onFieldsChange: (patch: Partial<FieldValues>) => void;
+  ownerIds: string[];
+  onOwnersChange: (ids: string[]) => void;
 }
 
 const SECTION_LABEL: React.CSSProperties = {
@@ -48,23 +53,12 @@ function ExRow({ label, value, conf }: { label: string; value: string; conf?: Re
 export default function ExtractionReview({
   extracted, confidence, fileName, fileFormat, filePath,
   vendors, departments, groupEntities, users,
+  fields, onFieldsChange, ownerIds, onOwnersChange,
 }: ExtractionReviewProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [saving, startSave] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [ownerIds, setOwnerIds] = useState<string[]>([]);
-  const [fields, setFields] = useState<FieldValues>({
-    vendorId: null,
-    groupEntityId: null,
-    departmentId: null,
-    startDate: str(extracted?.start_date),
-    endDate: str(extracted?.end_date),
-    termType: str(extracted?.term_type),
-    autoRenewal: extracted?.auto_renewal ?? false,
-    renewalPeriodMonths: str(extracted?.renewal_period_months),
-    renewalNoticePeriodValue: str(extracted?.renewal_notice_period_value),
-    renewalNoticePeriodUnit: str(extracted?.renewal_notice_period_unit),
-  });
 
   function handleSave() {
     setSaveError(null);
@@ -109,6 +103,23 @@ export default function ExtractionReview({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type: "main", fileName, filePath, fileFormat }),
         });
+      }
+
+      if (fields.alertEnabled) {
+        const alertRes = await fetch(`/api/contracts/${contractId}/alerts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            triggerValue: fields.alertTriggerValue,
+            triggerUnit: fields.alertTriggerUnit,
+            triggerReference: fields.alertTriggerReference,
+            channels: fields.alertChannels,
+          }),
+        });
+        if (!alertRes.ok) {
+          const body = await alertRes.json().catch(() => ({})) as { error?: string };
+          showToast(body.error ?? "Alert could not be saved, but the contract was created.", "warning");
+        }
       }
 
       router.push(`/contracts/${contractId}`);
@@ -165,13 +176,13 @@ export default function ExtractionReview({
           <ContractFormFields
             values={fields}
             confidence={confidence}
-            onChange={(patch) => setFields((prev) => ({ ...prev, ...patch }))}
+            onChange={onFieldsChange}
             vendors={vendors}
             groupEntities={groupEntities}
             departments={departments.filter((d) => d.isActive)}
             users={users}
             ownerIds={ownerIds}
-            onOwnersChange={setOwnerIds}
+            onOwnersChange={onOwnersChange}
           />
 
           {saveError && (

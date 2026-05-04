@@ -30,6 +30,8 @@ const CSP = [
   "frame-src 'self' blob: https://storage.googleapis.com https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
   // Prevents this app from being embedded in iframes (clickjacking defence)
   "frame-ancestors 'none'",
+  // blob: required for PDF.js workers loaded from blob URLs in the upload preview
+  "worker-src 'self' blob:",
   "font-src 'self' data:",
   "object-src 'none'",
   "base-uri 'self'",

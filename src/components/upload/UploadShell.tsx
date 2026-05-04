@@ -7,6 +7,31 @@ import UploadDocumentViewer from "@/components/upload/UploadDocumentViewer";
 import Button from "@/components/ui/Button";
 import BackLink from "@/components/ui/BackLink";
 import type { ExtractionOutput, ConfidenceRatings, Vendor, Department, GroupEntity, User } from "@/types";
+import type { FieldValues } from "@/components/upload/ContractFormFields";
+
+function str(v: string | number | boolean | null | undefined): string {
+  return v === null || v === undefined ? "" : String(v);
+}
+
+function makeInitialFields(extracted: ExtractionOutput | null): FieldValues {
+  return {
+    vendorId: null,
+    groupEntityId: null,
+    departmentId: null,
+    startDate: str(extracted?.start_date) || new Date().toISOString().slice(0, 10),
+    endDate: str(extracted?.end_date),
+    termType: str(extracted?.term_type),
+    autoRenewal: extracted?.auto_renewal ?? false,
+    renewalPeriodMonths: str(extracted?.renewal_period_months),
+    renewalNoticePeriodValue: str(extracted?.renewal_notice_period_value),
+    renewalNoticePeriodUnit: str(extracted?.renewal_notice_period_unit),
+    alertEnabled: false,
+    alertTriggerValue: 2,
+    alertTriggerUnit: 'months',
+    alertTriggerReference: 'renewal_notice_deadline',
+    alertChannels: ['email'],
+  };
+}
 
 type Phase = "upload" | "polling" | "review" | "error";
 
@@ -57,6 +82,9 @@ export default function UploadShell() {
   const [result, setResult] = useState<JobResult | null>(null);
   const [error, setError] = useState<ErrorState | null>(null);
   const pollStart = useRef<number>(0);
+
+  const [fields, setFields] = useState<FieldValues>(() => makeInitialFields(null));
+  const [ownerIds, setOwnerIds] = useState<string[]>([]);
 
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -123,7 +151,10 @@ export default function UploadShell() {
           clearInterval(timer);
           const resultRes = await fetch(`/api/upload/${jobId}/result`);
           const resultJson = await resultRes.json() as { data?: JobResult };
-          setResult(resultJson.data ?? null);
+          const newResult = resultJson.data ?? null;
+          setResult(newResult);
+          setFields(makeInitialFields(newResult?.extracted ?? null));
+          setOwnerIds([]);
           setPhase("review");
         }
       } catch {
@@ -184,6 +215,8 @@ export default function UploadShell() {
             size="sm"
             onClick={() => {
               setResult({ extracted: null, confidence: null, fileName, fileFormat: "", filePath: null });
+              setFields(makeInitialFields(null));
+              setOwnerIds([]);
               setPhase("review");
               setError(null);
             }}
@@ -197,7 +230,7 @@ export default function UploadShell() {
 
   // phase === "review"
   return (
-    <div className="flex h-full">
+    <div className="flex flex-1">
       {/* Left pane — document viewer (60%) */}
       <div
         style={{
@@ -256,6 +289,10 @@ export default function UploadShell() {
             departments={departments}
             groupEntities={groupEntities}
             users={users}
+            fields={fields}
+            onFieldsChange={(patch) => setFields((prev) => ({ ...prev, ...patch }))}
+            ownerIds={ownerIds}
+            onOwnersChange={setOwnerIds}
           />
         </div>
       </div>

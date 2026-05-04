@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import PropertiesTab from "@/components/contracts/detail/PropertiesTab";
 import DocumentsTab from "@/components/contracts/detail/DocumentsTab";
 import AlertsTab from "@/components/contracts/detail/AlertsTab";
+import { useToast } from "@/lib/hooks/useToast";
 import type { ContractWithRelations, Document } from "@/types";
 
 type Tab = "properties" | "documents" | "alerts";
@@ -29,6 +30,7 @@ export default function PropertiesPanel({
   onSelectDoc,
 }: PropertiesPanelProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>("properties");
   const [confirming, setConfirming] = useState(false);
   const [deleting, startDelete] = useTransition();
@@ -39,7 +41,13 @@ export default function PropertiesPanel({
       return;
     }
     startDelete(async () => {
-      await fetch(`/api/contracts/${contract.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/contracts/${contract.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        showToast(body?.error ?? "Failed to delete contract. Please try again.", "error");
+        setConfirming(false);
+        return;
+      }
       window.location.href = "/contracts";
     });
   }

@@ -30,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "All contracts", href: "/contracts" },
   { label: "Upcoming renewals", href: "/action-required", badge: "actionRequired" },
   { label: "Notifications", href: "/notifications" },
+  { label: "Vendors", href: "/vendors" },
 ];
 
 const SETTINGS_SUB_ITEMS: SettingsSubItem[] = [
