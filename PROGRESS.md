@@ -310,3 +310,27 @@ Full replacement of `@auth0/nextjs-auth0` with `@clerk/nextjs@7.3.0`.
 - **Clerk webhook**: register `https://your-domain.vercel.app/api/webhooks/clerk` in the Clerk dashboard → Webhooks, subscribe to `user.created`, copy the signing secret to `CLERK_WEBHOOK_SECRET`.
 - **New user flow**: Clerk signup → `user.created` webhook → Tenant + User provisioned in DB → user redirected to `/setup` to configure workspace.
 - **`AppLayout` redirect logic**: no Clerk session → `/sign-in`; authenticated but no DB user → `/setup`; authenticated + DB user → renders app normally.
+
+---
+
+## Session changes (2026-05-04)
+
+### Vendors navigation
+- `src/components/layout/Sidebar.tsx` — added "Vendors" nav item linking to `/vendors`.
+
+### Contract deletion fix
+- `prisma/schema.prisma` — added `onDelete: Cascade` to the `contract` relation on `ContractOwner`, `Document`, and `NotificationAlert`. Child rows are now removed automatically when a contract is deleted.
+- `prisma/migrations/20260504192425_add_cascade_delete_contract/` — migration applied to Neon.
+- `src/components/contracts/detail/PropertiesPanel.tsx` — checks `response.ok` after the DELETE fetch; shows a toast error and resets confirm state on failure instead of redirecting regardless.
+
+### Alert setup in upload form
+- `src/components/upload/ContractFormFields.tsx` — added five fields to `FieldValues`: `alertEnabled`, `alertTriggerValue`, `alertTriggerUnit`, `alertTriggerReference`, `alertChannels`. Rendered as a "Set up alert" Yes/No toggle (styled identically to Auto-renewal) with inline fields: number input + unit select (stacked), "Before" reference select, "Notify via" checkboxes.
+- `src/components/upload/ExtractionReview.tsx` — after contract and document are saved, fires `POST /api/contracts/[id]/alerts` if `alertEnabled`; shows a warning toast on failure but does not block navigation.
+- `src/components/upload/UploadShell.tsx` — form state (`fields`, `ownerIds`) lifted here from `ExtractionReview` to survive any child remount; `makeInitialFields` initialises state from extracted data when transitioning to the review phase; `startDate` defaults to today's date in `YYYY-MM-DD` format when extraction does not provide one.
+
+### PDF viewer height fix
+- `src/components/layout/AppLayout.tsx` — added `flex flex-col` to `<main>` so the review layout can use `flex-1` instead of `h-full` for reliable height resolution.
+- `src/components/upload/UploadShell.tsx` — review wrapper changed from `className="flex h-full"` to `className="flex flex-1"`, giving the iframe a definite height at every ancestor level.
+
+### CSP update
+- `src/lib/security/headers.ts` — added `worker-src 'self' blob:` directive so the browser's built-in PDF renderer can load its Web Worker from a blob URL in the upload preview iframe.
