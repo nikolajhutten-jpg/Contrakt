@@ -6,13 +6,33 @@ import { UserRole } from "@/types";
 
 const VALID_ROLES = Object.values(UserRole) as string[];
 
+async function sendClerkInvitation(email: string): Promise<void> {
+  const secret = process.env.CLERK_SECRET_KEY;
+  if (!secret) {
+    console.error("CLERK_SECRET_KEY is not set; skipping Clerk invitation");
+    return;
+  }
+
+  const res = await fetch("https://api.clerk.com/v1/invitations", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secret}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email_address: email }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(`Clerk invitation failed (${res.status}): ${text}`);
+  }
+}
+
 /**
  * POST /api/users/invite
- * Creates a local user record for an invited user.
- * In production: call Clerk Backend API first to provision the user and
- * send the invite email; use the returned Clerk user ID here.
- * For now a placeholder clerkId is generated so the record can be created
- * immediately.
+ * Creates a local user record for the invited user, then fires a Clerk
+ * invitation email. If the Clerk call fails the DB record still exists and
+ * success is returned so the admin is not blocked.
  */
 export async function POST(request: NextRequest): Promise<Response> {
   try {
@@ -34,7 +54,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     const email = b.email.trim();
     const role = b.role as UserRole;
 
-    // Placeholder until Clerk Backend API is wired up
     const clerkId = `invite:${crypto.randomUUID()}`;
 
     const user = await createUser({
@@ -46,6 +65,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       departmentId:
         typeof b.departmentId === "string" ? b.departmentId : undefined,
     });
+
+    // Best-effort: send Clerk invitation email. Errors are logged but do not
+    // fail the request — the DB record already exists.
+    await sendClerkInvitation(email);
 
     return created(user);
   } catch (error) {

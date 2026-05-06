@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { Webhook } from "svix";
 import { createTenant } from "@/lib/db/tenants";
-import { createUser, getUserByClerkId } from "@/lib/db/users";
+import { createUser, getUserByClerkId, getUserByEmail, updateUser } from "@/lib/db/users";
 import { UserRole } from "@/types";
 
 const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -60,9 +60,9 @@ export async function POST(req: Request): Promise<Response> {
 
   const { id: clerkId, email_addresses, primary_email_address_id, first_name, last_name } = event.data;
 
-  // Idempotency: skip if user already exists
-  const existing = await getUserByClerkId(clerkId);
-  if (existing) {
+  // Idempotency: skip if user already exists by Clerk ID
+  const existingByClerkId = await getUserByClerkId(clerkId);
+  if (existingByClerkId) {
     return new Response("OK", { status: 200 });
   }
 
@@ -72,7 +72,15 @@ export async function POST(req: Request): Promise<Response> {
 
   const name = [first_name, last_name].filter(Boolean).join(" ") || email.split("@")[0];
 
-  // Derive a unique tenant slug from the name
+  // If a DB user with this email was pre-created by an admin invite, update
+  // its placeholder clerkId to the real one instead of provisioning a new tenant.
+  const invitedUser = await getUserByEmail(email);
+  if (invitedUser && invitedUser.clerkId.startsWith("invite:")) {
+    await updateUser(invitedUser.id, invitedUser.tenantId, { clerkId });
+    return new Response("OK", { status: 200 });
+  }
+
+  // New signup: provision a fresh tenant for this user.
   const baseSlug = toSlug(name) || "workspace";
   const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
   const gcsBucket = `contrakt-${slug}-documents`;

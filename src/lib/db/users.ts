@@ -16,6 +16,12 @@ export async function getUserByClerkId(clerkId: string) {
   })
 }
 
+export async function getUserByEmail(email: string) {
+  return prisma.user.findFirst({
+    where: { email },
+  });
+}
+
 export async function getUsersByTenant(tenantId: string): Promise<User[]> {
   return prisma.user.findMany({
     where: { tenantId },
@@ -46,6 +52,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
 }
 
 export interface UpdateUserInput {
+  clerkId?: string;
   name?: string;
   email?: string;
   role?: UserRole;
