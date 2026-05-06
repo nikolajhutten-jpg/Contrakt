@@ -8,6 +8,7 @@ import type { Department, User } from "@/types";
 interface Props {
   departments: Department[];
   onComplete: () => void;
+  onBack: () => void;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -24,7 +25,7 @@ const FIELD_LABEL: React.CSSProperties = {
   marginBottom: "4px",
 };
 
-export default function StepInviteUsers({ departments, onComplete }: Props) {
+export default function StepInviteUsers({ departments, onComplete, onBack }: Props) {
   const [invited, setInvited] = useState<User[]>([]);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -162,24 +163,41 @@ export default function StepInviteUsers({ departments, onComplete }: Props) {
         </ul>
       )}
 
-      <button
-        type="button"
-        onClick={onComplete}
-        style={{
-          width: "100%",
-          fontSize: "13px",
-          fontWeight: 500,
-          padding: "8px 16px",
-          background: "#1a1a1a",
-          color: "#ffffff",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-          letterSpacing: "-0.01em",
-        }}
-      >
-        {invited.length > 0 ? "Continue" : "Skip for now"}
-      </button>
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <button
+          type="button"
+          onClick={onComplete}
+          style={{
+            width: "100%",
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "8px 16px",
+            background: "#1a1a1a",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {invited.length > 0 ? "Continue" : "Skip for now"}
+        </button>
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={isPending}
+          style={{
+            fontSize: "13px",
+            color: "rgba(0,0,0,0.4)",
+            background: "none",
+            border: "none",
+            cursor: isPending ? "default" : "pointer",
+            padding: "4px 0",
+          }}
+        >
+          ← Back
+        </button>
+      </div>
     </div>
   );
 }

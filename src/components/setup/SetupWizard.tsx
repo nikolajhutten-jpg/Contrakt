@@ -3,17 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import StepOrganisation from "@/components/setup/StepOrganisation";
+import StepLicense from "@/components/setup/StepLicense";
 import StepDepartments from "@/components/setup/StepDepartments";
 import StepInviteUsers from "@/components/setup/StepInviteUsers";
-// Slack UI hidden — backend intact
+import { TenantPlan } from "@/types";
 import type { Department } from "@/types";
 
-type Step = 0 | 1 | 2;
+type Step = 0 | 1 | 2 | 3;
 
 const STEPS = [
   { number: 0, label: "Organisation" },
-  { number: 1, label: "Departments" },
-  { number: 2, label: "Invite users" },
+  { number: 1, label: "License" },
+  { number: 2, label: "Departments" },
+  { number: 3, label: "Invite users" },
 ];
 
 interface Props {
@@ -24,19 +26,33 @@ export default function SetupWizard({ initialDepartments }: Props) {
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
   const [departments, setDepartments] = useState<Department[]>(initialDepartments);
+  const [selectedPlan, setSelectedPlan] = useState<string>("");
 
   function handleOrganisationDone() {
     setStep(1);
   }
 
+  function handleLicenseDone(plan: string) {
+    setSelectedPlan(plan);
+    setStep(2);
+  }
+
   function handleDepartmentsDone(created: Department[]) {
     setDepartments(created);
-    setStep(2);
+    if (selectedPlan === TenantPlan.Free) {
+      router.push("/dashboard");
+    } else {
+      setStep(3);
+    }
   }
 
   function handleInviteDone() {
     router.push("/dashboard");
   }
+
+  const visibleSteps = selectedPlan === TenantPlan.Free
+    ? STEPS.filter((s) => s.number !== 3)
+    : STEPS;
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f7", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
@@ -54,7 +70,7 @@ export default function SetupWizard({ initialDepartments }: Props) {
 
         {/* Step indicator */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "32px" }}>
-          {STEPS.map((s, i) => (
+          {visibleSteps.map((s, i) => (
             <div key={s.number} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span
@@ -72,7 +88,7 @@ export default function SetupWizard({ initialDepartments }: Props) {
                     color: step >= s.number ? "#ffffff" : "rgba(0,0,0,0.4)",
                   }}
                 >
-                  {step > s.number ? "✓" : s.number}
+                  {step > s.number ? "✓" : i + 1}
                 </span>
                 <span
                   style={{
@@ -84,7 +100,7 @@ export default function SetupWizard({ initialDepartments }: Props) {
                   {s.label}
                 </span>
               </div>
-              {i < STEPS.length - 1 && (
+              {i < visibleSteps.length - 1 && (
                 <div style={{ width: "32px", height: "0.5px", background: "rgba(0,0,0,0.1)" }} />
               )}
             </div>
@@ -96,18 +112,25 @@ export default function SetupWizard({ initialDepartments }: Props) {
           <StepOrganisation onComplete={handleOrganisationDone} />
         )}
         {step === 1 && (
-          <StepDepartments
-            initial={departments}
-            onComplete={handleDepartmentsDone}
+          <StepLicense
+            onComplete={handleLicenseDone}
+            onBack={() => setStep(0)}
           />
         )}
         {step === 2 && (
+          <StepDepartments
+            initial={departments}
+            onComplete={handleDepartmentsDone}
+            onBack={() => setStep(1)}
+          />
+        )}
+        {step === 3 && (
           <StepInviteUsers
             departments={departments}
             onComplete={handleInviteDone}
+            onBack={() => setStep(2)}
           />
         )}
-        {/* Slack UI hidden — backend intact */}
       </div>
     </div>
   );

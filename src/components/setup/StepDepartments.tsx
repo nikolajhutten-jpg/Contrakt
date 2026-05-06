@@ -15,9 +15,10 @@ const SUGGESTIONS = [
 interface Props {
   initial: Department[];
   onComplete: (departments: Department[]) => void;
+  onBack: () => void;
 }
 
-export default function StepDepartments({ initial, onComplete }: Props) {
+export default function StepDepartments({ initial, onComplete, onBack }: Props) {
   const [departments, setDepartments] = useState<Department[]>(initial);
   const [customName, setCustomName] = useState("");
   const [error, setError] = useState("");
@@ -128,26 +129,43 @@ export default function StepDepartments({ initial, onComplete }: Props) {
         </ul>
       )}
 
-      <button
-        type="button"
-        disabled={departments.length === 0 || isPending}
-        onClick={() => onComplete(departments)}
-        style={{
-          width: "100%",
-          fontSize: "13px",
-          fontWeight: 500,
-          padding: "8px 16px",
-          background: "#1a1a1a",
-          color: "#ffffff",
-          border: "none",
-          borderRadius: "8px",
-          cursor: (departments.length === 0 || isPending) ? "default" : "pointer",
-          opacity: (departments.length === 0 || isPending) ? 0.5 : 1,
-          letterSpacing: "-0.01em",
-        }}
-      >
-        Continue
-      </button>
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <button
+          type="button"
+          disabled={departments.length === 0 || isPending}
+          onClick={() => onComplete(departments)}
+          style={{
+            width: "100%",
+            fontSize: "13px",
+            fontWeight: 500,
+            padding: "8px 16px",
+            background: "#1a1a1a",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: (departments.length === 0 || isPending) ? "default" : "pointer",
+            opacity: (departments.length === 0 || isPending) ? 0.5 : 1,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          Continue
+        </button>
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={isPending}
+          style={{
+            fontSize: "13px",
+            color: "rgba(0,0,0,0.4)",
+            background: "none",
+            border: "none",
+            cursor: isPending ? "default" : "pointer",
+            padding: "4px 0",
+          }}
+        >
+          ← Back
+        </button>
+      </div>
     </div>
   );
 }

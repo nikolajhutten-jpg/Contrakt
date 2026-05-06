@@ -5,7 +5,7 @@ import { getDepartmentsByTenant } from "@/lib/db/departments";
 import { getOnboardingState } from "@/lib/db/dashboard";
 import { getTenantSettings } from "@/lib/db/settings";
 import SetupWizard from "@/components/setup/SetupWizard";
-import { UserRole } from "@/types";
+import { UserRole, TenantPlan } from "@/types";
 
 export const metadata = { title: "Workspace setup — Contrakt" };
 
@@ -33,11 +33,11 @@ export default async function SetupPage() {
       getTenantSettings(localUser.tenantId),
     ]);
 
+    const isFreePlan = tenant?.plan === TenantPlan.Free;
     if (
       tenant?.name &&
       onboarding.departmentsAdded &&
-      onboarding.firstUserInvited
-      // Slack UI hidden — backend intact
+      (onboarding.firstUserInvited || isFreePlan)
     ) {
       redirect("/dashboard");
     }

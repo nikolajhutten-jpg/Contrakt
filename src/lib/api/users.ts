@@ -20,7 +20,8 @@ export async function inviteUser(input: InviteUserInput): Promise<User> {
     const data = (await res.json().catch(() => ({}))) as { error?: string };
     throw new Error(data.error ?? "Failed to invite user.");
   }
-  return res.json() as Promise<User>;
+  const body = (await res.json()) as { data: User };
+  return body.data;
 }
 
 export async function updateUserRole(
