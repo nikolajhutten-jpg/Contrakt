@@ -32,25 +32,29 @@ export async function getVendorsByTenant(tenantId: string): Promise<Vendor[]> {
 export async function getVendorsByOwner(
   userId: string,
   tenantId: string,
-): Promise<Vendor[]> {
-  return db.vendor.findMany({
+): Promise<VendorWithContractCount[]> {
+  const rows = await db.vendor.findMany({
     where: { tenantId, contracts: { some: { owners: { some: { userId } } } } },
     orderBy: { name: "asc" },
+    include: { _count: { select: { contracts: true } } },
   });
+  return rows.map(({ _count, ...rest }) => ({ ...rest, contractCount: _count.contracts }));
 }
 
 export async function getVendorsByDepartmentOrOwner(
   userId: string,
   departmentId: string | null,
   tenantId: string,
-): Promise<Vendor[]> {
+): Promise<VendorWithContractCount[]> {
   const contractScope = departmentId
     ? { OR: [{ departmentId }, { owners: { some: { userId } } }] }
     : { owners: { some: { userId } } };
-  return db.vendor.findMany({
+  const rows = await db.vendor.findMany({
     where: { tenantId, contracts: { some: contractScope } },
     orderBy: { name: "asc" },
+    include: { _count: { select: { contracts: true } } },
   });
+  return rows.map(({ _count, ...rest }) => ({ ...rest, contractCount: _count.contracts }));
 }
 
 export async function getVendorsWithContractCounts(

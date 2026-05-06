@@ -44,23 +44,6 @@ export default function VendorList({ vendors, isAdmin }: VendorListProps) {
     <div style={{ padding: "28px 32px", maxWidth: "960px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
         <h1 style={{ fontSize: "22px", fontWeight: 600, color: "#171717", letterSpacing: "-0.03em" }}>Vendors</h1>
-        {isAdmin && (
-          <Link
-            href="/vendors/new"
-            style={{
-              fontSize: "13px",
-              fontWeight: 500,
-              padding: "7px 16px",
-              background: "#1a7f4b",
-              color: "#ffffff",
-              borderRadius: "8px",
-              textDecoration: "none",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            Add vendor
-          </Link>
-        )}
       </div>
 
       {vendors.length === 0 ? (
