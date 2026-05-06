@@ -75,45 +75,35 @@ export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps
           onChange={(e) => setName(e.target.value)}
           required
         />
+        {error && <p style={{ fontSize: "12px", color: "#c0392b", marginTop: "10px" }}>{error}</p>}
+        {saved && <p style={{ fontSize: "12px", color: "#1a7f4b", marginTop: "10px" }}>Settings saved.</p>}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
+          <button
+            type="submit"
+            disabled={isPending}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "13px",
+              fontWeight: 500,
+              padding: "7px 16px",
+              background: "rgba(0,0,0,0.05)",
+              color: "#171717",
+              border: "0.5px solid rgba(0,0,0,0.1)",
+              borderRadius: "8px",
+              cursor: isPending ? "default" : "pointer",
+              opacity: isPending ? 0.5 : 1,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {isPending && <Spinner />}
+            {isPending ? "Saving…" : "Save changes"}
+          </button>
+        </div>
       </div>
 
       {/* Slack UI hidden — backend intact */}
-
-      {/* Tenant info */}
-      <div style={{ marginBottom: "24px" }}>
-        <p style={SECTION_LABEL}>Tenant</p>
-        <p style={SECTION_DESC}>Read-only identifier for your workspace.</p>
-        <label style={FIELD_LABEL}>Tenant slug</label>
-        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)" }}>{tenant.slug}</p>
-      </div>
-
-      {error && <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
-      {saved && <p style={{ fontSize: "12px", color: "#1a7f4b", marginBottom: "12px" }}>Settings saved.</p>}
-
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button
-          type="submit"
-          disabled={isPending}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            fontSize: "13px",
-            fontWeight: 500,
-            padding: "7px 16px",
-            background: "rgba(0,0,0,0.05)",
-            color: "#171717",
-            border: "0.5px solid rgba(0,0,0,0.1)",
-            borderRadius: "8px",
-            cursor: isPending ? "default" : "pointer",
-            opacity: isPending ? 0.5 : 1,
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {isPending && <Spinner />}
-          {isPending ? "Saving…" : "Save changes"}
-        </button>
-      </div>
     </form>
   );
 }

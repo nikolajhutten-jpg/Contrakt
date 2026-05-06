@@ -6,7 +6,7 @@ Contrakt is a B2B SaaS contract management platform that lets teams upload, extr
 
 - **Next.js 16.2.3** (App Router, React 19) — TypeScript throughout, no `any`
 - **Prisma 7** — PostgreSQL, every query scoped by `tenantId`
-- **Auth0 SDK v4** (`@auth0/nextjs-auth0`) — auth handled in `src/middleware.ts`, not a route handler
+- **Clerk** (`@clerk/nextjs@7.3.0`) — auth via `clerkMiddleware()` in `src/proxy.ts`; webhook at `/api/webhooks/clerk` provisions tenants and handles invite flow
 - **Anthropic Claude SDK** — AI extraction of contract fields from uploaded PDFs/DOCX
 - **Stripe** — billing, checkout, webhook at `/api/billing/webhook`
 - **SendGrid** — transactional email (invite, alert notifications)
@@ -16,7 +16,7 @@ Contrakt is a B2B SaaS contract management platform that lets teams upload, extr
 ## Current App State
 
 **Fully working:**
-- Auth (login / logout / invite-based signup, Auth0 v4)
+- Auth (login / logout / invite-based signup, Clerk)
 - Contract upload → AI extraction → review form → save
 - Contract detail page (split-pane: document viewer + tabbed properties/documents/alerts)
 - Dashboard & "All contracts" table (sortable, column visibility via View Options)
@@ -32,12 +32,37 @@ Contrakt is a B2B SaaS contract management platform that lets teams upload, extr
 - Slack notifications — webhook URL saved, sending not fully implemented
 - Renewals page (`/renewals`) — route exists, content unknown
 
-## Recent Changes (2026-05-01)
+## Recent Changes
 
+### 2026-05-01
 - **CSP headers** (`src/lib/security/headers.ts`) — added `*.r2.cloudflarestorage.com` and `*.eu.r2.cloudflarestorage.com` to `connect-src`, `frame-src`, and `img-src`; added `blob:` to `frame-src`
 - **DocumentViewer iframe** (`src/components/contracts/detail/DocumentViewer.tsx`) — white background, 0.5px border, 12px border-radius to feel native
 - **Upload bug fix** (`src/components/upload/ExtractionReview.tsx`) — document type was incorrectly sent as `"original"` (invalid); fixed to `"main"` so the document record is actually created and the viewer shows the document on the detail page
 - **Delete contract** (`src/components/contracts/detail/PropertiesPanel.tsx`) — delete button at the bottom of the Properties tab (scrollable, not fixed); two-step confirm; calls `DELETE /api/contracts/[id]` then hard-navigates to `/contracts` via `window.location.href` to bypass Next.js cache
+
+### 2026-05-03 — Auth0 → Clerk migration
+- Full replacement of `@auth0/nextjs-auth0` with `@clerk/nextjs@7.3.0`
+- `src/proxy.ts` — replaced Auth0 middleware with `clerkMiddleware()`; public routes: `/sign-in(.*)`, `/sign-up(.*)`, `/api/billing/webhook`, `/api/webhooks/clerk`
+- `src/app/layout.tsx` — added `<ClerkProvider>`
+- `src/app/sign-in/` and `src/app/sign-up/` — Clerk-hosted `<SignIn />` / `<SignUp />` components
+- `src/app/api/webhooks/clerk/route.ts` — new webhook: `user.created` provisions Tenant + admin User; `user.deleted` removes DB user
+- `src/lib/auth/session.ts` — rewritten: `resolveAuthContext()` uses Clerk `auth()` + `getUserByClerkId`; `User.auth0Id` renamed to `User.clerkId` throughout (`prisma/schema.prisma`, `src/lib/db/users.ts`, `src/types/index.ts`)
+- CSP updated in `src/lib/security/headers.ts` — Clerk and Cloudflare domains added
+
+### 2026-05-04
+- **Vendors nav** — "Vendors" added to `Sidebar.tsx`
+- **Contract cascade delete** — `onDelete: Cascade` added to `ContractOwner`, `Document`, and `NotificationAlert` relations in schema; migration `20260504192425_add_cascade_delete_contract` applied
+- **Contract deletion fix** (`PropertiesPanel.tsx`) — checks `response.ok` before navigating; shows toast on failure
+- **Alert setup in upload** — `ContractFormFields.tsx` adds Yes/No alert toggle with inline fields; `ExtractionReview.tsx` fires `POST /api/contracts/[id]/alerts` after save; `UploadShell.tsx` lifts form state to survive child remounts; `startDate` defaults to today when extraction omits it
+- **PDF viewer height fix** — `AppLayout.tsx` adds `flex flex-col` to `<main>`; review wrapper uses `flex-1`
+- **CSP** — added `worker-src 'self' blob:` for PDF Web Worker
+
+### 2026-05-06
+- **Clerk invite email** (`src/app/api/users/invite/route.ts`) — after creating the DB user record, POSTs to `https://api.clerk.com/v1/invitations`; errors are best-effort (logged, not thrown)
+- **Invited user webhook flow** (`src/app/api/webhooks/clerk/route.ts`) — on `user.created`, matches email to a DB user with `clerkId` starting with `"invite:"` and updates it with the real Clerk userId; fresh signups fall through to tenant creation
+- **Duplicate email guard** — `invite` route returns 409 if a user with that email already exists in the tenant
+- **`getUserByEmail`** added to `src/lib/db/users.ts`; `clerkId` added to `UpdateUserInput`
+- **`conflict()` helper** added to `src/lib/api/response.ts`
 
 ## The 6 Coding Rules
 

@@ -350,3 +350,59 @@ Full replacement of `@auth0/nextjs-auth0` with `@clerk/nextjs@7.3.0`.
 - `src/app/(app)/setup/page.tsx` — deactivated user guard: in the no-DB-user branch, fetches the Clerk user's primary email via `currentUser()` and calls `getUserByEmail`; if the email exists in the DB with a non-`invite:` clerkId, redirects to `/sign-in` instead of rendering the setup wizard.
 - `src/app/api/webhooks/clerk/route.ts` — deactivated user guard: on `user.created`, if the email matches a DB row with a real (non-`invite:`) clerkId, returns 200 without provisioning a new tenant. `user.deleted` handler: looks up DB user by clerkId and hard-deletes them if found, keeping the DB consistent with direct Clerk-dashboard deletions. Event interface updated to make email fields optional (absent on `user.deleted` payloads).
 - `src/app/api/users/route.ts` — removed dead `POST` handler (including `parseInput` and `ParsedInput`); only `GET` remains. Invite goes through `POST /api/users/invite`.
+
+### Invite resend
+- `src/app/api/users/invite/route.ts` — resend path: if the email belongs to an existing pending user (`clerkId` starts with `"invite:"`), cancels all live Clerk invitations for that address via `GET /v1/invitations?status=pending` + `POST /v1/invitations/:id/revoke`, then sends a fresh one and returns 200 with the existing user. Fresh invites still return 201.
+- `src/components/settings/users/UserTable.tsx` — "Pending" amber badge on rows with a placeholder `clerkId`; "Resend" button calls `inviteUser` from the client API helper; Spinner while busy; "Invite resent." confirmation inline. Added `Joined/Invited` date column. Department select now shows `—` for Admins (not just DepartmentOwners). Role revert on error.
+
+---
+
+## Session changes (2026-05-06, continued)
+
+### Role-based access control overhaul — DepartmentOwner and BusinessOwner made view-only
+
+**Goal:** Admin retains full access. DepartmentOwner and BusinessOwner become read-only roles. DepartmentOwner scope expanded to include contracts they own (in addition to contracts in their department).
+
+#### DB layer
+
+| File | Change |
+|---|---|
+| `src/lib/db/contractHelpers.ts` | `contractWhere` for `DepartmentOwner` now returns `{ tenantId, OR: [{ departmentId }, { owners: { some: { userId } } }] }` instead of `{ tenantId, departmentId }`, giving DepartmentOwners visibility into contracts they own regardless of department. |
+| `src/lib/db/dashboard.ts` | Three queries that spread `contractWhere` and then added a top-level `OR` (renewal / upcoming date filters) now wrap the extra `OR` as `AND: [{ OR: [...] }]` to prevent it clobbering the role-scope `OR` for DepartmentOwner. |
+| `src/lib/db/contractsFiltered.ts` | Search filter `OR` wrapped as `AND: [{ OR: [...] }]` for the same reason. |
+| `src/lib/db/contracts.ts` | Added `getContractsByDepartmentOrOwner(departmentId, userId, tenantId)` — single query with `OR: [{ departmentId }, { owners: { some: { userId } } }]`; used by the `GET /api/contracts` list route for DepartmentOwner. |
+| `src/lib/db/vendors.ts` | Added `getVendorsByOwner(userId, tenantId)` and `getVendorsByDepartmentOrOwner(userId, departmentId, tenantId)` — both include `_count` and return `VendorWithContractCount[]`. |
+
+#### API routes
+
+| Route | Change |
+|---|---|
+| `POST /api/contracts` | Now Admin-only (was open to all authenticated users). |
+| `PATCH /api/contracts/[id]` | Now Admin-only (was Admin + BusinessOwner with ownership check). |
+| `POST /api/contracts/[id]/alerts` | Now Admin-only (was Admin + BusinessOwner). |
+| `PATCH /api/contracts/[id]/alerts/[alertId]` | Now Admin-only. |
+| `DELETE /api/contracts/[id]/alerts/[alertId]` | Now Admin-only. |
+| `POST /api/contracts/[id]/documents` | Now Admin-only. |
+| `POST /api/contracts/[id]/confirm-action` | Now Admin-only. |
+| `GET /api/contracts` | DepartmentOwner branch now calls `getContractsByDepartmentOrOwner` (dept + owned) instead of `getContractsByDepartment` (dept only). |
+| `GET /api/contracts/[id]` | `canRead` helper updated: DepartmentOwner can read if `contract.departmentId === departmentId` **or** they are listed in `contract.owners`. |
+| `GET /api/vendors` | Now role-scoped: Admin → all, DepartmentOwner → `getVendorsByDepartmentOrOwner`, BusinessOwner → `getVendorsByOwner`. |
+| `POST /api/vendors` | Now Admin-only (was open to all authenticated users). |
+
+#### Pages
+
+| File | Change |
+|---|---|
+| `src/app/(app)/contracts/new/page.tsx` | Added `resolveAuthContext()` call; non-Admin roles are redirected to `/dashboard`. |
+| `src/app/(app)/contracts/[id]/page.tsx` | `canEdit` is now `localUser.role === UserRole.Admin` only (previously also true for BusinessOwner on owned contracts). |
+| `src/app/(app)/contracts/page.tsx` | Passes `isAdmin` prop to `ContractsShell`. |
+| `src/app/(app)/vendors/page.tsx` | Now branches on role: Admin → `getVendorsWithContractCounts`, DepartmentOwner → `getVendorsByDepartmentOrOwner`, BusinessOwner → `getVendorsByOwner`. Previously always called the unscoped `getVendorsWithContractCounts`. |
+
+#### UI components
+
+| File | Change |
+|---|---|
+| `src/components/contracts/ContractsShell.tsx` | Added `isAdmin` prop. "Add contract" button hidden for non-Admin. Empty-state action and subtext conditionally suppressed for non-Admin. |
+| `src/components/dashboard/DashboardShell.tsx` | "Add contract" button wrapped in `{isAdmin && ...}`. |
+| `src/components/ui/EmptyState.tsx` | `actionLabel` and `onAction` made optional; button only renders when both are provided. |
+| `src/components/vendors/VendorList.tsx` | Removed "Add vendor" button (linked to a non-existent `/vendors/new` route).
