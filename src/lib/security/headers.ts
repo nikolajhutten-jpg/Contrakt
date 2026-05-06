@@ -26,8 +26,8 @@ const CSP = [
   "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
   // GCS signed URLs for document fetching; Clerk for auth API calls; R2 for Cloudflare-hosted documents
   "connect-src 'self' https://storage.googleapis.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
-  // PDF iframe viewer loads signed URLs in an iframe
-  "frame-src 'self' blob: https://storage.googleapis.com https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
+  // PDF iframe viewer loads signed URLs and base64 data URLs in an iframe
+  "frame-src 'self' data: blob: https://storage.googleapis.com https://challenges.cloudflare.com https://*.r2.cloudflarestorage.com https://*.eu.r2.cloudflarestorage.com",
   // Prevents this app from being embedded in iframes (clickjacking defence)
   "frame-ancestors 'none'",
   // blob: required for PDF.js workers loaded from blob URLs in the upload preview
