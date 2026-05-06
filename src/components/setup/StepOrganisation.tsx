@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { startCheckout } from "@/lib/api/billing";
+import Button from "@/components/ui/Button";
 import { TenantPlan } from "@/types";
 
 interface Props {
@@ -29,6 +30,7 @@ const FIELD_LABEL: React.CSSProperties = {
 export default function StepOrganisation({ onComplete }: Props) {
   const [part, setPart] = useState<Part>("name");
   const [orgName, setOrgName] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -50,11 +52,18 @@ export default function StepOrganisation({ onComplete }: Props) {
     });
   }
 
-  function handlePlanSelect(planKey: string) {
+  function handleBack() {
+    setSelectedPlan(null);
+    setError("");
+    setPart("name");
+  }
+
+  function handlePlanContinue() {
+    if (!selectedPlan) return;
     setError("");
     startTransition(async () => {
       try {
-        if (planKey === TenantPlan.Free) {
+        if (selectedPlan === TenantPlan.Free) {
           const res = await fetch("/api/settings/account", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -63,7 +72,7 @@ export default function StepOrganisation({ onComplete }: Props) {
           if (!res.ok) throw new Error("Failed to save plan.");
           onComplete();
         } else {
-          await startCheckout(planKey as PaidPlan);
+          await startCheckout(selectedPlan as PaidPlan);
         }
       } catch {
         setError("Something went wrong. Please try again.");
@@ -86,30 +95,18 @@ export default function StepOrganisation({ onComplete }: Props) {
               onChange={(e) => setOrgName(e.target.value)}
               placeholder="Acme Corp"
               disabled={isPending}
-              // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
             />
           </div>
           {error && <p style={{ fontSize: "13px", color: "#c0392b" }}>{error}</p>}
-          <button
+          <Button
             type="submit"
+            variant="primary"
             disabled={!orgName.trim() || isPending}
-            style={{
-              width: "100%",
-              fontSize: "13px",
-              fontWeight: 500,
-              padding: "8px 16px",
-              background: "#1a7f4b",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "8px",
-              cursor: (!orgName.trim() || isPending) ? "default" : "pointer",
-              opacity: (!orgName.trim() || isPending) ? 0.5 : 1,
-              letterSpacing: "-0.01em",
-            }}
+            style={{ width: "100%", padding: "8px 16px" }}
           >
             {isPending ? "Saving…" : "Continue"}
-          </button>
+          </Button>
         </form>
       </div>
     );
@@ -121,33 +118,65 @@ export default function StepOrganisation({ onComplete }: Props) {
         You can upgrade or change your plan at any time from account settings.
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "12px" }}>
-        {PLANS.map((plan) => (
-          <button
-            key={plan.key}
-            type="button"
-            disabled={isPending}
-            onClick={() => handlePlanSelect(plan.key)}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "3px",
-              padding: "12px 10px",
-              background: "#ffffff",
-              border: "0.5px solid rgba(0,0,0,0.12)",
-              borderRadius: "10px",
-              cursor: isPending ? "default" : "pointer",
-              textAlign: "left",
-              opacity: isPending ? 0.5 : 1,
-            }}
-          >
-            <span style={{ fontSize: "12px", fontWeight: 600, color: "#171717" }}>{plan.label}</span>
-            <span style={{ fontSize: "12px", fontWeight: 500, color: "#1a7f4b" }}>{plan.price}</span>
-            <span style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)", marginTop: "4px" }}>{plan.users}</span>
-            <span style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)" }}>{plan.contracts}</span>
-          </button>
-        ))}
+        {PLANS.map((plan) => {
+          const isSelected = selectedPlan === plan.key;
+          return (
+            <button
+              key={plan.key}
+              type="button"
+              disabled={isPending}
+              onClick={() => setSelectedPlan(plan.key)}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "3px",
+                padding: "12px 10px",
+                background: isSelected ? "rgba(26,127,75,0.04)" : "#ffffff",
+                border: isSelected
+                  ? "1.5px solid #1a7f4b"
+                  : "0.5px solid rgba(0,0,0,0.12)",
+                borderRadius: "10px",
+                cursor: isPending ? "default" : "pointer",
+                textAlign: "left",
+                opacity: isPending ? 0.5 : 1,
+                transition: "border-color 0.12s, background 0.12s",
+              }}
+            >
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#171717" }}>{plan.label}</span>
+              <span style={{ fontSize: "12px", fontWeight: 500, color: "#1a7f4b" }}>{plan.price}</span>
+              <span style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)", marginTop: "4px" }}>{plan.users}</span>
+              <span style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)" }}>{plan.contracts}</span>
+            </button>
+          );
+        })}
       </div>
-      {error && <p style={{ fontSize: "13px", color: "#c0392b" }}>{error}</p>}
+      {error && <p style={{ fontSize: "13px", color: "#c0392b", marginBottom: "8px" }}>{error}</p>}
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <Button
+          type="button"
+          variant="primary"
+          disabled={!selectedPlan || isPending}
+          onClick={handlePlanContinue}
+          style={{ width: "100%", padding: "8px 16px" }}
+        >
+          {isPending ? "Loading…" : "Continue"}
+        </Button>
+        <button
+          type="button"
+          onClick={handleBack}
+          disabled={isPending}
+          style={{
+            fontSize: "13px",
+            color: "rgba(0,0,0,0.4)",
+            background: "none",
+            border: "none",
+            cursor: isPending ? "default" : "pointer",
+            padding: "4px 0",
+          }}
+        >
+          ← Back
+        </button>
+      </div>
     </div>
   );
 }
