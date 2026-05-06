@@ -4,15 +4,12 @@ import type { TenantPlan, PlanUsage } from "@/types";
 export type { PlanUsage };
 
 // ─── Limits (§15.2) ───────────────────────────────────────────────────────────
-// Starter and Trial share the same limits; Growth and Enterprise are unlimited.
-
-const UNLIMITED = -1; // sentinel for Growth/Enterprise
 
 const LIMITS: Record<TenantPlan, { contracts: number; users: number; extractions: number }> = {
-  trial:      { contracts: 50,        users: 5,        extractions: 20 },
-  starter:    { contracts: 50,        users: 5,        extractions: 20 },
-  growth:     { contracts: UNLIMITED, users: UNLIMITED, extractions: UNLIMITED },
-  enterprise: { contracts: UNLIMITED, users: UNLIMITED, extractions: UNLIMITED },
+  free:     { contracts: 10,     users: 1,  extractions: 10 },
+  starter:  { contracts: 999999, users: 1,  extractions: 999999 },
+  team:     { contracts: 999999, users: 5,  extractions: 999999 },
+  business: { contracts: 999999, users: 20, extractions: 999999 },
 };
 
 /** Returns current usage counts for a tenant. Used by the billing UI. */
@@ -44,12 +41,11 @@ export async function checkContractLimit(
   plan: TenantPlan,
 ): Promise<LimitCheck> {
   const limit = LIMITS[plan].contracts;
-  if (limit === UNLIMITED) return { allowed: true };
   const count = await db.contract.count({ where: { tenantId } });
   if (count >= limit) {
     return {
       allowed: false,
-      message: `Contract limit reached (${limit}). Upgrade to Growth for unlimited contracts.`,
+      message: `Contract limit reached (${limit}). Upgrade your plan for more contracts.`,
     };
   }
   return { allowed: true };
@@ -64,12 +60,11 @@ export async function checkUserLimit(
   plan: TenantPlan,
 ): Promise<LimitCheck> {
   const limit = LIMITS[plan].users;
-  if (limit === UNLIMITED) return { allowed: true };
   const count = await db.user.count({ where: { tenantId } });
   if (count >= limit) {
     return {
       allowed: false,
-      message: `User limit reached (${limit}). Upgrade to Growth for unlimited users.`,
+      message: `User limit reached (${limit}). Upgrade your plan for more users.`,
     };
   }
   return { allowed: true };
@@ -84,7 +79,6 @@ export async function checkExtractionLimit(
   plan: TenantPlan,
 ): Promise<LimitCheck> {
   const limit = LIMITS[plan].extractions;
-  if (limit === UNLIMITED) return { allowed: true };
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const count = await db.extractionResult.count({
@@ -93,7 +87,7 @@ export async function checkExtractionLimit(
   if (count >= limit) {
     return {
       allowed: false,
-      message: `AI extraction limit reached (${limit}/month). Upgrade to Growth for unlimited extractions.`,
+      message: `AI extraction limit reached (${limit}/month). Upgrade your plan for more extractions.`,
     };
   }
   return { allowed: true };

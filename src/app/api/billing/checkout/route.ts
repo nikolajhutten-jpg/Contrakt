@@ -11,7 +11,7 @@ import { ok, badRequest, handleError } from "@/lib/api/response";
 import { UserRole } from "@/types";
 import { db } from "@/lib/db/client";
 
-const VALID_PLANS = ["starter", "growth"] as const;
+const VALID_PLANS = ["starter", "team", "business"] as const;
 type PlanKey = (typeof VALID_PLANS)[number];
 
 /**
@@ -19,7 +19,7 @@ type PlanKey = (typeof VALID_PLANS)[number];
  * Creates a Stripe Checkout Session for plan selection (§15.5).
  * Admin only. Returns a hosted checkout URL for the client to redirect to.
  *
- * Body: { plan: "starter" | "growth" }
+ * Body: { plan: "starter" | "team" | "business" }
  */
 export async function POST(request: NextRequest): Promise<Response> {
   try {

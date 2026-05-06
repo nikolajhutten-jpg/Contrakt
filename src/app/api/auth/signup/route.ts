@@ -59,10 +59,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const gcsBucket = `contrakt-${slug}-documents`;
     // TODO: replace with real GCS bucket provisioning
 
-    // §15.4: 14-day free trial begins at signup
-    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-
-    const tenant = await createTenant({ name: companyName, slug, gcsBucket, trialEndsAt });
+    const tenant = await createTenant({ name: companyName, slug, gcsBucket });
 
     // TODO: replace placeholder with real Clerk user ID from webhook
     const clerkId = `signup:${crypto.randomUUID()}`;

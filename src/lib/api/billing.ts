@@ -6,7 +6,7 @@
  * Starts a Stripe Checkout session for the given plan and redirects
  * the browser to the hosted Stripe checkout page.
  */
-export async function startCheckout(plan: "starter" | "growth"): Promise<void> {
+export async function startCheckout(plan: "starter" | "team" | "business"): Promise<void> {
   const res = await fetch("/api/billing/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

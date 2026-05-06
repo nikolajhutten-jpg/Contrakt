@@ -6,13 +6,18 @@ import type { Tenant, PlanUsage } from "@/types";
 import { TenantPlan, TenantPlanStatus } from "@/types";
 
 // §15.2 limits — mirrored here for display; enforcement is server-side in planLimits.ts
-const STARTER_LIMITS = { contracts: 50, users: 5, extractions: 20 };
+const PLAN_LIMITS: Record<TenantPlan, { contracts: number; users: number; extractions: number }> = {
+  free:     { contracts: 10,     users: 1,  extractions: 10 },
+  starter:  { contracts: 999999, users: 1,  extractions: 999999 },
+  team:     { contracts: 999999, users: 5,  extractions: 999999 },
+  business: { contracts: 999999, users: 20, extractions: 999999 },
+};
 
 const PLAN_LABELS: Record<TenantPlan, string> = {
-  trial: "Trial",
-  starter: "Starter",
-  growth: "Growth",
-  enterprise: "Enterprise",
+  free:     "Free",
+  starter:  "Starter",
+  team:     "Team",
+  business: "Business",
 };
 
 interface Props {
@@ -70,21 +75,13 @@ export default function BillingSection({ tenant, usage }: Props) {
   const [isCheckingOut, startCheckoutTransition] = useTransition();
   const [isOpeningPortal, startPortalTransition] = useTransition();
 
-  const isTrialActive =
-    tenant.plan === TenantPlan.Trial &&
-    tenant.planStatus === TenantPlanStatus.Active &&
-    tenant.trialEndsAt !== null;
-
   const isReadOnly = tenant.planStatus === TenantPlanStatus.ReadOnly;
 
-  const daysLeft = tenant.trialEndsAt
-    ? Math.max(0, Math.ceil((tenant.trialEndsAt.getTime() - Date.now()) / 86_400_000))
-    : null;
-
-  const showUsageMeters = tenant.plan === TenantPlan.Trial || tenant.plan === TenantPlan.Starter;
-  const atContractLimit = usage.contracts >= STARTER_LIMITS.contracts;
-  const atUserLimit = usage.users >= STARTER_LIMITS.users;
-  const atExtractionLimit = usage.extractionsThisMonth >= STARTER_LIMITS.extractions;
+  const limits = PLAN_LIMITS[tenant.plan];
+  const showUsageMeters = tenant.plan === TenantPlan.Free || tenant.plan === TenantPlan.Starter;
+  const atContractLimit = usage.contracts >= limits.contracts;
+  const atUserLimit = usage.users >= limits.users;
+  const atExtractionLimit = usage.extractionsThisMonth >= limits.extractions;
   const anyLimitReached = atContractLimit || atUserLimit || atExtractionLimit;
 
   function handlePortal() {
@@ -95,7 +92,7 @@ export default function BillingSection({ tenant, usage }: Props) {
     });
   }
 
-  function handleCheckout(plan: "starter" | "growth") {
+  function handleCheckout(plan: "starter" | "team" | "business") {
     setError("");
     startCheckoutTransition(async () => {
       try { await startCheckout(plan); }
@@ -107,17 +104,12 @@ export default function BillingSection({ tenant, usage }: Props) {
     <div style={{ maxWidth: "480px" }}>
       <p style={{ fontSize: "13px", fontWeight: 600, color: "#171717", marginBottom: "16px" }}>Billing</p>
 
-      {/* Plan + trial badge */}
+      {/* Plan badge */}
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
         <span style={{ display: "inline-flex", alignItems: "center", borderRadius: "20px", padding: "2px 8px", fontSize: "11px", fontWeight: 500, background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" }}>
           {PLAN_LABELS[tenant.plan]}
         </span>
-        {isTrialActive && daysLeft !== null && (
-          <span style={{ display: "inline-flex", alignItems: "center", borderRadius: "20px", padding: "2px 8px", fontSize: "11px", fontWeight: 500, background: daysLeft <= 3 ? "#fdecea" : "#fff3e0", color: daysLeft <= 3 ? "#c0392b" : "#b45309" }}>
-            {daysLeft} {daysLeft === 1 ? "day" : "days"} left in trial
-          </span>
-        )}
-        {tenant.plan !== TenantPlan.Trial && (
+        {tenant.plan !== TenantPlan.Free && (
           <span style={{ fontSize: "12px", color: "rgba(0,0,0,0.4)" }}>
             {tenant.seatCount} seat{tenant.seatCount !== 1 ? "s" : ""}
           </span>
@@ -140,16 +132,16 @@ export default function BillingSection({ tenant, usage }: Props) {
       {showUsageMeters && (
         <div style={{ marginBottom: "16px", padding: "14px 16px", background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
           <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(0,0,0,0.35)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Plan usage</p>
-          <UsageMeter label="Contracts" used={usage.contracts} limit={STARTER_LIMITS.contracts} />
-          <UsageMeter label="Users" used={usage.users} limit={STARTER_LIMITS.users} />
-          <UsageMeter label="AI extractions this month" used={usage.extractionsThisMonth} limit={STARTER_LIMITS.extractions} />
+          <UsageMeter label="Contracts" used={usage.contracts} limit={limits.contracts} />
+          <UsageMeter label="Users" used={usage.users} limit={limits.users} />
+          <UsageMeter label="AI extractions this month" used={usage.extractionsThisMonth} limit={limits.extractions} />
         </div>
       )}
 
       {/* Upgrade prompt */}
-      {anyLimitReached && tenant.plan !== TenantPlan.Growth && tenant.plan !== TenantPlan.Enterprise && (
+      {anyLimitReached && tenant.plan !== TenantPlan.Team && tenant.plan !== TenantPlan.Business && (
         <div style={{ marginBottom: "16px", padding: "10px 12px", background: "#fff3e0", border: "0.5px solid rgba(180,83,9,0.2)", borderRadius: "8px", fontSize: "13px", color: "#b45309" }}>
-          You&apos;ve reached a plan limit. Upgrade to Growth for unlimited contracts, users, and extractions.
+          You&apos;ve reached a plan limit. Upgrade for more contracts, users, and extractions.
         </div>
       )}
 
@@ -157,24 +149,34 @@ export default function BillingSection({ tenant, usage }: Props) {
 
       {/* Action buttons */}
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-        {(tenant.plan === TenantPlan.Trial || isReadOnly) && (
+        {(tenant.plan === TenantPlan.Free || isReadOnly) && (
           <>
             <button type="button" onClick={() => handleCheckout("starter")} disabled={isCheckingOut}
               style={{ ...BTN_SECONDARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
-              {isCheckingOut ? "Loading…" : "Starter — €49/mo"}
+              {isCheckingOut ? "Loading…" : "Starter"}
             </button>
-            <button type="button" onClick={() => handleCheckout("growth")} disabled={isCheckingOut}
+            <button type="button" onClick={() => handleCheckout("team")} disabled={isCheckingOut}
+              style={{ ...BTN_SECONDARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
+              {isCheckingOut ? "Loading…" : "Team"}
+            </button>
+            <button type="button" onClick={() => handleCheckout("business")} disabled={isCheckingOut}
               style={{ ...BTN_PRIMARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
-              {isCheckingOut ? "Loading…" : "Growth — €15/user/mo"}
+              {isCheckingOut ? "Loading…" : "Business"}
             </button>
           </>
         )}
-        {tenant.plan !== TenantPlan.Trial && !isReadOnly && (
+        {tenant.plan !== TenantPlan.Free && !isReadOnly && (
           <>
             {tenant.plan === TenantPlan.Starter && (
-              <button type="button" onClick={() => handleCheckout("growth")} disabled={isCheckingOut}
+              <button type="button" onClick={() => handleCheckout("team")} disabled={isCheckingOut}
+                style={{ ...BTN_SECONDARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
+                {isCheckingOut ? "Loading…" : "Upgrade to Team"}
+              </button>
+            )}
+            {(tenant.plan === TenantPlan.Starter || tenant.plan === TenantPlan.Team) && (
+              <button type="button" onClick={() => handleCheckout("business")} disabled={isCheckingOut}
                 style={{ ...BTN_PRIMARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
-                {isCheckingOut ? "Loading…" : "Upgrade to Growth"}
+                {isCheckingOut ? "Loading…" : "Upgrade to Business"}
               </button>
             )}
             <button type="button" onClick={handlePortal} disabled={isOpeningPortal}

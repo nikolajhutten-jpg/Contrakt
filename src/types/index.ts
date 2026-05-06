@@ -59,10 +59,10 @@ export const AlertTriggerReference = {
 export type AlertTriggerReference = (typeof AlertTriggerReference)[keyof typeof AlertTriggerReference];
 
 export const TenantPlan = {
-  Trial: "trial",
+  Free: "free",
   Starter: "starter",
-  Growth: "growth",
-  Enterprise: "enterprise",
+  Team: "team",
+  Business: "business",
 } as const;
 export type TenantPlan = (typeof TenantPlan)[keyof typeof TenantPlan];
 

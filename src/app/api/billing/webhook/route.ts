@@ -11,8 +11,9 @@ import { TenantPlan, TenantPlanStatus } from "@/types";
 
 /** Maps a Stripe Price ID to the matching internal plan name. */
 function priceIdToPlan(priceId: string): TenantPlan {
-  if (priceId === process.env.STRIPE_STARTER_PRICE_ID) return TenantPlan.Starter;
-  if (priceId === process.env.STRIPE_GROWTH_PRICE_ID) return TenantPlan.Growth;
+  if (priceId === process.env.STRIPE_STARTER_PRICE_ID)  return TenantPlan.Starter;
+  if (priceId === process.env.STRIPE_TEAM_PRICE_ID)     return TenantPlan.Team;
+  if (priceId === process.env.STRIPE_BUSINESS_PRICE_ID) return TenantPlan.Business;
   // Unknown price — default to Starter; admin should verify Stripe configuration
   return TenantPlan.Starter;
 }
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         if (!tenant) break;
 
         await updateTenantBilling(tenant.id, {
-          plan: TenantPlan.Trial,
+          plan: TenantPlan.Free,
           planStatus: TenantPlanStatus.ReadOnly,
           stripeSubscriptionId: null,
         });

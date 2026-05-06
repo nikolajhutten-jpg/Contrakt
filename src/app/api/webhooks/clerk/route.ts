@@ -103,9 +103,7 @@ export async function POST(req: Request): Promise<Response> {
   const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
   const gcsBucket = `contrakt-${slug}-documents`;
 
-  const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-
-  const tenant = await createTenant({ name, slug, gcsBucket, trialEndsAt });
+  const tenant = await createTenant({ name, slug, gcsBucket });
 
   await createUser({
     tenantId: tenant.id,

@@ -12,12 +12,14 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 /**
- * Maps plan names to Stripe Price IDs configured in .env.local.
- * Set STRIPE_STARTER_PRICE_ID and STRIPE_GROWTH_PRICE_ID in your Stripe dashboard.
+ * Maps paid plan names to Stripe Price IDs configured in .env.local.
+ * Set STRIPE_STARTER_PRICE_ID, STRIPE_TEAM_PRICE_ID, and STRIPE_BUSINESS_PRICE_ID
+ * in your Stripe dashboard.
  */
 export const STRIPE_PRICES = {
-  starter: process.env.STRIPE_STARTER_PRICE_ID ?? "",
-  growth: process.env.STRIPE_GROWTH_PRICE_ID ?? "",
+  starter:  process.env.STRIPE_STARTER_PRICE_ID ?? "",
+  team:     process.env.STRIPE_TEAM_PRICE_ID ?? "",
+  business: process.env.STRIPE_BUSINESS_PRICE_ID ?? "",
 } as const;
 
 // ─── Customer ─────────────────────────────────────────────────────────────────

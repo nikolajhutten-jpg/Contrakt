@@ -57,10 +57,10 @@ enum AlertTriggerReference {
 }
 
 enum TenantPlan {
-  trial
+  free
   starter
-  growth
-  enterprise
+  team
+  business
 }
 
 enum TenantPlanStatus {
@@ -81,7 +81,7 @@ model Tenant {
   // ── Billing (§15) ──────────────────────────────────────────────────────────
   stripeCustomerId     String?          @map("stripe_customer_id")
   stripeSubscriptionId String?          @map("stripe_subscription_id")
-  plan                 TenantPlan       @default(trial)
+  plan                 TenantPlan       @default(free)
   planStatus           TenantPlanStatus @default(active)
   trialEndsAt          DateTime?        @map("trial_ends_at")
   seatCount            Int              @default(1) @map("seat_count")
