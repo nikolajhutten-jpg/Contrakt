@@ -173,7 +173,7 @@ export interface Document {
   fileName: string;
   filePath: string;
   fileFormat: FileFormat;
-  uploadedById: string;
+  uploadedById: string | null;
   uploadedAt: Date;
 }
 
