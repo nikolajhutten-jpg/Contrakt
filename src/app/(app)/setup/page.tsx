@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { getUserByClerkId, getUserByEmail } from "@/lib/db/users";
 import { getDepartmentsByTenant } from "@/lib/db/departments";
 import { getOnboardingState } from "@/lib/db/dashboard";
+import { getTenantSettings } from "@/lib/db/settings";
 import SetupWizard from "@/components/setup/SetupWizard";
 import { UserRole } from "@/types";
 
@@ -26,12 +27,14 @@ export default async function SetupPage() {
       redirect("/dashboard");
     }
 
-    const [departments, onboarding] = await Promise.all([
+    const [departments, onboarding, tenant] = await Promise.all([
       getDepartmentsByTenant(localUser.tenantId),
       getOnboardingState(localUser.tenantId),
+      getTenantSettings(localUser.tenantId),
     ]);
 
     if (
+      tenant?.name &&
       onboarding.departmentsAdded &&
       onboarding.firstUserInvited
       // Slack UI hidden — backend intact

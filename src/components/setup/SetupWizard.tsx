@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import StepOrganisation from "@/components/setup/StepOrganisation";
 import StepDepartments from "@/components/setup/StepDepartments";
 import StepInviteUsers from "@/components/setup/StepInviteUsers";
 // Slack UI hidden — backend intact
 import type { Department } from "@/types";
 
-type Step = 1 | 2;
+type Step = 0 | 1 | 2;
 
 const STEPS = [
+  { number: 0, label: "Organisation" },
   { number: 1, label: "Departments" },
   { number: 2, label: "Invite users" },
 ];
@@ -20,8 +22,12 @@ interface Props {
 
 export default function SetupWizard({ initialDepartments }: Props) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState<Step>(0);
   const [departments, setDepartments] = useState<Department[]>(initialDepartments);
+
+  function handleOrganisationDone() {
+    setStep(1);
+  }
 
   function handleDepartmentsDone(created: Department[]) {
     setDepartments(created);
@@ -86,6 +92,9 @@ export default function SetupWizard({ initialDepartments }: Props) {
         </div>
 
         {/* Step content */}
+        {step === 0 && (
+          <StepOrganisation onComplete={handleOrganisationDone} />
+        )}
         {step === 1 && (
           <StepDepartments
             initial={departments}

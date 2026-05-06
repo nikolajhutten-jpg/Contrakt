@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth/session";
 import { getTenantSettings, updateTenantSettings } from "@/lib/db/settings";
 import { ok, notFound, badRequest, handleError } from "@/lib/api/response";
-import { UserRole } from "@/types";
+import { UserRole, TenantPlan } from "@/types";
 
 // GET /api/settings/account — admin only
 export async function GET(): Promise<Response> {
@@ -37,6 +37,12 @@ export async function PATCH(request: NextRequest): Promise<Response> {
       if (typeof b.name !== "string" || b.name.trim() === "")
         return badRequest("name must be a non-empty string.");
       patch.name = b.name.trim();
+    }
+    if ("plan" in b) {
+      const raw = typeof b.plan === "string" ? b.plan.toLowerCase() : "";
+      if (raw !== TenantPlan.Free)
+        return badRequest("Only the Free plan can be set via this endpoint. Use Stripe checkout for paid plans.");
+      patch.plan = TenantPlan.Free;
     }
 
     if (Object.keys(patch).length === 0) return badRequest("No valid fields provided.");
