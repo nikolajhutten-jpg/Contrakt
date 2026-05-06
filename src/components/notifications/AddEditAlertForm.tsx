@@ -17,7 +17,7 @@ interface FormState {
   triggerUnit: PeriodUnit;
   triggerReference: AlertTriggerReference;
   emailChannel: boolean;
-  slackChannel: boolean;
+  // Slack UI hidden — backend intact
 }
 
 function defaultState(alert?: AlertWithContract, contracts?: ContractOption[]): FormState {
@@ -28,7 +28,6 @@ function defaultState(alert?: AlertWithContract, contracts?: ContractOption[]): 
       triggerUnit: alert.triggerUnit,
       triggerReference: alert.triggerReference,
       emailChannel: alert.channels.includes(AlertChannel.Email),
-      slackChannel: alert.channels.includes(AlertChannel.Slack),
     };
   }
   return {
@@ -37,7 +36,6 @@ function defaultState(alert?: AlertWithContract, contracts?: ContractOption[]): 
     triggerUnit: PeriodUnit.Months,
     triggerReference: AlertTriggerReference.RenewalNoticeDeadline,
     emailChannel: true,
-    slackChannel: false,
   };
 }
 
@@ -63,7 +61,7 @@ export default function AddEditAlertForm({ contracts, alert, onDone }: AddEditAl
   function handleSave() {
     const channels: AlertChannel[] = [];
     if (form.emailChannel) channels.push(AlertChannel.Email);
-    if (form.slackChannel) channels.push(AlertChannel.Slack);
+    // Slack UI hidden — backend intact
 
     if (!form.contractId) { setError("Select a contract."); return; }
     if (channels.length === 0) { setError("Select at least one channel."); return; }
@@ -183,11 +181,7 @@ export default function AddEditAlertForm({ contracts, alert, onDone }: AddEditAl
                 onChange={(e) => set("emailChannel", e.target.checked)} />
               Email
             </label>
-            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", cursor: "pointer" }}>
-              <input type="checkbox" checked={form.slackChannel}
-                onChange={(e) => set("slackChannel", e.target.checked)} />
-              Slack
-            </label>
+            {/* Slack UI hidden — backend intact */}
           </div>
         </div>
       </div>

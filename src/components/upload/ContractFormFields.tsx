@@ -292,7 +292,8 @@ export default function ContractFormFields({
 
           <FieldRow label="Notify via">
             <div style={{ display: "flex", gap: "12px" }}>
-              {(["email", "slack"] as const).map((ch) => (
+              {/* Slack UI hidden — backend intact */}
+              {(["email"] as const).map((ch) => (
                 <label key={ch} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer" }}>
                   <input
                     type="checkbox"

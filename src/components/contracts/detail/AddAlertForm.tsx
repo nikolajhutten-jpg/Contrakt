@@ -14,7 +14,7 @@ interface FormState {
   triggerUnit: PeriodUnit;
   triggerReference: AlertTriggerReference;
   emailChannel: boolean;
-  slackChannel: boolean;
+  // Slack UI hidden — backend intact
 }
 
 const DEFAULT: FormState = {
@@ -22,7 +22,6 @@ const DEFAULT: FormState = {
   triggerUnit: PeriodUnit.Months,
   triggerReference: AlertTriggerReference.RenewalNoticeDeadline,
   emailChannel: true,
-  slackChannel: false,
 };
 
 export default function AddAlertForm({ contractId, onDone }: AddAlertFormProps) {
@@ -34,7 +33,7 @@ export default function AddAlertForm({ contractId, onDone }: AddAlertFormProps) 
   function handleSave() {
     const channels: AlertChannel[] = [];
     if (form.emailChannel) channels.push(AlertChannel.Email);
-    if (form.slackChannel) channels.push(AlertChannel.Slack);
+    // Slack UI hidden — backend intact
 
     if (channels.length === 0) {
       setError("Select at least one channel.");
@@ -105,14 +104,7 @@ export default function AddAlertForm({ contractId, onDone }: AddAlertFormProps) 
           />
           Email
         </label>
-        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#171717", cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={form.slackChannel}
-            onChange={(e) => setForm({ ...form, slackChannel: e.target.checked })}
-          />
-          Slack
-        </label>
+        {/* Slack UI hidden — backend intact */}
       </div>
 
       {error && (

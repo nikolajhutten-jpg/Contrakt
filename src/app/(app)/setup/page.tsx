@@ -33,8 +33,8 @@ export default async function SetupPage() {
 
     if (
       onboarding.departmentsAdded &&
-      onboarding.firstUserInvited &&
-      onboarding.slackConnected
+      onboarding.firstUserInvited
+      // Slack UI hidden — backend intact
     ) {
       redirect("/dashboard");
     }

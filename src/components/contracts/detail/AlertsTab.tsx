@@ -89,9 +89,9 @@ function AlertRow({
         )}
       </div>
 
-      {/* Channel pills */}
+      {/* Channel pills — Slack UI hidden, backend intact */}
       <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
-        {alert.channels.map((ch) => (
+        {alert.channels.filter((ch) => ch !== "slack").map((ch) => (
           <ChannelPill key={ch} label={ch} />
         ))}
       </div>

@@ -87,7 +87,7 @@ export default function DashboardShell({
   const allOnboardingDone =
     onboarding.departmentsAdded &&
     onboarding.firstUserInvited &&
-    onboarding.slackConnected &&
+    // Slack UI hidden — backend intact
     onboarding.firstContractUploaded;
 
   const showChecklist = isAdmin && !checklistDismissed && !allOnboardingDone;
@@ -157,7 +157,7 @@ export default function DashboardShell({
             <ChecklistItem done label="Account created" />
             <ChecklistItem done={onboarding.departmentsAdded} label="Add a department" />
             <ChecklistItem done={onboarding.firstUserInvited} label="Invite a team member" />
-            <ChecklistItem done={onboarding.slackConnected} label="Connect Slack" />
+            {/* Slack UI hidden — backend intact */}
             <ChecklistItem done={onboarding.firstContractUploaded} label="Upload your first contract" />
           </ul>
         </div>

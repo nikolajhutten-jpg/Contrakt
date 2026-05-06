@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateAccountSettings, testSlackWebhook } from "@/lib/api/settings";
+import { updateAccountSettings } from "@/lib/api/settings";
 import Spinner from "@/components/ui/Spinner";
 import type { Tenant } from "@/types";
 
@@ -40,13 +40,10 @@ const SECTION_DIVIDER: React.CSSProperties = {
 export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isTesting, startTesting] = useTransition();
   const [saved, setSaved] = useState(false);
-  const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState(tenant.name);
-  const [slackWebhookUrl, setSlackWebhookUrl] = useState(tenant.slackWebhookUrl ?? "");
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -56,24 +53,11 @@ export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps
       try {
         await updateAccountSettings({
           name: name.trim() || undefined,
-          slackWebhookUrl: slackWebhookUrl.trim() || null,
         });
         setSaved(true);
         router.refresh();
       } catch {
         setError("Failed to save settings. Please try again.");
-      }
-    });
-  }
-
-  function handleTestSlack() {
-    setTestResult(null);
-    startTesting(async () => {
-      try {
-        await testSlackWebhook();
-        setTestResult("success");
-      } catch {
-        setTestResult("error");
       }
     });
   }
@@ -93,55 +77,7 @@ export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps
         />
       </div>
 
-      {/* Slack */}
-      <div style={SECTION_DIVIDER}>
-        <p style={SECTION_LABEL}>Slack integration</p>
-        <p style={SECTION_DESC}>Used for tenant-wide renewal and status change notifications.</p>
-        <label style={FIELD_LABEL}>Incoming webhook URL</label>
-        <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-          <input
-            type="url"
-            value={slackWebhookUrl}
-            onChange={(e) => { setSlackWebhookUrl(e.target.value); setTestResult(null); }}
-            placeholder="https://hooks.slack.com/services/…"
-            style={{ flex: 1 }}
-          />
-          <button
-            type="button"
-            onClick={handleTestSlack}
-            disabled={isTesting || !slackWebhookUrl.trim()}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "13px",
-              fontWeight: 500,
-              padding: "7px 12px",
-              background: "rgba(0,0,0,0.05)",
-              color: "inherit",
-              border: "0.5px solid rgba(0,0,0,0.1)",
-              borderRadius: "8px",
-              cursor: (isTesting || !slackWebhookUrl.trim()) ? "default" : "pointer",
-              opacity: (isTesting || !slackWebhookUrl.trim()) ? 0.5 : 1,
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}
-          >
-            {isTesting && <Spinner />}
-            {isTesting ? "Sending…" : "Send test"}
-          </button>
-        </div>
-        {testResult === "success" && (
-          <p className="fade-in" style={{ fontSize: "12px", color: "#1a7f4b", marginTop: "6px" }}>
-            ✓ Message sent
-          </p>
-        )}
-        {testResult === "error" && (
-          <p className="fade-in" style={{ fontSize: "12px", color: "#c0392b", marginTop: "6px" }}>
-            ✗ Failed — check the webhook URL
-          </p>
-        )}
-      </div>
+      {/* Slack UI hidden — backend intact */}
 
       {/* Tenant info */}
       <div style={{ marginBottom: "24px" }}>

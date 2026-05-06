@@ -51,7 +51,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
-  const [slackUserId, setSlackUserId] = useState(user.slackUserId ?? "");
+  // Slack UI hidden — backend intact
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,7 +62,6 @@ export default function ProfileForm({ user }: ProfileFormProps) {
         await updateMyProfile({
           name: name.trim(),
           email: email.trim(),
-          slackUserId: slackUserId.trim() || null,
         });
         setSaved(true);
         router.refresh();
@@ -90,26 +89,14 @@ export default function ProfileForm({ user }: ProfileFormProps) {
         </div>
       </div>
 
-      {/* Slack */}
-      <div style={SECTION_DIVIDER}>
-        <p style={SECTION_LABEL}>Slack</p>
-        <p style={SECTION_DESC}>Connect your Slack identity for personal DM alerts.</p>
-        <label style={FIELD_LABEL}>Slack user ID</label>
-        <input
-          type="text"
-          value={slackUserId}
-          onChange={(e) => setSlackUserId(e.target.value)}
-          placeholder="U012AB3CD (optional)"
-        />
-        <p style={FIELD_HINT}>Find yours in your Slack profile → More → Profile.</p>
-      </div>
+      {/* Slack UI hidden — backend intact */}
 
       {/* Notification preferences */}
       <div style={{ marginBottom: "24px" }}>
         <p style={SECTION_LABEL}>Notification preferences</p>
         <p style={SECTION_DESC}>Alert channels are configured per contract.</p>
         <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", lineHeight: 1.5 }}>
-          To set up email or Slack alerts for a specific contract, open that
+          To set up email alerts for a specific contract, open that
           contract and use the <strong style={{ fontWeight: 500, color: "#171717" }}>Alerts</strong> tab
           in the right panel.
         </p>

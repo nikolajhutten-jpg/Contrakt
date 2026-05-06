@@ -4,15 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import StepDepartments from "@/components/setup/StepDepartments";
 import StepInviteUsers from "@/components/setup/StepInviteUsers";
-import StepSlack from "@/components/setup/StepSlack";
+// Slack UI hidden — backend intact
 import type { Department } from "@/types";
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2;
 
 const STEPS = [
   { number: 1, label: "Departments" },
   { number: 2, label: "Invite users" },
-  { number: 3, label: "Slack" },
 ];
 
 interface Props {
@@ -30,10 +29,6 @@ export default function SetupWizard({ initialDepartments }: Props) {
   }
 
   function handleInviteDone() {
-    setStep(3);
-  }
-
-  function handleSlackDone() {
     router.push("/dashboard");
   }
 
@@ -103,7 +98,7 @@ export default function SetupWizard({ initialDepartments }: Props) {
             onComplete={handleInviteDone}
           />
         )}
-        {step === 3 && <StepSlack onComplete={handleSlackDone} />}
+        {/* Slack UI hidden — backend intact */}
       </div>
     </div>
   );
