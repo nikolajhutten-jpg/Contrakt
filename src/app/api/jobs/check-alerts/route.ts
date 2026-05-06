@@ -1,27 +1,17 @@
-import { NextRequest } from "next/server";
-import { checkAndFireAlerts } from "@/lib/services/alertScheduler";
-import { ok, forbidden, handleError } from "@/lib/api/response";
-
 /**
  * POST /api/jobs/check-alerts
- * Called daily by GCP Cloud Scheduler (§8.5).
- * Evaluates all pending notification alerts, fires due email and Slack
- * notifications, and marks them sent.
- *
- * Security: configure Cloud Scheduler to send
- * "Authorization: Bearer <SCHEDULER_SECRET>" and verify it here in production.
+ * DEPRECATED: This endpoint was called by GCP Cloud Scheduler (§8.5).
+ * Alert scheduling has been replaced by the Vercel cron job at
+ * GET /api/cron/alerts (schedule: 0 8 * * *). This route is kept for
+ * reference but is no longer active.
  */
-export async function POST(request: NextRequest): Promise<Response> {
-  try {
-    const secret = process.env.SCHEDULER_SECRET;
-    if (secret) {
-      const auth = request.headers.get("authorization");
-      if (auth !== `Bearer ${secret}`) return forbidden("Invalid scheduler secret.");
-    }
-
-    await checkAndFireAlerts();
-    return ok({ fired: true });
-  } catch (error) {
-    return handleError(error);
-  }
+export async function POST(): Promise<Response> {
+  return new Response(
+    JSON.stringify({
+      error: "Gone",
+      message:
+        "This endpoint has been retired. Alert scheduling is now handled by the Vercel cron job at GET /api/cron/alerts.",
+    }),
+    { status: 410, headers: { "Content-Type": "application/json" } },
+  );
 }
