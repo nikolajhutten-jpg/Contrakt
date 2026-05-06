@@ -290,26 +290,9 @@ export default function ContractFormFields({
             </select>
           </FieldRow>
 
-          <FieldRow label="Notify via">
-            <div style={{ display: "flex", gap: "12px" }}>
-              {/* Slack UI hidden — backend intact */}
-              {(["email"] as const).map((ch) => (
-                <label key={ch} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={values.alertChannels.includes(ch)}
-                    onChange={(e) => {
-                      const next = e.target.checked
-                        ? [...values.alertChannels, ch]
-                        : values.alertChannels.filter((c) => c !== ch);
-                      onChange({ alertChannels: next });
-                    }}
-                  />
-                  {ch.charAt(0).toUpperCase() + ch.slice(1)}
-                </label>
-              ))}
-            </div>
-          </FieldRow>
+          <p style={{ fontSize: "12px", color: "rgba(0,0,0,0.4)", marginTop: "4px" }}>
+            Alerts are sent to contract owners by email.
+          </p>
         </div>
       )}
     </div>

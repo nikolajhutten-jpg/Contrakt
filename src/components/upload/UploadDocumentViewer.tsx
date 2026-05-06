@@ -9,15 +9,16 @@ interface UploadDocumentViewerProps {
 const DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 export default function UploadDocumentViewer({ file }: UploadDocumentViewerProps) {
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   const isDocx = file.type === DOCX_TYPE || file.name.toLowerCase().endsWith(".docx");
 
   useEffect(() => {
     if (isDocx) return;
-    const url = URL.createObjectURL(file);
-    setBlobUrl(url);
-    return () => { URL.revokeObjectURL(url); };
+    const reader = new FileReader();
+    reader.onload = () => setDataUrl(reader.result as string);
+    reader.readAsDataURL(file);
+    return () => { reader.abort(); };
   }, [file, isDocx]);
 
   if (isDocx) {
@@ -44,7 +45,7 @@ export default function UploadDocumentViewer({ file }: UploadDocumentViewerProps
     );
   }
 
-  if (!blobUrl) {
+  if (!dataUrl) {
     return (
       <div
         style={{
@@ -63,7 +64,7 @@ export default function UploadDocumentViewer({ file }: UploadDocumentViewerProps
 
   return (
     <iframe
-      src={blobUrl}
+      src={dataUrl}
       style={{ width: "100%", height: "100%", border: "none", display: "block" }}
       title={file.name}
     />

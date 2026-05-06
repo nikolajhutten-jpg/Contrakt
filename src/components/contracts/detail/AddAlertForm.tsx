@@ -13,15 +13,12 @@ interface FormState {
   triggerValue: string;
   triggerUnit: PeriodUnit;
   triggerReference: AlertTriggerReference;
-  emailChannel: boolean;
-  // Slack UI hidden — backend intact
 }
 
 const DEFAULT: FormState = {
   triggerValue: "2",
   triggerUnit: PeriodUnit.Months,
   triggerReference: AlertTriggerReference.RenewalNoticeDeadline,
-  emailChannel: true,
 };
 
 export default function AddAlertForm({ contractId, onDone }: AddAlertFormProps) {
@@ -31,14 +28,7 @@ export default function AddAlertForm({ contractId, onDone }: AddAlertFormProps) 
   const [error, setError] = useState<string | null>(null);
 
   function handleSave() {
-    const channels: AlertChannel[] = [];
-    if (form.emailChannel) channels.push(AlertChannel.Email);
-    // Slack UI hidden — backend intact
-
-    if (channels.length === 0) {
-      setError("Select at least one channel.");
-      return;
-    }
+    const channels: AlertChannel[] = [AlertChannel.Email];
 
     setError(null);
     startSave(async () => {
@@ -94,18 +84,9 @@ export default function AddAlertForm({ contractId, onDone }: AddAlertFormProps) 
         </select>
       </div>
 
-      {/* Channels */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
-        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#171717", cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={form.emailChannel}
-            onChange={(e) => setForm({ ...form, emailChannel: e.target.checked })}
-          />
-          Email
-        </label>
-        {/* Slack UI hidden — backend intact */}
-      </div>
+      <p style={{ fontSize: "12px", color: "rgba(0,0,0,0.4)", marginBottom: "10px" }}>
+        Alerts are sent to contract owners by email.
+      </p>
 
       {error && (
         <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "8px" }}>{error}</p>

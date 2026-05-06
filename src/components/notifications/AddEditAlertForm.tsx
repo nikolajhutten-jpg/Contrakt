@@ -16,8 +16,6 @@ interface FormState {
   triggerValue: string;
   triggerUnit: PeriodUnit;
   triggerReference: AlertTriggerReference;
-  emailChannel: boolean;
-  // Slack UI hidden — backend intact
 }
 
 function defaultState(alert?: AlertWithContract, contracts?: ContractOption[]): FormState {
@@ -27,7 +25,6 @@ function defaultState(alert?: AlertWithContract, contracts?: ContractOption[]): 
       triggerValue: String(alert.triggerValue),
       triggerUnit: alert.triggerUnit,
       triggerReference: alert.triggerReference,
-      emailChannel: alert.channels.includes(AlertChannel.Email),
     };
   }
   return {
@@ -35,7 +32,6 @@ function defaultState(alert?: AlertWithContract, contracts?: ContractOption[]): 
     triggerValue: "2",
     triggerUnit: PeriodUnit.Months,
     triggerReference: AlertTriggerReference.RenewalNoticeDeadline,
-    emailChannel: true,
   };
 }
 
@@ -59,12 +55,9 @@ export default function AddEditAlertForm({ contracts, alert, onDone }: AddEditAl
   }
 
   function handleSave() {
-    const channels: AlertChannel[] = [];
-    if (form.emailChannel) channels.push(AlertChannel.Email);
-    // Slack UI hidden — backend intact
+    const channels: AlertChannel[] = [AlertChannel.Email];
 
     if (!form.contractId) { setError("Select a contract."); return; }
-    if (channels.length === 0) { setError("Select at least one channel."); return; }
 
     const body = {
       triggerValue: Number(form.triggerValue),
@@ -172,19 +165,11 @@ export default function AddEditAlertForm({ contracts, alert, onDone }: AddEditAl
           </div>
         </div>
 
-        {/* Channels */}
-        <div>
-          <label style={LABEL}>Channels</label>
-          <div style={{ display: "flex", gap: "12px", height: "32px", alignItems: "center" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", cursor: "pointer" }}>
-              <input type="checkbox" checked={form.emailChannel}
-                onChange={(e) => set("emailChannel", e.target.checked)} />
-              Email
-            </label>
-            {/* Slack UI hidden — backend intact */}
-          </div>
-        </div>
       </div>
+
+      <p style={{ fontSize: "12px", color: "rgba(0,0,0,0.4)", marginBottom: "10px" }}>
+        Alerts are sent to contract owners by email.
+      </p>
 
       {error && (
         <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "10px" }}>{error}</p>
