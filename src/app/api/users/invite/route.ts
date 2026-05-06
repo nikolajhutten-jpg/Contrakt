@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth/session";
-import { createUser } from "@/lib/db/users";
-import { created, badRequest, handleError } from "@/lib/api/response";
+import { createUser, getUserByEmail } from "@/lib/db/users";
+import { created, badRequest, conflict, handleError } from "@/lib/api/response";
 import { UserRole } from "@/types";
 
 const VALID_ROLES = Object.values(UserRole) as string[];
@@ -53,6 +53,10 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     const email = b.email.trim();
     const role = b.role as UserRole;
+
+    const existing = await getUserByEmail(email);
+    if (existing && existing.tenantId === tenantId)
+      return conflict("A user with this email already exists.");
 
     const clerkId = `invite:${crypto.randomUUID()}`;
 

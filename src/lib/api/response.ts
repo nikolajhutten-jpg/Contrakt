@@ -27,6 +27,12 @@ export function badRequest(message: string): NextResponse {
   });
 }
 
+export function conflict(message: string): NextResponse {
+  return NextResponse.json({ error: message } satisfies ApiError, {
+    status: 409,
+  });
+}
+
 /**
  * Converts a thrown error into a NextResponse.
  * Auth helpers throw Error objects with a `status` property attached —

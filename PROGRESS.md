@@ -27,7 +27,7 @@ Files created to date, organised by layer.
 |---|---|
 | `src/lib/db/client.ts` | Prisma 7 singleton using `PrismaPg` adapter; pinned to `globalThis` for hot-reload safety; imports `@/env` to trigger validation on startup. |
 | `src/lib/db/tenants.ts` | `getTenantById`, `getTenantBySlug`, `createTenant`, `updateTenant` — tenant record queries. |
-| `src/lib/db/users.ts` | `getUserById`, `getUserByClerkId`, `getUsersByTenant`, `createUser`, `updateUser`, `deactivateUser`. All `auth0Id` references renamed to `clerkId`. |
+| `src/lib/db/users.ts` | `getUserById`, `getUserByClerkId`, `getUserByEmail`, `getUsersByTenant`, `createUser`, `updateUser`, `deactivateUser`. `UpdateUserInput` includes `clerkId`. All `auth0Id` references renamed to `clerkId`. |
 | `src/lib/db/contracts.ts` | Core contract CRUD. `CreateContractData` and `UpdateContractData` use `groupEntityId: string | null`. `contractWithRelations` include fetches `groupEntity`. |
 | `src/lib/db/contractHelpers.ts` | Shared helpers used by `dashboard.ts` and `contractsFiltered.ts`. `summaryInclude` fetches `groupEntity: { select: { id, name } }`. `toSummary` maps `groupEntity` and `autoRenewal` into `ContractSummary`. |
 | `src/lib/db/contractsFiltered.ts` | `getContractsFiltered` — role-aware query with status, department, term type, auto-renewal, date range, and free-text search filters. |
@@ -83,7 +83,7 @@ Files created to date, organised by layer.
 | File | Description |
 |---|---|
 | `src/app/api/auth/signup/route.ts` | `POST` — legacy onboarding: validates input, creates `Tenant` + admin `User` with placeholder `clerkId`; sets `trialEndsAt` (+14 days). Superseded by the Clerk webhook for new signups. |
-| `src/app/api/webhooks/clerk/route.ts` | `POST` — Clerk webhook receiver. Verifies Svix signature. On `user.created`: idempotency check, then provisions a new `Tenant` (name from user's name, unique slug, 14-day trial) and admin `User` with the real Clerk `userId` as `clerkId`. |
+| `src/app/api/webhooks/clerk/route.ts` | `POST` — Clerk webhook receiver. Verifies Svix signature. On `user.created`: idempotency check by Clerk ID; if email matches a DB user with `invite:*` clerkId, updates it (invited user flow); if email matches a real clerkId, returns 200 without provisioning (deactivated user guard); otherwise provisions a new `Tenant` + admin `User`. On `user.deleted`: looks up DB user by clerkId and deletes them if found. |
 | `src/app/api/billing/checkout/route.ts` | `POST` — admin only; provisions Stripe customer, creates hosted Checkout Session. |
 | `src/app/api/billing/portal/route.ts` | `POST` — admin only; creates Stripe Customer Portal session. |
 | `src/app/api/billing/webhook/route.ts` | `POST` — Stripe webhook receiver; handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`. |
@@ -98,8 +98,8 @@ Files created to date, organised by layer.
 | `src/app/api/group-entities/[id]/route.ts` | `DELETE` soft-deactivates a group entity (admin only). |
 | `src/app/api/vendors/route.ts` | `GET` list and `POST` create vendors. |
 | `src/app/api/vendors/[id]/route.ts` | `GET` vendor with contracts and `PATCH` update (admin only). |
-| `src/app/api/users/route.ts` | `GET` all users in tenant (admin only). `POST` create user with `clerkId`. |
-| `src/app/api/users/invite/route.ts` | `POST` — creates a local user record with placeholder `clerkId` until Clerk Backend API is wired. |
+| `src/app/api/users/route.ts` | `GET` all users in tenant (admin only). |
+| `src/app/api/users/invite/route.ts` | `POST` — validates no duplicate email in the tenant (409 if found), creates a local user record with placeholder `clerkId`, then calls Clerk's `/v1/invitations` to send the invite email (best-effort; errors logged but do not fail the request). |
 | `src/app/api/users/[id]/route.ts` | `PATCH` update role/department and `DELETE` deactivate (admin only). |
 | `src/app/api/users/me/route.ts` | `PATCH` — update own profile. |
 | `src/app/api/departments/route.ts` | `GET` list and `POST` create departments. |
@@ -125,7 +125,7 @@ Files created to date, organised by layer.
 | `src/app/(auth)/layout.tsx` | Minimal centred layout for public auth pages. |
 | `src/app/(app)/layout.tsx` | Authenticated route group layout — wraps every protected page in `AppLayout`. |
 | `src/app/(app)/dashboard/page.tsx` | Home page — fetches KPIs, active contracts, upcoming renewals, and onboarding state. |
-| `src/app/(app)/setup/page.tsx` | Setup wizard — requires only a valid Clerk session (no DB user needed). If DB user exists: admin-only, skips to dashboard if complete. If no DB user: renders wizard with empty state for fresh signups. |
+| `src/app/(app)/setup/page.tsx` | Setup wizard — requires only a valid Clerk session (no DB user needed). If DB user exists: admin-only, skips to dashboard if complete. If no DB user: checks Clerk email against DB — redirects to `/sign-in` if email belongs to a deactivated account; otherwise renders wizard with empty state for fresh signups. |
 | `src/app/(app)/contracts/page.tsx` | All Contracts page — role-filtered, passes data to `ContractsShell`. |
 | `src/app/(app)/contracts/[id]/page.tsx` | Contract Detail page. |
 | `src/app/(app)/contracts/new/page.tsx` | Upload Contract page — renders `UploadShell`. |
@@ -334,3 +334,19 @@ Full replacement of `@auth0/nextjs-auth0` with `@clerk/nextjs@7.3.0`.
 
 ### CSP update
 - `src/lib/security/headers.ts` — added `worker-src 'self' blob:` directive so the browser's built-in PDF renderer can load its Web Worker from a blob URL in the upload preview iframe.
+
+---
+
+## Session changes (2026-05-06)
+
+### Clerk invite email wired up
+- `src/app/api/users/invite/route.ts` — after creating the DB user record, POSTs to `https://api.clerk.com/v1/invitations` using `CLERK_SECRET_KEY` as the Bearer token. Errors are logged but do not fail the request (DB record already exists).
+- `src/app/api/webhooks/clerk/route.ts` — on `user.created`, checks for an existing DB user with the same email and a placeholder `clerkId` starting with `"invite:"`; if found, updates it with the real Clerk `userId` instead of provisioning a new tenant. Fresh signups fall through to the existing tenant-creation path.
+- `src/lib/db/users.ts` — added `getUserByEmail(email)`; added `clerkId` to `UpdateUserInput`.
+
+### User management gap fixes
+- `src/lib/api/response.ts` — added `conflict()` helper (409).
+- `src/app/api/users/invite/route.ts` — duplicate email guard: calls `getUserByEmail` before creating the record; returns 409 if a user with that email already exists in the tenant.
+- `src/app/(app)/setup/page.tsx` — deactivated user guard: in the no-DB-user branch, fetches the Clerk user's primary email via `currentUser()` and calls `getUserByEmail`; if the email exists in the DB with a non-`invite:` clerkId, redirects to `/sign-in` instead of rendering the setup wizard.
+- `src/app/api/webhooks/clerk/route.ts` — deactivated user guard: on `user.created`, if the email matches a DB row with a real (non-`invite:`) clerkId, returns 200 without provisioning a new tenant. `user.deleted` handler: looks up DB user by clerkId and hard-deletes them if found, keeping the DB consistent with direct Clerk-dashboard deletions. Event interface updated to make email fields optional (absent on `user.deleted` payloads).
+- `src/app/api/users/route.ts` — removed dead `POST` handler (including `parseInput` and `ParsedInput`); only `GET` remains. Invite goes through `POST /api/users/invite`.

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
-import { getUserByClerkId } from "@/lib/db/users";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { getUserByClerkId, getUserByEmail } from "@/lib/db/users";
 import { getDepartmentsByTenant } from "@/lib/db/departments";
 import { getOnboardingState } from "@/lib/db/dashboard";
 import SetupWizard from "@/components/setup/SetupWizard";
@@ -42,6 +42,23 @@ export default async function SetupPage() {
     return <SetupWizard initialDepartments={departments} />;
   }
 
-  // No DB user yet — fresh Clerk signup, show wizard with empty state
+  // No DB user by clerkId — but check if this email belongs to a deactivated
+  // account. If so, prevent them from provisioning a new workspace.
+  const clerkUser = await currentUser();
+  const primaryEmail =
+    clerkUser?.emailAddresses.find(
+      (e) => e.id === clerkUser.primaryEmailAddressId,
+    )?.emailAddress ?? clerkUser?.emailAddresses[0]?.emailAddress;
+
+  if (primaryEmail) {
+    const existingByEmail = await getUserByEmail(primaryEmail);
+    if (existingByEmail && !existingByEmail.clerkId.startsWith("invite:")) {
+      // Email exists with a real clerkId — this is a deactivated user
+      // who re-signed up. Do not allow a new workspace to be created.
+      redirect("/sign-in");
+    }
+  }
+
+  // Fresh Clerk signup — show wizard with empty state
   return <SetupWizard initialDepartments={[]} />;
 }
