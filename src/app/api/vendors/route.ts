@@ -1,23 +1,45 @@
 import { NextRequest } from "next/server";
 import { resolveAuthContext } from "@/lib/auth/session";
-import { getVendorsByTenant, createVendor } from "@/lib/db/vendors";
-import { ok, created, badRequest, handleError } from "@/lib/api/response";
+import {
+  getVendorsByTenant,
+  getVendorsByOwner,
+  getVendorsByDepartmentOrOwner,
+  createVendor,
+} from "@/lib/db/vendors";
+import { ok, created, badRequest, forbidden, handleError } from "@/lib/api/response";
+import { UserRole } from "@/types";
 
-// GET /api/vendors — list all vendors for the tenant
+// GET /api/vendors — list vendors scoped by the caller's role
 export async function GET(): Promise<Response> {
   try {
-    const { tenantId } = await resolveAuthContext();
-    const vendors = await getVendorsByTenant(tenantId);
+    const { localUser, tenantId } = await resolveAuthContext();
+
+    let vendors: Awaited<ReturnType<typeof getVendorsByTenant>>;
+    if (localUser.role === UserRole.Admin) {
+      vendors = await getVendorsByTenant(tenantId);
+    } else if (localUser.role === UserRole.DepartmentOwner) {
+      vendors = await getVendorsByDepartmentOrOwner(
+        localUser.id,
+        localUser.departmentId,
+        tenantId,
+      );
+    } else {
+      // BusinessOwner — only vendors with a contract they own
+      vendors = await getVendorsByOwner(localUser.id, tenantId);
+    }
+
     return ok(vendors);
   } catch (error) {
     return handleError(error);
   }
 }
 
-// POST /api/vendors — create a new vendor (all authenticated users)
+// POST /api/vendors — create a new vendor (Admin only)
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const { tenantId } = await resolveAuthContext();
+    const { localUser, tenantId } = await resolveAuthContext();
+
+    if (localUser.role !== UserRole.Admin) return forbidden();
 
     const body: unknown = await request.json();
     const input = parseCreateInput(body);

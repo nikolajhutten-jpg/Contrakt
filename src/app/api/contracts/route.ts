@@ -3,11 +3,11 @@ import { resolveAuthContext } from "@/lib/auth/session";
 import {
   getContractsByTenant,
   getContractsByOwner,
-  getContractsByDepartment,
+  getContractsByDepartmentOrOwner,
   createContract,
 } from "@/lib/db/contracts";
 import { buildCreateContractData } from "@/lib/services/contracts";
-import { ok, created, badRequest, handleError } from "@/lib/api/response";
+import { ok, created, badRequest, forbidden, handleError } from "@/lib/api/response";
 import { UserRole } from "@/types";
 import type { CreateContractInput } from "@/types";
 
@@ -21,10 +21,11 @@ export async function GET(): Promise<Response> {
       contracts = await getContractsByTenant(tenantId);
     } else if (localUser.role === UserRole.DepartmentOwner) {
       if (!localUser.departmentId) {
-        contracts = [];
+        contracts = await getContractsByOwner(localUser.id, tenantId);
       } else {
-        contracts = await getContractsByDepartment(
+        contracts = await getContractsByDepartmentOrOwner(
           localUser.departmentId,
+          localUser.id,
           tenantId,
         );
       }
@@ -39,10 +40,12 @@ export async function GET(): Promise<Response> {
   }
 }
 
-// POST /api/contracts — create a new contract
+// POST /api/contracts — create a new contract (Admin only)
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const { localUser, tenantId } = await resolveAuthContext();
+
+    if (localUser.role !== UserRole.Admin) return forbidden();
 
     const body: unknown = await request.json();
     const input = parseCreateInput(body);
@@ -56,15 +59,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     const data = buildCreateContractData(input, tenantId);
-
-    // Ensure the caller is always an owner unless they are an admin
-    if (
-      localUser.role !== UserRole.Admin &&
-      !data.ownerIds.includes(localUser.id)
-    ) {
-      data.ownerIds = [...data.ownerIds, localUser.id];
-    }
-
     const contract = await createContract(data);
     return created(contract);
   } catch (error) {

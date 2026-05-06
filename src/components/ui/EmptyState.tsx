@@ -5,8 +5,8 @@ import Button from "@/components/ui/Button";
 interface EmptyStateProps {
   heading: string;
   subtext: string;
-  actionLabel: string;
-  onAction: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 /**
@@ -69,9 +69,11 @@ export default function EmptyState({
         {subtext}
       </p>
 
-      <div style={{ marginTop: "20px" }}>
-        <Button onClick={onAction}>{actionLabel}</Button>
-      </div>
+      {actionLabel && onAction && (
+        <div style={{ marginTop: "20px" }}>
+          <Button onClick={onAction}>{actionLabel}</Button>
+        </div>
+      )}
     </div>
   );
 }

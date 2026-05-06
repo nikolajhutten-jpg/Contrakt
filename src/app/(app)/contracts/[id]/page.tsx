@@ -19,10 +19,7 @@ export default async function ContractDetailPage({ params }: PageProps) {
   const contract = await getContractById(id, tenantId);
   if (!contract) notFound();
 
-  const canEdit =
-    localUser.role === UserRole.Admin ||
-    (localUser.role === UserRole.BusinessOwner &&
-      contract!.owners.some((o) => o.userId === localUser.id));
+  const canEdit = localUser.role === UserRole.Admin;
 
   return (
     <ContractDetailShell

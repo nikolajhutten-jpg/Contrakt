@@ -66,6 +66,20 @@ export async function getContractsByDepartment(
   });
 }
 
+export async function getContractsByDepartmentOrOwner(
+  departmentId: string,
+  userId: string,
+  tenantId: string,
+): Promise<Contract[]> {
+  return db.contract.findMany({
+    where: {
+      tenantId,
+      OR: [{ departmentId }, { owners: { some: { userId } } }],
+    },
+    orderBy: { endDate: "asc" },
+  });
+}
+
 // ─── Write ────────────────────────────────────────────────────────────────────
 
 export interface CreateContractData {

@@ -46,7 +46,8 @@ export async function getContractsFiltered(
         }
       : {}),
     ...(filters.search && {
-      OR: [
+      // Wrap in AND so it doesn't clobber a top-level OR in base (DepartmentOwner scope).
+      AND: [{ OR: [
         {
           vendor: {
             name: { contains: filters.search, mode: "insensitive" as const },
@@ -66,7 +67,7 @@ export async function getContractsFiltered(
             },
           },
         },
-      ],
+      ] }],
     }),
   };
 

@@ -29,6 +29,30 @@ export async function getVendorsByTenant(tenantId: string): Promise<Vendor[]> {
   });
 }
 
+export async function getVendorsByOwner(
+  userId: string,
+  tenantId: string,
+): Promise<Vendor[]> {
+  return db.vendor.findMany({
+    where: { tenantId, contracts: { some: { owners: { some: { userId } } } } },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getVendorsByDepartmentOrOwner(
+  userId: string,
+  departmentId: string | null,
+  tenantId: string,
+): Promise<Vendor[]> {
+  const contractScope = departmentId
+    ? { OR: [{ departmentId }, { owners: { some: { userId } } }] }
+    : { owners: { some: { userId } } };
+  return db.vendor.findMany({
+    where: { tenantId, contracts: { some: contractScope } },
+    orderBy: { name: "asc" },
+  });
+}
+
 export async function getVendorsWithContractCounts(
   tenantId: string,
 ): Promise<VendorWithContractCount[]> {

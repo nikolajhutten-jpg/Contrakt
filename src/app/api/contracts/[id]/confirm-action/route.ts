@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
-import { resolveAuthContext } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/session";
 import { getContractById, updateContract } from "@/lib/db/contracts";
-import { ok, notFound, forbidden, handleError } from "@/lib/api/response";
+import { ok, notFound, handleError } from "@/lib/api/response";
 import { UserRole, ContractStatus } from "@/types";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -16,26 +16,11 @@ export async function POST(
   { params }: RouteContext,
 ): Promise<Response> {
   try {
-    const { localUser, tenantId } = await resolveAuthContext();
+    const { tenantId } = await requireRole([UserRole.Admin]);
     const { id } = await params;
-
-    if (
-      localUser.role !== UserRole.Admin &&
-      localUser.role !== UserRole.BusinessOwner
-    ) {
-      return forbidden();
-    }
 
     const contract = await getContractById(id, tenantId);
     if (!contract) return notFound("Contract not found.");
-
-    // Business owners may only act on contracts they own
-    if (
-      localUser.role === UserRole.BusinessOwner &&
-      !contract.owners.some((o) => o.userId === localUser.id)
-    ) {
-      return forbidden();
-    }
 
     if (contract.status !== ContractStatus.ActionRequired) {
       return ok(contract); // idempotent — already resolved

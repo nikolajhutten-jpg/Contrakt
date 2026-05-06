@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { resolveAuthContext } from "@/lib/auth/session";
+import { resolveAuthContext, requireRole } from "@/lib/auth/session";
 import { getContractById } from "@/lib/db/contracts";
 import {
   getDocumentsByContract,
@@ -10,7 +10,6 @@ import {
   ok,
   created,
   notFound,
-  forbidden,
   badRequest,
   handleError,
 } from "@/lib/api/response";
@@ -37,31 +36,17 @@ export async function GET(
   }
 }
 
-// POST /api/contracts/[id]/documents — business owner or admin only
+// POST /api/contracts/[id]/documents — Admin only
 export async function POST(
   request: NextRequest,
   { params }: RouteContext,
 ): Promise<Response> {
   try {
-    const { localUser, tenantId } = await resolveAuthContext();
+    const { localUser, tenantId } = await requireRole([UserRole.Admin]);
     const { id } = await params;
-
-    if (
-      localUser.role !== UserRole.Admin &&
-      localUser.role !== UserRole.BusinessOwner
-    ) {
-      return forbidden();
-    }
 
     const contract = await getContractById(id, tenantId);
     if (!contract) return notFound("Contract not found.");
-
-    if (
-      localUser.role === UserRole.BusinessOwner &&
-      !contract.owners.some((o) => o.userId === localUser.id)
-    ) {
-      return forbidden();
-    }
 
     const body: unknown = await request.json();
     const input = parseInput(body);

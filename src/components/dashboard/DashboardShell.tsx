@@ -114,9 +114,11 @@ export default function DashboardShell({
             </p>
           )}
         </div>
-        <Link href="/contracts/new">
-          <Button variant="secondary" size="sm">Add contract</Button>
-        </Link>
+        {isAdmin && (
+          <Link href="/contracts/new">
+            <Button variant="secondary" size="sm">Add contract</Button>
+          </Link>
+        )}
       </div>
 
       {/* Onboarding checklist */}

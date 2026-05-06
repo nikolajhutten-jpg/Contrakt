@@ -16,8 +16,16 @@ export interface RoleContext {
 export function contractWhere(ctx: RoleContext) {
   const { role, userId, departmentId, tenantId } = ctx;
   if (role === UserRole.Admin) return { tenantId };
-  if (role === UserRole.DepartmentOwner && departmentId) {
-    return { tenantId, departmentId };
+  if (role === UserRole.DepartmentOwner) {
+    // DepartmentOwner sees contracts in their department AND contracts where
+    // they are listed as a business owner.
+    if (departmentId) {
+      return {
+        tenantId,
+        OR: [{ departmentId }, { owners: { some: { userId } } }],
+      };
+    }
+    // No department assigned — fall through to owner-only scope.
   }
   return { tenantId, owners: { some: { userId } } };
 }

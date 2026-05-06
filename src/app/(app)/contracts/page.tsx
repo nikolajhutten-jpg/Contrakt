@@ -53,6 +53,7 @@ export default async function ContractsPage({ searchParams }: PageProps) {
       contracts={contracts}
       departments={departments}
       activeFilters={filters}
+      isAdmin={localUser.role === "admin"}
     />
   );
 }

@@ -13,12 +13,14 @@ interface ContractsShellProps {
   contracts: ContractSummary[];
   departments: Department[];
   activeFilters: ContractFilterParams;
+  isAdmin: boolean;
 }
 
 export default function ContractsShell({
   contracts,
   departments,
   activeFilters,
+  isAdmin,
 }: ContractsShellProps) {
   const router = useRouter();
   const hasFilters = Object.values(activeFilters).some(
@@ -39,9 +41,11 @@ export default function ContractsShell({
         >
           Contracts
         </h1>
-        <Button variant="secondary" size="sm" onClick={() => router.push("/contracts/new")}>
-          Add contract
-        </Button>
+        {isAdmin && (
+          <Button variant="secondary" size="sm" onClick={() => router.push("/contracts/new")}>
+            Add contract
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -57,11 +61,19 @@ export default function ContractsShell({
             subtext={
               hasFilters
                 ? "Try adjusting or clearing your filters."
-                : "Upload your first contract to get started."
+                : isAdmin
+                  ? "Upload your first contract to get started."
+                  : "Contracts will appear here once they are uploaded."
             }
-            actionLabel={hasFilters ? "Clear filters" : "Upload a contract"}
-            onAction={() =>
-              router.push(hasFilters ? "/contracts" : "/contracts/new")
+            actionLabel={
+              hasFilters ? "Clear filters" : isAdmin ? "Upload a contract" : undefined
+            }
+            onAction={
+              hasFilters
+                ? () => router.push("/contracts")
+                : isAdmin
+                  ? () => router.push("/contracts/new")
+                  : undefined
             }
           />
         ) : (

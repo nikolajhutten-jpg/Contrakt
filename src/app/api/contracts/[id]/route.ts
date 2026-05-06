@@ -37,32 +37,17 @@ export async function GET(
   }
 }
 
-// PATCH /api/contracts/[id] — update contract (business owner or admin)
+// PATCH /api/contracts/[id] — update contract (Admin only)
 export async function PATCH(
   request: NextRequest,
   { params }: RouteContext,
 ): Promise<Response> {
   try {
-    const { localUser, tenantId } = await resolveAuthContext();
+    const { tenantId } = await requireRole([UserRole.Admin]);
     const { id } = await params;
-
-    if (
-      localUser.role !== UserRole.Admin &&
-      localUser.role !== UserRole.BusinessOwner
-    ) {
-      return forbidden();
-    }
 
     const contract = await getContractById(id, tenantId);
     if (!contract) return notFound("Contract not found.");
-
-    // Business owners may only edit contracts they own
-    if (
-      localUser.role === UserRole.BusinessOwner &&
-      !contract.owners.some((o) => o.userId === localUser.id)
-    ) {
-      return forbidden();
-    }
 
     const body: unknown = await request.json();
     const patch = parseUpdateInput(body, contract);
@@ -103,7 +88,10 @@ function canRead(
 ): boolean {
   if (role === UserRole.Admin) return true;
   if (role === UserRole.DepartmentOwner) {
-    return contract.departmentId === departmentId;
+    return (
+      contract.departmentId === departmentId ||
+      contract.owners.some((o) => o.userId === userId)
+    );
   }
   return contract.owners.some((o) => o.userId === userId);
 }
