@@ -90,7 +90,7 @@ export default function EditableField({
               flexShrink: 0,
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "#1a7f4b";
+              (e.currentTarget as HTMLElement).style.color = "#1a1a1a";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.35)";
@@ -121,7 +121,7 @@ export default function EditableField({
                   borderRadius: "20px",
                   border: "0.5px solid rgba(0,0,0,0.1)",
                   cursor: "pointer",
-                  background: draft === v ? "#1a7f4b" : "rgba(0,0,0,0.05)",
+                  background: draft === v ? "#1a1a1a" : "rgba(0,0,0,0.05)",
                   color: draft === v ? "#ffffff" : "rgba(0,0,0,0.5)",
                   transition: "background 0.15s, color 0.15s",
                 }}
@@ -158,7 +158,7 @@ export default function EditableField({
           style={{
             fontSize: "12px",
             fontWeight: 500,
-            color: pending ? "rgba(0,0,0,0.3)" : "#1a7f4b",
+            color: pending ? "rgba(0,0,0,0.3)" : "#1a1a1a",
             background: "none",
             border: "none",
             cursor: pending ? "default" : "pointer",

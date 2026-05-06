@@ -243,7 +243,7 @@ export default function AlertsTable({ alerts, canEdit, onEdit }: AlertsTableProp
                   return (
                     <td key={col.key} style={TD}>
                       {alert.sentAt ? (
-                        <span style={{ color: "#1a7f4b" }}>Sent {fmt(alert.sentAt)}</span>
+                        <span style={{ color: "#1a1a1a" }}>Sent {fmt(alert.sentAt)}</span>
                       ) : (
                         <span style={{ color: "rgba(0,0,0,0.4)" }}>Scheduled</span>
                       )}
@@ -259,7 +259,7 @@ export default function AlertsTable({ alerts, canEdit, onEdit }: AlertsTableProp
                       onClick={() => onEdit(alert)}
                       style={{
                         fontSize: "12px",
-                        color: "#1a7f4b",
+                        color: "#1a1a1a",
                         background: "none",
                         border: "none",
                         cursor: "pointer",

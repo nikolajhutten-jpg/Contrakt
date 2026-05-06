@@ -77,7 +77,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 // ─── Toast UI ─────────────────────────────────────────────────────────────────
 
 const VARIANT_STYLES: Record<ToastVariant, React.CSSProperties> = {
-  success: { color: "#1a7f4b" },
+  success: { color: "#1a1a1a" },
   error:   { color: "#c0392b" },
   warning: { color: "#b45309" },
 };

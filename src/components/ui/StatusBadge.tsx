@@ -12,7 +12,7 @@ interface Config {
 const CONFIG: Record<StatusVariant, Config> = {
   [ContractStatus.Active]: {
     background: "#e6f4ec",
-    color: "#1a7f4b",
+    color: "#1a1a1a",
     label: "Active",
   },
   [ContractStatus.ActionRequired]: {

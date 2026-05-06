@@ -13,7 +13,7 @@ const VALUE_COLOR: Record<NonNullable<KpiCardProps["valueColor"]>, string> = {
   default: "#171717",
   red: "#c0392b",
   amber: "#b45309",
-  green: "#1a7f4b",
+  green: "#1a1a1a",
 };
 
 const CARD_STYLE: React.CSSProperties = {

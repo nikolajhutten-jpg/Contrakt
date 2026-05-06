@@ -184,7 +184,7 @@ function UserRow({
                 <p style={{ fontSize: "11px", color: "#c0392b", marginTop: "2px" }}>{error}</p>
               )}
               {resendSuccess && (
-                <p style={{ fontSize: "11px", color: "#1a7f4b", marginTop: "2px" }}>Invite resent.</p>
+                <p style={{ fontSize: "11px", color: "#1a1a1a", marginTop: "2px" }}>Invite resent.</p>
               )}
             </div>
           </div>
@@ -242,7 +242,7 @@ function UserRow({
                 disabled={isBusy}
                 style={{
                   fontSize: "12px",
-                  color: "#1a7f4b",
+                  color: "#1a1a1a",
                   background: "none",
                   border: "none",
                   cursor: isBusy ? "default" : "pointer",

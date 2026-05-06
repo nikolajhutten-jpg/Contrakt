@@ -65,8 +65,8 @@ function NavLink({
       style={{
         paddingLeft: indent ? "28px" : "8px",
         borderRadius: "7px",
-        // Sub-nav items: active = #1a7f4b text, no background pill
-        color: isActive ? (indent ? "#1a7f4b" : "#171717") : "rgba(0,0,0,0.5)",
+        // Sub-nav items: active = #1a1a1a text, no background pill
+        color: isActive ? (indent ? "#1a1a1a" : "#171717") : "rgba(0,0,0,0.5)",
         fontWeight: isActive ? 500 : 400,
         background: isActive && !indent ? "rgba(0,0,0,0.05)" : "transparent",
       }}
@@ -152,7 +152,7 @@ export default function Sidebar({ user, badgeCounts }: SidebarProps) {
                   style={{
                     fontSize: "11px",
                     fontWeight: 500,
-                    background: "#1a7f4b",
+                    background: "#1a1a1a",
                     color: "#ffffff",
                   }}
                 >

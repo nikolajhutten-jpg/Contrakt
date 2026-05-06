@@ -184,7 +184,7 @@ export default function UploadShell() {
             width: "20px",
             height: "20px",
             border: "2px solid rgba(0,0,0,0.1)",
-            borderTopColor: "#1a7f4b",
+            borderTopColor: "#1a1a1a",
             borderRadius: "50%",
           }}
           className="animate-spin"

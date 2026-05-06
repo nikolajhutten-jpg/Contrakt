@@ -187,7 +187,7 @@ export default function ContractFormFields({
                 borderRadius: "20px",
                 border: "0.5px solid rgba(0,0,0,0.1)",
                 cursor: "pointer",
-                background: values.autoRenewal === v ? "#1a7f4b" : "rgba(0,0,0,0.05)",
+                background: values.autoRenewal === v ? "#1a1a1a" : "rgba(0,0,0,0.05)",
                 color: values.autoRenewal === v ? "#ffffff" : "rgba(0,0,0,0.5)",
                 transition: "background 0.15s, color 0.15s",
               }}
@@ -249,7 +249,7 @@ export default function ContractFormFields({
                 borderRadius: "20px",
                 border: "0.5px solid rgba(0,0,0,0.1)",
                 cursor: "pointer",
-                background: values.alertEnabled === v ? "#1a7f4b" : "rgba(0,0,0,0.05)",
+                background: values.alertEnabled === v ? "#1a1a1a" : "rgba(0,0,0,0.05)",
                 color: values.alertEnabled === v ? "#ffffff" : "rgba(0,0,0,0.5)",
                 transition: "background 0.15s, color 0.15s",
               }}

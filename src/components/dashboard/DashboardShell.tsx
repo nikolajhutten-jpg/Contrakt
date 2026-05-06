@@ -26,7 +26,7 @@ function ChecklistItem({ done, label }: ChecklistItemProps) {
           width: "16px",
           height: "16px",
           borderRadius: "50%",
-          background: done ? "#1a7f4b" : "rgba(0,0,0,0.08)",
+          background: done ? "#1a1a1a" : "rgba(0,0,0,0.08)",
         }}
       >
         {done && (

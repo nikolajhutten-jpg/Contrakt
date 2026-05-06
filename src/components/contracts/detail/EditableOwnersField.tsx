@@ -70,7 +70,7 @@ export default function EditableOwnersField({
               flexShrink: 0,
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "#1a7f4b";
+              (e.currentTarget as HTMLElement).style.color = "#1a1a1a";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.35)";
@@ -95,7 +95,7 @@ export default function EditableOwnersField({
             style={{
               fontSize: "12px",
               fontWeight: 500,
-              color: pending ? "rgba(0,0,0,0.3)" : "#1a7f4b",
+              color: pending ? "rgba(0,0,0,0.3)" : "#1a1a1a",
               background: "none",
               border: "none",
               cursor: pending ? "default" : "pointer",

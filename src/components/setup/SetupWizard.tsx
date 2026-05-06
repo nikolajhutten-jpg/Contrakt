@@ -68,7 +68,7 @@ export default function SetupWizard({ initialDepartments }: Props) {
                     fontSize: "11px",
                     fontWeight: 500,
                     flexShrink: 0,
-                    background: step === s.number ? "#171717" : step > s.number ? "#1a7f4b" : "rgba(0,0,0,0.08)",
+                    background: step === s.number ? "#171717" : step > s.number ? "#1a1a1a" : "rgba(0,0,0,0.08)",
                     color: step >= s.number ? "#ffffff" : "rgba(0,0,0,0.4)",
                   }}
                 >

@@ -54,7 +54,7 @@ export default function ContractDetailShell({
                 flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.color = "#1a7f4b";
+                (e.currentTarget as HTMLElement).style.color = "#1a1a1a";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.4)";

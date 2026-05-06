@@ -48,7 +48,7 @@ export default function ErrorPage({ error, unstable_retry }: ErrorPageProps) {
           fontSize: "13px",
           fontWeight: 500,
           padding: "7px 16px",
-          background: "#1a7f4b",
+          background: "#1a1a1a",
           color: "#ffffff",
           border: "none",
           borderRadius: "8px",

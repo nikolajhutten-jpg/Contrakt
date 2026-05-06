@@ -78,7 +78,7 @@ function AlertRow({
           {alert.triggerValue} {alert.triggerUnit} before {ref}
         </p>
         {alert.sentAt && (
-          <p style={{ fontSize: "11px", color: "#1a7f4b", marginTop: "2px" }}>
+          <p style={{ fontSize: "11px", color: "#1a1a1a", marginTop: "2px" }}>
             Sent{" "}
             {new Date(alert.sentAt).toLocaleDateString("en-GB", {
               day: "2-digit",
@@ -160,7 +160,7 @@ export default function AlertsTab({
           style={{
             marginTop: "12px",
             fontSize: "13px",
-            color: "#1a7f4b",
+            color: "#1a1a1a",
             background: "none",
             border: "none",
             cursor: "pointer",

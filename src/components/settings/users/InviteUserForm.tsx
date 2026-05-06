@@ -110,7 +110,7 @@ export default function InviteUserForm({ departments }: InviteUserFormProps) {
       </div>
 
       {error && <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "10px" }}>{error}</p>}
-      {success && <p style={{ fontSize: "12px", color: "#1a7f4b", marginBottom: "10px" }}>Invite sent successfully.</p>}
+      {success && <p style={{ fontSize: "12px", color: "#1a1a1a", marginBottom: "10px" }}>Invite sent successfully.</p>}
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button

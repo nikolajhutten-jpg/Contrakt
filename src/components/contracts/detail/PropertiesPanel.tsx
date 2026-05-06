@@ -69,9 +69,9 @@ export default function PropertiesPanel({
               fontWeight: 500,
               border: "none",
               borderBottom: activeTab === tab.id
-                ? "2px solid #1a7f4b"
+                ? "2px solid #1a1a1a"
                 : "2px solid transparent",
-              color: activeTab === tab.id ? "#1a7f4b" : "rgba(0,0,0,0.4)",
+              color: activeTab === tab.id ? "#1a1a1a" : "rgba(0,0,0,0.4)",
               background: "transparent",
               cursor: "pointer",
               transition: "color 0.15s",

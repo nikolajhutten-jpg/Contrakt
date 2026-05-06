@@ -132,7 +132,7 @@ export default function DepartmentList({ initialDepartments }: DepartmentListPro
                     <button
                       onClick={() => handleRename(dept.id)}
                       disabled={isPending || !draftName.trim()}
-                      style={{ ...ACTION_BTN, color: "#1a7f4b", fontWeight: 500, opacity: (isPending || !draftName.trim()) ? 0.4 : 1 }}
+                      style={{ ...ACTION_BTN, color: "#1a1a1a", fontWeight: 500, opacity: (isPending || !draftName.trim()) ? 0.4 : 1 }}
                     >
                       Save
                     </button>

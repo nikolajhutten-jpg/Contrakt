@@ -6,7 +6,7 @@ interface ConfidenceIndicatorProps {
 }
 
 const CONFIG: Record<ConfidenceLevel, { color: string; label: string }> = {
-  high:   { color: "#1a7f4b", label: "High confidence" },
+  high:   { color: "#1a1a1a", label: "High confidence" },
   medium: { color: "#d97706", label: "Medium confidence" },
   low:    { color: "rgba(0,0,0,0.2)", label: "Not detected" },
 };

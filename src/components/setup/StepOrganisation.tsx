@@ -131,9 +131,9 @@ export default function StepOrganisation({ onComplete }: Props) {
                 flexDirection: "column",
                 gap: "3px",
                 padding: "12px 10px",
-                background: isSelected ? "rgba(26,127,75,0.04)" : "#ffffff",
+                background: isSelected ? "rgba(0,0,0,0.04)" : "#ffffff",
                 border: isSelected
-                  ? "1.5px solid #1a7f4b"
+                  ? "1.5px solid #1a1a1a"
                   : "0.5px solid rgba(0,0,0,0.12)",
                 borderRadius: "10px",
                 cursor: isPending ? "default" : "pointer",
@@ -143,7 +143,7 @@ export default function StepOrganisation({ onComplete }: Props) {
               }}
             >
               <span style={{ fontSize: "12px", fontWeight: 600, color: "#171717" }}>{plan.label}</span>
-              <span style={{ fontSize: "12px", fontWeight: 500, color: "#1a7f4b" }}>{plan.price}</span>
+              <span style={{ fontSize: "12px", fontWeight: 500, color: "#1a1a1a" }}>{plan.price}</span>
               <span style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)", marginTop: "4px" }}>{plan.users}</span>
               <span style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)" }}>{plan.contracts}</span>
             </button>

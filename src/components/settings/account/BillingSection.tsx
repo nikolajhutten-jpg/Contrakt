@@ -29,7 +29,7 @@ function UsageMeter({ label, used, limit }: { label: string; used: number; limit
   const pct = Math.min((used / limit) * 100, 100);
   const atLimit = used >= limit;
   const nearLimit = pct >= 80;
-  const barColor = atLimit ? "#ef4444" : nearLimit ? "#d97706" : "#1a7f4b";
+  const barColor = atLimit ? "#ef4444" : nearLimit ? "#d97706" : "#1a1a1a";
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -50,7 +50,7 @@ const BTN_PRIMARY: React.CSSProperties = {
   fontSize: "13px",
   fontWeight: 500,
   padding: "7px 16px",
-  background: "#1a7f4b",
+  background: "#1a1a1a",
   color: "#ffffff",
   border: "none",
   borderRadius: "8px",

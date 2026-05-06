@@ -75,8 +75,8 @@ export default function UploadZone({ onUpload, onError }: UploadZoneProps) {
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
         style={{
-          background: dragOver ? "rgba(26,127,75,0.03)" : "#ffffff",
-          border: `0.5px dashed ${dragOver ? "#1a7f4b" : "rgba(0,0,0,0.2)"}`,
+          background: dragOver ? "rgba(0,0,0,0.02)" : "#ffffff",
+          border: `0.5px dashed ${dragOver ? "#1a1a1a" : "rgba(0,0,0,0.2)"}`,
           borderRadius: "12px",
           padding: "48px 32px",
           display: "flex",

@@ -155,7 +155,7 @@ export default function StepInviteUsers({ departments, onComplete }: Props) {
         <ul style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: "4px", marginBottom: "16px", listStyle: "none", padding: 0 }}>
           {invited.map((u) => (
             <li key={u.id} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#1a7f4b", flexShrink: 0, display: "inline-block" }} />
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#1a1a1a", flexShrink: 0, display: "inline-block" }} />
               {u.name} ({u.email})
             </li>
           ))}
@@ -170,7 +170,7 @@ export default function StepInviteUsers({ departments, onComplete }: Props) {
           fontSize: "13px",
           fontWeight: 500,
           padding: "8px 16px",
-          background: "#1a7f4b",
+          background: "#1a1a1a",
           color: "#ffffff",
           border: "none",
           borderRadius: "8px",

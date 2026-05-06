@@ -103,7 +103,7 @@ export default function ProfileForm({ user }: ProfileFormProps) {
       </div>
 
       {error && <p style={{ fontSize: "12px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
-      {saved && <p style={{ fontSize: "12px", color: "#1a7f4b", marginBottom: "12px" }}>Profile saved.</p>}
+      {saved && <p style={{ fontSize: "12px", color: "#1a1a1a", marginBottom: "12px" }}>Profile saved.</p>}
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button

@@ -100,7 +100,7 @@ export default function AddAlertForm({ contractId, onDone }: AddAlertFormProps) 
           style={{
             fontSize: "12px",
             fontWeight: 500,
-            color: saving ? "rgba(0,0,0,0.3)" : "#1a7f4b",
+            color: saving ? "rgba(0,0,0,0.3)" : "#1a1a1a",
             background: "none",
             border: "none",
             cursor: saving ? "default" : "pointer",

@@ -76,7 +76,7 @@ export default function AccountSettingsForm({ tenant }: AccountSettingsFormProps
           required
         />
         {error && <p style={{ fontSize: "12px", color: "#c0392b", marginTop: "10px" }}>{error}</p>}
-        {saved && <p style={{ fontSize: "12px", color: "#1a7f4b", marginTop: "10px" }}>Settings saved.</p>}
+        {saved && <p style={{ fontSize: "12px", color: "#1a1a1a", marginTop: "10px" }}>Settings saved.</p>}
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
           <button
             type="submit"

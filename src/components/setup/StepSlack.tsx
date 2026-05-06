@@ -95,7 +95,7 @@ export default function StepSlack({ onComplete }: Props) {
         )}
 
         {testStatus === "ok" && (
-          <p style={{ fontSize: "13px", color: "#1a7f4b" }}>
+          <p style={{ fontSize: "13px", color: "#1a1a1a" }}>
             Test notification sent successfully.
           </p>
         )}
@@ -134,7 +134,7 @@ export default function StepSlack({ onComplete }: Props) {
             fontSize: "13px",
             fontWeight: 500,
             padding: "8px 16px",
-            background: "#1a7f4b",
+            background: "#1a1a1a",
             color: "#ffffff",
             border: "none",
             borderRadius: "8px",

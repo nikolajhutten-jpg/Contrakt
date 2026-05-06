@@ -154,7 +154,7 @@ export default function VendorDetail({ vendor, isAdmin }: VendorDetailProps) {
                 <dt style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)", marginBottom: "2px" }}>Contact email</dt>
                 <dd style={{ color: "#171717" }}>
                   {vendor.contactEmail
-                    ? <a href={`mailto:${vendor.contactEmail}`} style={{ color: "#1a7f4b", textDecoration: "none" }}>{vendor.contactEmail}</a>
+                    ? <a href={`mailto:${vendor.contactEmail}`} style={{ color: "#1a1a1a", textDecoration: "none" }}>{vendor.contactEmail}</a>
                     : "—"}
                 </dd>
               </div>
