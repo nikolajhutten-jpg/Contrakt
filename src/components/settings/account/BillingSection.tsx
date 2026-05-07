@@ -5,20 +5,19 @@ import { startCheckout, openBillingPortal } from "@/lib/api/billing";
 import type { Tenant, PlanUsage } from "@/types";
 import { TenantPlan, TenantPlanStatus } from "@/types";
 
-// §15.2 limits — mirrored here for display; enforcement is server-side in planLimits.ts
-const PLAN_LIMITS: Record<TenantPlan, { contracts: number; users: number; extractions: number }> = {
-  free:     { contracts: 10,     users: 1,  extractions: 10 },
-  starter:  { contracts: 999999, users: 1,  extractions: 999999 },
-  team:     { contracts: 999999, users: 5,  extractions: 999999 },
-  business: { contracts: 999999, users: 20, extractions: 999999 },
+const PLAN_LIMITS: Record<TenantPlan, { contracts: number | null; users: number }> = {
+  free:     { contracts: 10,   users: 1 },
+  starter:  { contracts: null, users: 1 },
+  team:     { contracts: null, users: 5 },
+  business: { contracts: null, users: 20 },
 };
 
-const PLAN_LABELS: Record<TenantPlan, string> = {
-  free:     "Free",
-  starter:  "Starter",
-  team:     "Team",
-  business: "Business",
-};
+const PLANS = [
+  { key: TenantPlan.Free,     label: "Free",     price: "€0/mo",   users: "1 user",   contracts: "10 contracts" },
+  { key: TenantPlan.Starter,  label: "Starter",  price: "€39/mo",  users: "1 user",   contracts: "Unlimited contracts" },
+  { key: TenantPlan.Team,     label: "Team",     price: "€59/mo",  users: "5 users",  contracts: "Unlimited contracts" },
+  { key: TenantPlan.Business, label: "Business", price: "€129/mo", users: "20 users", contracts: "Unlimited contracts" },
+];
 
 interface Props {
   tenant: Tenant;
@@ -46,18 +45,6 @@ function UsageMeter({ label, used, limit }: { label: string; used: number; limit
   );
 }
 
-const BTN_PRIMARY: React.CSSProperties = {
-  fontSize: "13px",
-  fontWeight: 500,
-  padding: "7px 16px",
-  background: "#1a1a1a",
-  color: "#ffffff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-  letterSpacing: "-0.01em",
-};
-
 const BTN_SECONDARY: React.CSSProperties = {
   fontSize: "13px",
   fontWeight: 500,
@@ -76,13 +63,11 @@ export default function BillingSection({ tenant, usage }: Props) {
   const [isOpeningPortal, startPortalTransition] = useTransition();
 
   const isReadOnly = tenant.planStatus === TenantPlanStatus.ReadOnly;
-
   const limits = PLAN_LIMITS[tenant.plan];
   const showUsageMeters = tenant.plan === TenantPlan.Free || tenant.plan === TenantPlan.Starter;
-  const atContractLimit = usage.contracts >= limits.contracts;
+  const atContractLimit = limits.contracts !== null && usage.contracts >= limits.contracts;
   const atUserLimit = usage.users >= limits.users;
-  const atExtractionLimit = usage.extractionsThisMonth >= limits.extractions;
-  const anyLimitReached = atContractLimit || atUserLimit || atExtractionLimit;
+  const anyLimitReached = atContractLimit || atUserLimit;
 
   function handlePortal() {
     setError("");
@@ -96,25 +81,20 @@ export default function BillingSection({ tenant, usage }: Props) {
     setError("");
     startCheckoutTransition(async () => {
       try { await startCheckout(plan); }
-      catch (err) { setError(err instanceof Error ? err.message : "Something went wrong."); }
+      catch (err) {
+        const msg = err instanceof Error ? err.message : "";
+        setError(
+          msg.toLowerCase().includes("not configured")
+            ? "Stripe is not configured yet. Please contact support."
+            : "Something went wrong. Please try again."
+        );
+      }
     });
   }
 
   return (
     <div style={{ maxWidth: "480px" }}>
       <p style={{ fontSize: "13px", fontWeight: 600, color: "#171717", marginBottom: "16px" }}>Billing</p>
-
-      {/* Plan badge */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", borderRadius: "20px", padding: "2px 8px", fontSize: "11px", fontWeight: 500, background: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" }}>
-          {PLAN_LABELS[tenant.plan]}
-        </span>
-        {tenant.plan !== TenantPlan.Free && (
-          <span style={{ fontSize: "12px", color: "rgba(0,0,0,0.4)" }}>
-            {tenant.seatCount} seat{tenant.seatCount !== 1 ? "s" : ""}
-          </span>
-        )}
-      </div>
 
       {/* Banners */}
       {isReadOnly && (
@@ -132,60 +112,67 @@ export default function BillingSection({ tenant, usage }: Props) {
       {showUsageMeters && (
         <div style={{ marginBottom: "16px", padding: "14px 16px", background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
           <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(0,0,0,0.35)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Plan usage</p>
-          <UsageMeter label="Contracts" used={usage.contracts} limit={limits.contracts} />
+          {limits.contracts !== null && (
+            <UsageMeter label="Contracts" used={usage.contracts} limit={limits.contracts} />
+          )}
           <UsageMeter label="Users" used={usage.users} limit={limits.users} />
-          <UsageMeter label="AI extractions this month" used={usage.extractionsThisMonth} limit={limits.extractions} />
         </div>
       )}
 
       {/* Upgrade prompt */}
       {anyLimitReached && tenant.plan !== TenantPlan.Team && tenant.plan !== TenantPlan.Business && (
         <div style={{ marginBottom: "16px", padding: "10px 12px", background: "#fff3e0", border: "0.5px solid rgba(180,83,9,0.2)", borderRadius: "8px", fontSize: "13px", color: "#b45309" }}>
-          You&apos;ve reached a plan limit. Upgrade for more contracts, users, and extractions.
+          You&apos;ve reached a plan limit. Upgrade for more contracts and users.
         </div>
       )}
 
+      {/* Plan cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "16px" }}>
+        {PLANS.map((plan) => {
+          const isCurrent = tenant.plan === plan.key;
+          const isPaid = plan.key !== TenantPlan.Free;
+          const isClickable = !isCurrent && isPaid && !isCheckingOut;
+          return (
+            <button
+              key={plan.key}
+              type="button"
+              disabled={!isClickable}
+              onClick={isClickable ? () => handleCheckout(plan.key as "starter" | "team" | "business") : undefined}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "3px",
+                padding: "12px 10px",
+                background: isCurrent ? "rgba(0,0,0,0.04)" : "#ffffff",
+                border: isCurrent ? "1.5px solid #1a1a1a" : "0.5px solid rgba(0,0,0,0.12)",
+                borderRadius: "10px",
+                cursor: isClickable ? "pointer" : "default",
+                textAlign: "left",
+                opacity: isCheckingOut && !isCurrent ? 0.5 : 1,
+                transition: "border-color 0.12s, background 0.12s",
+              }}
+            >
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#171717" }}>{plan.label}</span>
+              <span style={{ fontSize: "12px", fontWeight: 500, color: "#1a1a1a" }}>{plan.price}</span>
+              <span style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)", marginTop: "4px" }}>{plan.users}</span>
+              <span style={{ fontSize: "11px", color: "rgba(0,0,0,0.4)" }}>{plan.contracts}</span>
+              {isCurrent && (
+                <span style={{ fontSize: "10px", fontWeight: 500, color: "rgba(0,0,0,0.4)", marginTop: "4px" }}>Current plan</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
       {error && <p style={{ fontSize: "13px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
 
-      {/* Action buttons */}
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-        {(tenant.plan === TenantPlan.Free || isReadOnly) && (
-          <>
-            <button type="button" onClick={() => handleCheckout("starter")} disabled={isCheckingOut}
-              style={{ ...BTN_SECONDARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
-              {isCheckingOut ? "Loading…" : "Starter"}
-            </button>
-            <button type="button" onClick={() => handleCheckout("team")} disabled={isCheckingOut}
-              style={{ ...BTN_SECONDARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
-              {isCheckingOut ? "Loading…" : "Team"}
-            </button>
-            <button type="button" onClick={() => handleCheckout("business")} disabled={isCheckingOut}
-              style={{ ...BTN_PRIMARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
-              {isCheckingOut ? "Loading…" : "Business"}
-            </button>
-          </>
-        )}
-        {tenant.plan !== TenantPlan.Free && !isReadOnly && (
-          <>
-            {tenant.plan === TenantPlan.Starter && (
-              <button type="button" onClick={() => handleCheckout("team")} disabled={isCheckingOut}
-                style={{ ...BTN_SECONDARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
-                {isCheckingOut ? "Loading…" : "Upgrade to Team"}
-              </button>
-            )}
-            {(tenant.plan === TenantPlan.Starter || tenant.plan === TenantPlan.Team) && (
-              <button type="button" onClick={() => handleCheckout("business")} disabled={isCheckingOut}
-                style={{ ...BTN_PRIMARY, opacity: isCheckingOut ? 0.5 : 1, cursor: isCheckingOut ? "default" : "pointer" }}>
-                {isCheckingOut ? "Loading…" : "Upgrade to Business"}
-              </button>
-            )}
-            <button type="button" onClick={handlePortal} disabled={isOpeningPortal}
-              style={{ ...BTN_SECONDARY, opacity: isOpeningPortal ? 0.5 : 1, cursor: isOpeningPortal ? "default" : "pointer" }}>
-              {isOpeningPortal ? "Loading…" : "Manage billing"}
-            </button>
-          </>
-        )}
-      </div>
+      {/* Manage billing — paid plans only */}
+      {tenant.plan !== TenantPlan.Free && !isReadOnly && (
+        <button type="button" onClick={handlePortal} disabled={isOpeningPortal}
+          style={{ ...BTN_SECONDARY, opacity: isOpeningPortal ? 0.5 : 1, cursor: isOpeningPortal ? "default" : "pointer" }}>
+          {isOpeningPortal ? "Loading…" : "Manage billing"}
+        </button>
+      )}
     </div>
   );
 }

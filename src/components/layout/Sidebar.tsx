@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SignOutButton } from "@clerk/nextjs";
 import { UserRole } from "@/types";
 import type { BadgeCounts } from "@/lib/db/dashboard";
 
@@ -190,6 +191,34 @@ export default function Sidebar({ user, badgeCounts }: SidebarProps) {
           })}
         </div>
       </nav>
+
+      {/* Sign out */}
+      <div style={{ padding: "0 8px 8px" }}>
+        <SignOutButton>
+          <button
+            className="w-full text-left py-1.5 text-[13px] transition-colors"
+            style={{
+              paddingLeft: "8px",
+              paddingRight: "8px",
+              borderRadius: "7px",
+              color: "rgba(0,0,0,0.5)",
+              fontWeight: 400,
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              width: "100%",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.03)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+            }}
+          >
+            Sign out
+          </button>
+        </SignOutButton>
+      </div>
 
       {/* User identity */}
       <div

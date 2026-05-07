@@ -64,6 +64,15 @@ Contrakt is a B2B SaaS contract management platform that lets teams upload, extr
 - **`getUserByEmail`** added to `src/lib/db/users.ts`; `clerkId` added to `UpdateUserInput`
 - **`conflict()` helper** added to `src/lib/api/response.ts`
 
+### 2026-05-06 (continued)
+
+- **Dark rebrand** — removed green palette (`#1a7f4b`, `--green-*` CSS vars) across all 35 components and `globals.css`; replaced with `#1a1a1a` (solid) and proportionally scaled `rgba(0,0,0,*)` for tinted backgrounds/borders. `.btn-primary` is now light grey (`#f5f5f7`) with dark text.
+- **Setup wizard restructure** — split `StepOrganisation` into two steps: `StepOrganisation` (org name only) and new `StepLicense.tsx` (plan picker). `SetupWizard` now has 4 numbered steps: Organisation → License → Departments → Invite. Step indicator shows 1-indexed labels; "Invite users" label shortened to "Invite" to prevent wrapping.
+- **Free plan skip** — `SetupWizard` tracks `selectedPlan`; after Departments completes, if plan is `FREE` it redirects straight to `/dashboard` and never renders step 4. "Invite users" is also hidden from the step indicator on Free.
+- **Back buttons** — `StepLicense`, `StepDepartments`, and `StepInviteUsers` all have a `← Back` button (same plain-text style). Back on License → Organisation; Departments → License; Invite → Departments.
+- **`• ()` invite bug** — `inviteUser()` in `src/lib/api/users.ts` was casting `res.json()` directly to `User`, but the API wraps responses as `{ data: T }`. Fixed to `(await res.json() as { data: User }).data`. Invited users now display correctly in the list.
+- **Setup bypass fix** — `src/app/(setup)/setup/page.tsx` completion check tightened: redirects to `/dashboard` only when `tenant.name` + `departmentsAdded` + (`firstUserInvited` **or** plan is `FREE`). Previously only required name + departments, so paid-plan users mid-wizard were incorrectly bounced.
+
 ## The 6 Coding Rules
 
 1. **Strict layer separation** — UI → `src/components/`, DB queries → `src/lib/db/`, business logic → `src/lib/services/`, API functions → `src/lib/api/`, types → `src/types/`, routes → `src/app/api/`
@@ -89,7 +98,7 @@ Contrakt is a B2B SaaS contract management platform that lets teams upload, extr
 
 ## What's Been Built
 
-- **Multi-tenant auth** with Auth0 v4, role-based access, invite flow, onboarding setup wizard
+- **Multi-tenant auth** with Clerk, role-based access, invite flow, onboarding setup wizard
 - **Contract lifecycle** — upload (PDF/DOCX), AI extraction via Anthropic, extraction review, contract save, detail view with document viewer and tabbed UI
 - **Sortable, configurable tables** across all contract views — column visibility and order stored globally in `localStorage` (`contrakt_view_options`), sort state per-table (`contrakt_sort_<id>`); View Options in account settings with drag-and-drop reorder
 - **Vendor management** — list, detail page with scoped contract table, inline edit form

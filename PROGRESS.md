@@ -17,7 +17,7 @@ Files created to date, organised by layer.
 | `sentry.client.config.ts` | Sentry browser-side init — reads `NEXT_PUBLIC_SENTRY_DSN`; 10 % trace sampling; replay integration with full text+media masking; no-op when DSN is absent. |
 | `sentry.server.config.ts` | Sentry Node.js-side init — reads `SENTRY_DSN`; 10 % trace sampling; no-op when DSN is absent. |
 | `.env.local` | Clerk keys (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`), Clerk redirect URLs, `APP_BASE_URL`, PostgreSQL, Anthropic, Stripe (§15), Upstash Redis, Sentry DSN, Cloudflare R2. |
-| `src/app/globals.css` | Design system foundation. System font stack (`-apple-system`, SF Pro Display), CSS custom properties (`--primary: #1a7f4b`, `--green-900` through `--green-100`), global input/select/textarea styles with #1a7f4b focus ring, `.fade-in` keyframe (120 ms), `.prop-row` border utility. |
+| `src/app/globals.css` | Design system foundation. System font stack (`-apple-system`, SF Pro Display), CSS custom properties (`--primary: #1a1a1a`), global input/select/textarea styles with dark focus ring, `.fade-in` keyframe (120 ms), `.prop-row` border utility. Green palette (`#1a7f4b`, `--green-*`) fully replaced with dark (`#1a1a1a`) across all components. |
 
 ---
 
@@ -125,7 +125,7 @@ Files created to date, organised by layer.
 | `src/app/(auth)/layout.tsx` | Minimal centred layout for public auth pages. |
 | `src/app/(app)/layout.tsx` | Authenticated route group layout — wraps every protected page in `AppLayout`. |
 | `src/app/(app)/dashboard/page.tsx` | Home page — fetches KPIs, active contracts, upcoming renewals, and onboarding state. |
-| `src/app/(app)/setup/page.tsx` | Setup wizard — requires only a valid Clerk session (no DB user needed). If DB user exists: admin-only, skips to dashboard if complete. If no DB user: checks Clerk email against DB — redirects to `/sign-in` if email belongs to a deactivated account; otherwise renders wizard with empty state for fresh signups. |
+| `src/app/(setup)/setup/page.tsx` | Setup wizard — requires only a valid Clerk session (no DB user needed). If DB user exists: admin-only; redirects to `/dashboard` if `tenant.name` is set, `departmentsAdded` is true, and (`firstUserInvited` is true **or** plan is FREE). If no DB user: checks Clerk email — redirects to `/sign-in` if deactivated; otherwise renders wizard with empty state. |
 | `src/app/(app)/contracts/page.tsx` | All Contracts page — role-filtered, passes data to `ContractsShell`. |
 | `src/app/(app)/contracts/[id]/page.tsx` | Contract Detail page. |
 | `src/app/(app)/contracts/new/page.tsx` | Upload Contract page — renders `UploadShell`. |
@@ -150,9 +150,11 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/components/setup/SetupWizard.tsx` | #f5f5f7 full-screen shell with white 0.5px-border 12px-radius card. Step indicator. |
-| `src/components/setup/StepDepartments.tsx` | Suggestion chips. |
-| `src/components/setup/StepInviteUsers.tsx` | 2-col grid for name/email. |
+| `src/components/setup/SetupWizard.tsx` | #f5f5f7 full-screen shell with white 0.5px-border 12px-radius card. 4-step indicator (1 Organisation, 2 License, 3 Departments, 4 Invite). Tracks `selectedPlan`; skips step 4 and redirects to `/dashboard` directly after Departments when plan is FREE. |
+| `src/components/setup/StepOrganisation.tsx` | Org name input only. Saves via `PATCH /api/settings/account` and calls `onComplete()`. |
+| `src/components/setup/StepLicense.tsx` | Plan picker (Free / Starter / Team / Business). Free plan saves immediately; paid plans trigger Stripe checkout. Has `onBack` to return to Organisation. |
+| `src/components/setup/StepDepartments.tsx` | Suggestion chips + custom department input. Has `onBack` (→ License). |
+| `src/components/setup/StepInviteUsers.tsx` | 2-col grid for name/email. Has `onBack` (→ Departments). |
 | `src/components/setup/StepSlack.tsx` | "Send test notification" button. |
 
 ### Layout
