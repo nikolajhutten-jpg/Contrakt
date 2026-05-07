@@ -9,6 +9,7 @@ export interface UpdateTenantSettingsData {
   slackWebhookUrl?: string | null;
   name?: string;
   plan?: TenantPlan;
+  setupComplete?: boolean;
 }
 
 export async function updateTenantSettings(

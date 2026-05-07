@@ -95,6 +95,7 @@ export interface Tenant {
   planStatus: TenantPlanStatus;
   trialEndsAt: Date | null;
   seatCount: number;
+  setupComplete: boolean;
   createdAt: Date;
 }
 

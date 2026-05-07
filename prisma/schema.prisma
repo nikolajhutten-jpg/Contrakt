@@ -85,6 +85,7 @@ model Tenant {
   planStatus           TenantPlanStatus @default(active)
   trialEndsAt          DateTime?        @map("trial_ends_at")
   seatCount            Int              @default(1) @map("seat_count")
+  setupComplete        Boolean          @default(false) @map("setup_complete")
   createdAt            DateTime         @default(now()) @map("created_at")
 
   users               User[]

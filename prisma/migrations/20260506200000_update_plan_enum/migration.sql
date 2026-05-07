@@ -11,8 +11,8 @@ ALTER TABLE "tenants"
   ALTER COLUMN "plan" TYPE "TenantPlan"
   USING "plan"::text::"TenantPlan";
 
--- Step 2: remove the leftover old type
-DROP TYPE "TenantPlan_old";
+-- Step 2: remove the leftover old type (may already be gone in shadow DB)
+DROP TYPE IF EXISTS "TenantPlan_old";
 
 -- Step 3: restore the default
 ALTER TABLE "tenants" ALTER COLUMN "plan" SET DEFAULT 'free'::"TenantPlan";

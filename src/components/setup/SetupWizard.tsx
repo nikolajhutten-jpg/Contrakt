@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import StepOrganisation from "@/components/setup/StepOrganisation";
 import StepLicense from "@/components/setup/StepLicense";
 import StepDepartments from "@/components/setup/StepDepartments";
-import StepInviteUsers from "@/components/setup/StepInviteUsers";
-import { TenantPlan } from "@/types";
+import StepConfirm from "@/components/setup/StepConfirm";
 import type { Department } from "@/types";
 
 type Step = 0 | 1 | 2 | 3;
@@ -15,20 +14,24 @@ const STEPS = [
   { number: 0, label: "Organisation" },
   { number: 1, label: "License" },
   { number: 2, label: "Departments" },
-  { number: 3, label: "Invite" },
+  { number: 3, label: "Confirm" },
 ];
 
 interface Props {
   initialDepartments: Department[];
+  initialOrgName?: string;
+  initialStep?: Step;
 }
 
-export default function SetupWizard({ initialDepartments }: Props) {
+export default function SetupWizard({ initialDepartments, initialOrgName = "", initialStep = 0 }: Props) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(0);
+  const [step, setStep] = useState<Step>(initialStep);
+  const [orgName, setOrgName] = useState<string>(initialOrgName);
   const [departments, setDepartments] = useState<Department[]>(initialDepartments);
   const [selectedPlan, setSelectedPlan] = useState<string>("");
 
-  function handleOrganisationDone() {
+  function handleOrganisationDone(name: string) {
+    setOrgName(name);
     setStep(1);
   }
 
@@ -39,20 +42,12 @@ export default function SetupWizard({ initialDepartments }: Props) {
 
   function handleDepartmentsDone(created: Department[]) {
     setDepartments(created);
-    if (selectedPlan === TenantPlan.Free) {
-      router.push("/dashboard");
-    } else {
-      setStep(3);
-    }
+    setStep(3);
   }
 
-  function handleInviteDone() {
+  function handleConfirmDone() {
     router.push("/dashboard");
   }
-
-  const visibleSteps = selectedPlan === TenantPlan.Free
-    ? STEPS.filter((s) => s.number !== 3)
-    : STEPS;
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f7", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px" }}>
@@ -70,7 +65,7 @@ export default function SetupWizard({ initialDepartments }: Props) {
 
         {/* Step indicator */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "32px" }}>
-          {visibleSteps.map((s, i) => (
+          {STEPS.map((s, i) => (
             <div key={s.number} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span
@@ -100,7 +95,7 @@ export default function SetupWizard({ initialDepartments }: Props) {
                   {s.label}
                 </span>
               </div>
-              {i < visibleSteps.length - 1 && (
+              {i < STEPS.length - 1 && (
                 <div style={{ width: "32px", height: "0.5px", background: "rgba(0,0,0,0.1)" }} />
               )}
             </div>
@@ -125,9 +120,11 @@ export default function SetupWizard({ initialDepartments }: Props) {
           />
         )}
         {step === 3 && (
-          <StepInviteUsers
-            departments={departments}
-            onComplete={handleInviteDone}
+          <StepConfirm
+            orgName={orgName}
+            plan={selectedPlan}
+            departmentCount={departments.length}
+            onComplete={handleConfirmDone}
             onBack={() => setStep(2)}
           />
         )}

@@ -24,6 +24,8 @@ export default async function AppLayout({ children }: AppLayoutProps) {
   const tenant = await getTenantById(tenantId);
   if (!tenant) redirect("/sign-in");
 
+  if (!tenant.setupComplete) redirect("/setup");
+
   const badgeCounts = await getBadgeCounts({
     role:         localUser.role,
     userId:       localUser.id,

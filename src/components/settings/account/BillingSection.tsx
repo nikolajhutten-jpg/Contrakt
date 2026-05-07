@@ -19,6 +19,8 @@ const PLANS = [
   { key: TenantPlan.Business, label: "Business", price: "€129/mo", users: "20 users", contracts: "Unlimited contracts" },
 ];
 
+const PLAN_ORDER = [TenantPlan.Free, TenantPlan.Starter, TenantPlan.Team, TenantPlan.Business];
+
 interface Props {
   tenant: Tenant;
   usage: PlanUsage;
@@ -69,8 +71,12 @@ export default function BillingSection({ tenant, usage }: Props) {
   const atUserLimit = usage.users >= limits.users;
   const anyLimitReached = atContractLimit || atUserLimit;
 
+  const currentPlanLabel = PLANS.find((p) => p.key === tenant.plan)?.label ?? tenant.plan;
+  const visiblePlans = tenant.plan === TenantPlan.Free ? PLANS : PLANS.filter((p) => p.key !== TenantPlan.Free);
   const selectedPlanData = selectedPlan ? PLANS.find((p) => p.key === selectedPlan) : null;
-  const canUpgrade = selectedPlan !== null && selectedPlan !== tenant.plan && selectedPlan !== TenantPlan.Free;
+  const canChangePlan = selectedPlan !== null && selectedPlan !== tenant.plan;
+  const isDowngrade = selectedPlan !== null &&
+    PLAN_ORDER.indexOf(selectedPlan as TenantPlan) < PLAN_ORDER.indexOf(tenant.plan);
 
   function handlePortal() {
     setError("");
@@ -113,7 +119,7 @@ export default function BillingSection({ tenant, usage }: Props) {
 
       {/* Usage meters */}
       <div style={{ marginBottom: "16px", padding: "14px 16px", background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
-        <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(0,0,0,0.35)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Plan usage</p>
+        <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(0,0,0,0.35)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Plan usage — {currentPlanLabel}</p>
         {limits.contracts !== null && (
           <UsageMeter label="Contracts" used={usage.contracts} limit={limits.contracts} />
         )}
@@ -128,8 +134,8 @@ export default function BillingSection({ tenant, usage }: Props) {
       )}
 
       {/* Plan cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "12px" }}>
-        {PLANS.map((plan) => {
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${visiblePlans.length}, 1fr)`, gap: "8px", marginBottom: "12px" }}>
+        {visiblePlans.map((plan) => {
           const isCurrent = tenant.plan === plan.key;
           const isSelected = selectedPlan === plan.key;
           const isPaid = plan.key !== TenantPlan.Free;
@@ -139,8 +145,8 @@ export default function BillingSection({ tenant, usage }: Props) {
             <button
               key={plan.key}
               type="button"
-              disabled={!isClickable}
-              onClick={isClickable ? () => setSelectedPlan(plan.key) : undefined}
+              disabled={!isClickable && !isSelected}
+              onClick={isClickable || isSelected ? () => setSelectedPlan((prev) => prev === plan.key ? null : plan.key) : undefined}
               style={{
                 display: "flex",
                 flexDirection: "column",
@@ -167,8 +173,8 @@ export default function BillingSection({ tenant, usage }: Props) {
         })}
       </div>
 
-      {/* Upgrade button */}
-      {canUpgrade && (
+      {/* Upgrade / Downgrade button */}
+      {canChangePlan && (
         <div style={{ marginBottom: "12px" }}>
           <button
             type="button"
@@ -187,7 +193,7 @@ export default function BillingSection({ tenant, usage }: Props) {
               opacity: isCheckingOut ? 0.5 : 1,
             }}
           >
-            {isCheckingOut ? "Loading…" : `Upgrade to ${selectedPlanData?.label}`}
+            {isCheckingOut ? "Loading…" : `${isDowngrade ? "Downgrade" : "Upgrade"} to ${selectedPlanData?.label}`}
           </button>
         </div>
       )}

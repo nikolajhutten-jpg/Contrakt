@@ -53,7 +53,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       priceId,
       tenantId,
       `${baseUrl}/settings/account?billing=success`,
-      `${baseUrl}/settings/account?billing=canceled`,
+      `${baseUrl}/setup?step=2`,
     );
 
     return ok({ url: sessionUrl });
