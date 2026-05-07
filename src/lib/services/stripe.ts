@@ -50,7 +50,6 @@ export async function createCustomer(
 export async function createCheckoutSession(
   customerId: string,
   priceId: string,
-  quantity: number,
   tenantId: string,
   successUrl: string,
   cancelUrl: string,
@@ -58,7 +57,7 @@ export async function createCheckoutSession(
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
-    line_items: [{ price: priceId, quantity }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: successUrl,
     cancel_url: cancelUrl,
     metadata: { tenantId },

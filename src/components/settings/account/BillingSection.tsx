@@ -59,15 +59,18 @@ const BTN_SECONDARY: React.CSSProperties = {
 
 export default function BillingSection({ tenant, usage }: Props) {
   const [error, setError] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isCheckingOut, startCheckoutTransition] = useTransition();
   const [isOpeningPortal, startPortalTransition] = useTransition();
 
   const isReadOnly = tenant.planStatus === TenantPlanStatus.ReadOnly;
   const limits = PLAN_LIMITS[tenant.plan];
-  const showUsageMeters = tenant.plan === TenantPlan.Free || tenant.plan === TenantPlan.Starter;
   const atContractLimit = limits.contracts !== null && usage.contracts >= limits.contracts;
   const atUserLimit = usage.users >= limits.users;
   const anyLimitReached = atContractLimit || atUserLimit;
+
+  const selectedPlanData = selectedPlan ? PLANS.find((p) => p.key === selectedPlan) : null;
+  const canUpgrade = selectedPlan !== null && selectedPlan !== tenant.plan && selectedPlan !== TenantPlan.Free;
 
   function handlePortal() {
     setError("");
@@ -109,15 +112,13 @@ export default function BillingSection({ tenant, usage }: Props) {
       )}
 
       {/* Usage meters */}
-      {showUsageMeters && (
-        <div style={{ marginBottom: "16px", padding: "14px 16px", background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
-          <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(0,0,0,0.35)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Plan usage</p>
-          {limits.contracts !== null && (
-            <UsageMeter label="Contracts" used={usage.contracts} limit={limits.contracts} />
-          )}
-          <UsageMeter label="Users" used={usage.users} limit={limits.users} />
-        </div>
-      )}
+      <div style={{ marginBottom: "16px", padding: "14px 16px", background: "#ffffff", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+        <p style={{ fontSize: "11px", fontWeight: 500, color: "rgba(0,0,0,0.35)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "4px" }}>Plan usage</p>
+        {limits.contracts !== null && (
+          <UsageMeter label="Contracts" used={usage.contracts} limit={limits.contracts} />
+        )}
+        <UsageMeter label="Users" used={usage.users} limit={limits.users} />
+      </div>
 
       {/* Upgrade prompt */}
       {anyLimitReached && tenant.plan !== TenantPlan.Team && tenant.plan !== TenantPlan.Business && (
@@ -127,28 +128,30 @@ export default function BillingSection({ tenant, usage }: Props) {
       )}
 
       {/* Plan cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "12px" }}>
         {PLANS.map((plan) => {
           const isCurrent = tenant.plan === plan.key;
+          const isSelected = selectedPlan === plan.key;
           const isPaid = plan.key !== TenantPlan.Free;
           const isClickable = !isCurrent && isPaid && !isCheckingOut;
+          const highlighted = isCurrent || isSelected;
           return (
             <button
               key={plan.key}
               type="button"
               disabled={!isClickable}
-              onClick={isClickable ? () => handleCheckout(plan.key as "starter" | "team" | "business") : undefined}
+              onClick={isClickable ? () => setSelectedPlan(plan.key) : undefined}
               style={{
                 display: "flex",
                 flexDirection: "column",
                 gap: "3px",
                 padding: "12px 10px",
-                background: isCurrent ? "rgba(0,0,0,0.04)" : "#ffffff",
-                border: isCurrent ? "1.5px solid #1a1a1a" : "0.5px solid rgba(0,0,0,0.12)",
+                background: highlighted ? "rgba(0,0,0,0.04)" : "#ffffff",
+                border: highlighted ? "1.5px solid #1a1a1a" : "0.5px solid rgba(0,0,0,0.12)",
                 borderRadius: "10px",
                 cursor: isClickable ? "pointer" : "default",
                 textAlign: "left",
-                opacity: isCheckingOut && !isCurrent ? 0.5 : 1,
+                opacity: isCheckingOut && !isSelected ? 0.5 : 1,
                 transition: "border-color 0.12s, background 0.12s",
               }}
             >
@@ -163,6 +166,31 @@ export default function BillingSection({ tenant, usage }: Props) {
           );
         })}
       </div>
+
+      {/* Upgrade button */}
+      {canUpgrade && (
+        <div style={{ marginBottom: "12px" }}>
+          <button
+            type="button"
+            disabled={isCheckingOut}
+            onClick={() => handleCheckout(selectedPlan as "starter" | "team" | "business")}
+            style={{
+              fontSize: "13px",
+              fontWeight: 500,
+              padding: "7px 16px",
+              background: "#1a1a1a",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "8px",
+              cursor: isCheckingOut ? "default" : "pointer",
+              letterSpacing: "-0.01em",
+              opacity: isCheckingOut ? 0.5 : 1,
+            }}
+          >
+            {isCheckingOut ? "Loading…" : `Upgrade to ${selectedPlanData?.label}`}
+          </button>
+        </div>
+      )}
 
       {error && <p style={{ fontSize: "13px", color: "#c0392b", marginBottom: "12px" }}>{error}</p>}
 

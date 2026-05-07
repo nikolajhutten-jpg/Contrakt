@@ -9,7 +9,6 @@ import {
 } from "@/lib/services/stripe";
 import { ok, badRequest, handleError } from "@/lib/api/response";
 import { UserRole } from "@/types";
-import { db } from "@/lib/db/client";
 
 const VALID_PLANS = ["starter", "team", "business"] as const;
 type PlanKey = (typeof VALID_PLANS)[number];
@@ -41,9 +40,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     const tenant = await getTenantSettings(tenantId);
     if (!tenant) return badRequest("Tenant not found.");
 
-    // Seat count drives the Stripe subscription quantity (§15.5)
-    const seatCount = await db.user.count({ where: { tenantId } });
-
     // Provision a Stripe customer on first checkout
     let customerId = tenant.stripeCustomerId;
     if (!customerId) {
@@ -55,7 +51,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     const sessionUrl = await createCheckoutSession(
       customerId,
       priceId,
-      seatCount,
       tenantId,
       `${baseUrl}/settings/account?billing=success`,
       `${baseUrl}/settings/account?billing=canceled`,
