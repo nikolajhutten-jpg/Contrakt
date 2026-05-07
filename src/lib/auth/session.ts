@@ -2,9 +2,14 @@ import { auth } from '@clerk/nextjs/server'
 import { getUserByClerkId } from '@/lib/db/users'
 import { getTenantById } from '@/lib/db/tenants'
 import { forbidden } from '@/lib/api/response'
-import { UserRole } from '@/types'
+import { UserRole, TenantPlanStatus } from '@/types'
 
-export async function resolveAuthContext() {
+interface AuthOptions {
+  /** Skip the setupComplete guard — use only for routes that must work during onboarding. */
+  skipSetupCheck?: boolean
+}
+
+export async function resolveAuthContext(options?: AuthOptions) {
   const { userId } = await auth()
   if (!userId) throw new Error('Unauthenticated')
 
@@ -14,7 +19,26 @@ export async function resolveAuthContext() {
   const tenant = await getTenantById(user.tenantId)
   if (!tenant) throw new Error('Tenant not found')
 
-  return { localUser: user, tenant, tenantId: tenant.id }
+  if (
+    tenant.planStatus === TenantPlanStatus.Canceled ||
+    tenant.planStatus === TenantPlanStatus.ReadOnly
+  ) {
+    throw Object.assign(
+      new Error('Your subscription has been canceled. Please renew your plan to continue.'),
+      { status: 403 },
+    )
+  }
+
+  if (!tenant.setupComplete && !options?.skipSetupCheck) {
+    throw Object.assign(new Error('Setup not complete.'), { status: 403 })
+  }
+
+  return {
+    localUser: user,
+    tenant,
+    tenantId: tenant.id,
+    isPastDue: tenant.planStatus === TenantPlanStatus.PastDue,
+  }
 }
 
 export async function requireAuth() {
@@ -23,8 +47,8 @@ export async function requireAuth() {
   return userId
 }
 
-export async function requireRole(role: UserRole | UserRole[]) {
-  const ctx = await resolveAuthContext()
+export async function requireRole(role: UserRole | UserRole[], options?: AuthOptions) {
+  const ctx = await resolveAuthContext(options)
   const allowed = Array.isArray(role) ? role : [role]
   if (!allowed.includes(ctx.localUser.role)) throw forbidden()
   return ctx

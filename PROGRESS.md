@@ -8,9 +8,9 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `prisma/schema.prisma` | Full Prisma schema — 10 tables (added `GroupEntity`); `internalGroupEntity` made nullable on `Contract`; `groupEntityId` FK added to `Contract`; `TenantPlan` + `TenantPlanStatus` enums and 6 billing fields on `Tenant` (§15). `User.auth0Id` renamed to `User.clerkId` (DB column `clerk_id`). |
+| `prisma/schema.prisma` | Full Prisma schema — 10 tables (added `GroupEntity`); `internalGroupEntity` made nullable on `Contract`; `groupEntityId` FK added to `Contract`; `TenantPlan` + `TenantPlanStatus` enums and 6 billing fields on `Tenant` (§15). `User.auth0Id` renamed to `User.clerkId` (DB column `clerk_id`). `Tenant.setupComplete Boolean @default(false)` added — gates dashboard access. |
 | `prisma.config.ts` | Prisma 7 external config; moves the database URL out of the schema file. |
-| `src/types/index.ts` | All TypeScript interfaces and `const`+union enums. Added `GroupEntity` interface. `Contract` gains `groupEntityId: string | null` and `internalGroupEntity: string | null`. `ContractSummary` replaces `internalGroupEntity: string` with `groupEntity: { id; name } | null` and adds `autoRenewal: boolean`. `ContractWithRelations` gains `groupEntity: GroupEntity | null`. `CreateContractInput` uses `groupEntityId`. `User.auth0Id` renamed to `User.clerkId`. |
+| `src/types/index.ts` | All TypeScript interfaces and `const`+union enums. Added `GroupEntity` interface. `Contract` gains `groupEntityId: string | null` and `internalGroupEntity: string | null`. `ContractSummary` replaces `internalGroupEntity: string` with `groupEntity: { id; name } | null` and adds `autoRenewal: boolean`. `ContractWithRelations` gains `groupEntity: GroupEntity | null`. `CreateContractInput` uses `groupEntityId`. `User.auth0Id` renamed to `User.clerkId`. `Tenant` gains `setupComplete: boolean`. |
 | `src/env.ts` | `@t3-oss/env-nextjs` + Zod schema validating all required env vars at startup. Clerk vars: `CLERK_SECRET_KEY` (server), `CLERK_WEBHOOK_SECRET` (optional), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (client). Optional vars (Upstash, Sentry, Stripe, SendGrid) use `.optional()` so dev runs without them. |
 | `src/proxy.ts` | Clerk middleware via `clerkMiddleware()` from `@clerk/nextjs/server`. Public routes: `/sign-in(.*)`, `/sign-up(.*)`, `/api/billing/webhook`, `/api/webhooks/clerk`. All other routes require authentication via `auth.protect()`. Named `proxy` export per Next.js 16 convention. |
 | `next.config.ts` | Applies `getSecurityHeaders()` to all routes via the Next.js `headers()` config hook. |
@@ -38,7 +38,7 @@ Files created to date, organised by layer.
 | `src/lib/db/departments.ts` | `getDepartmentsByTenant`, `getDepartmentById`, `createDepartment`, `renameDepartment`, `deactivateDepartment`. |
 | `src/lib/db/documents.ts` | `getDocumentsByContract`, `getDocumentById`, `createDocument`, `deleteDocument`, `getLatestRenewalVersion`. |
 | `src/lib/db/alerts.ts` | `getAlertsByContract`, `getAlertById`, `createAlert`, `updateAlert`, `deleteAlert`. |
-| `src/lib/db/settings.ts` | `getTenantSettings`, `updateTenantSettings`. |
+| `src/lib/db/settings.ts` | `getTenantSettings`, `updateTenantSettings`. `UpdateTenantSettingsData` accepts `setupComplete?: boolean`. |
 | `src/lib/db/billing.ts` | `updateTenantBilling`, `getTenantByStripeCustomerId`, `getTenantByStripeSubscriptionId`. |
 | `src/lib/db/extractionResults.ts` | `saveExtractionResult`, `getExtractionResultByDocument`. |
 
@@ -84,7 +84,8 @@ Files created to date, organised by layer.
 |---|---|
 | `src/app/api/auth/signup/route.ts` | `POST` — legacy onboarding: validates input, creates `Tenant` + admin `User` with placeholder `clerkId`; sets `trialEndsAt` (+14 days). Superseded by the Clerk webhook for new signups. |
 | `src/app/api/webhooks/clerk/route.ts` | `POST` — Clerk webhook receiver. Verifies Svix signature. On `user.created`: idempotency check by Clerk ID; if email matches a DB user with `invite:*` clerkId, updates it (invited user flow); if email matches a real clerkId, returns 200 without provisioning (deactivated user guard); otherwise provisions a new `Tenant` + admin `User`. On `user.deleted`: looks up DB user by clerkId and deletes them if found. |
-| `src/app/api/billing/checkout/route.ts` | `POST` — admin only; provisions Stripe customer, creates hosted Checkout Session. |
+| `src/app/api/billing/checkout/route.ts` | `POST` — admin only; provisions Stripe customer, creates hosted Checkout Session. Quantity hardcoded to 1 (flat-rate plans). `success_url` → `GET /api/setup/complete?redirect=/dashboard`; `cancel_url` → `/setup?step=3`. |
+| `src/app/api/setup/complete/route.ts` | `PATCH` — admin only; sets `setupComplete: true`. `GET` — called by Stripe `success_url`; sets `setupComplete: true` and redirects to the `?redirect=` param (validated to start with `/`). |
 | `src/app/api/billing/portal/route.ts` | `POST` — admin only; creates Stripe Customer Portal session. |
 | `src/app/api/billing/webhook/route.ts` | `POST` — Stripe webhook receiver; handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`. |
 | `src/app/api/contracts/route.ts` | `GET` list (role-filtered) and `POST` create. |
@@ -125,7 +126,7 @@ Files created to date, organised by layer.
 | `src/app/(auth)/layout.tsx` | Minimal centred layout for public auth pages. |
 | `src/app/(app)/layout.tsx` | Authenticated route group layout — wraps every protected page in `AppLayout`. |
 | `src/app/(app)/dashboard/page.tsx` | Home page — fetches KPIs, active contracts, upcoming renewals, and onboarding state. |
-| `src/app/(setup)/setup/page.tsx` | Setup wizard — requires only a valid Clerk session (no DB user needed). If DB user exists: admin-only; redirects to `/dashboard` if `tenant.name` is set, `departmentsAdded` is true, and (`firstUserInvited` is true **or** plan is FREE). If no DB user: checks Clerk email — redirects to `/sign-in` if deactivated; otherwise renders wizard with empty state. |
+| `src/app/(setup)/setup/page.tsx` | Setup wizard — requires only a valid Clerk session (no DB user needed). If DB user exists: admin-only; redirects to `/dashboard` only if `tenant.setupComplete` is true. Accepts `?step=N` (1-indexed, 1–3) to resume at a specific step — used by Stripe cancel redirect. If no DB user: checks Clerk email — redirects to `/sign-in` if deactivated; otherwise renders wizard with empty state. |
 | `src/app/(app)/contracts/page.tsx` | All Contracts page — role-filtered, passes data to `ContractsShell`. |
 | `src/app/(app)/contracts/[id]/page.tsx` | Contract Detail page. |
 | `src/app/(app)/contracts/new/page.tsx` | Upload Contract page — renders `UploadShell`. |
@@ -150,19 +151,19 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/components/setup/SetupWizard.tsx` | #f5f5f7 full-screen shell with white 0.5px-border 12px-radius card. 4-step indicator (1 Organisation, 2 License, 3 Departments, 4 Invite). Tracks `selectedPlan`; skips step 4 and redirects to `/dashboard` directly after Departments when plan is FREE. |
-| `src/components/setup/StepOrganisation.tsx` | Org name input only. Saves via `PATCH /api/settings/account` and calls `onComplete()`. |
-| `src/components/setup/StepLicense.tsx` | Plan picker (Free / Starter / Team / Business). Free plan saves immediately; paid plans trigger Stripe checkout. Has `onBack` to return to Organisation. |
-| `src/components/setup/StepDepartments.tsx` | Suggestion chips + custom department input. Has `onBack` (→ License). |
-| `src/components/setup/StepInviteUsers.tsx` | 2-col grid for name/email. Has `onBack` (→ Departments). |
-| `src/components/setup/StepSlack.tsx` | "Send test notification" button. |
+| `src/components/setup/SetupWizard.tsx` | #f5f5f7 full-screen shell with white 0.5px-border 12px-radius card. 3-step indicator: 1 Organisation → 2 Departments → 3 License. Accepts `initialStep?: 0\|1\|2` (used by Stripe cancel redirect). |
+| `src/components/setup/StepOrganisation.tsx` | Org name input. Saves via `PATCH /api/settings/account` and calls `onComplete()`. |
+| `src/components/setup/StepDepartments.tsx` | Suggestion chips + custom department input. Continue is always enabled (departments optional). Has `onBack` (→ Organisation). |
+| `src/components/setup/StepLicense.tsx` | Final step. Plan picker (Free / Starter / Team / Business). "Get started" button: Free → saves plan + `PATCH /api/setup/complete` + `router.push('/dashboard')`; paid → `startCheckout(plan)` → Stripe (success redirects to `GET /api/setup/complete?redirect=/dashboard`). Has `onBack` (→ Departments). |
+| `src/components/setup/StepInviteUsers.tsx` | Unused in current wizard flow — retained in codebase. |
+| `src/components/setup/StepSlack.tsx` | Unused in current wizard flow — retained in codebase. |
 
 ### Layout
 
 | File | Description |
 |---|---|
-| `src/components/layout/AppLayout.tsx` | Server component — calls `auth()` from Clerk, looks up DB user by `clerkId`. Redirects to `/sign-in` if no Clerk session; to `/setup` if authenticated but no DB user yet. Fetches badge counts and renders sidebar. |
-| `src/components/layout/Sidebar.tsx` | White sidebar. Nav: Home, All contracts, Upcoming renewals, Notifications. Live `actionRequired` amber badge. |
+| `src/components/layout/AppLayout.tsx` | Server component — calls `auth()` from Clerk, looks up DB user by `clerkId`. Redirects to `/sign-in` if no Clerk session; to `/setup` if no DB user or `tenant.setupComplete` is false. Fetches badge counts and renders sidebar. |
+| `src/components/layout/Sidebar.tsx` | White sidebar. Nav: Home, All contracts, Upcoming renewals, Notifications, Vendors, Settings. Sign out button (`<SignOutButton>` from Clerk) above user identity footer. |
 
 ### UI primitives
 
@@ -266,7 +267,7 @@ Files created to date, organised by layer.
 | File | Description |
 |---|---|
 | `src/components/settings/account/AccountSettingsForm.tsx` | Company, Slack, and tenant settings. |
-| `src/components/settings/account/BillingSection.tsx` | Plan badges and usage meters. |
+| `src/components/settings/account/BillingSection.tsx` | Plan cards (matching StepLicense style) for all plans — current plan highlighted; selecting a different plan reveals an "Upgrade/Downgrade to X" button. Free card hidden for paid users. Users and Contracts usage meters (contracts meter only shown for finite limits). Stripe not-configured error surfaced explicitly. |
 
 ### Settings — Profile
 
@@ -408,3 +409,30 @@ Full replacement of `@auth0/nextjs-auth0` with `@clerk/nextjs@7.3.0`.
 | `src/components/dashboard/DashboardShell.tsx` | "Add contract" button wrapped in `{isAdmin && ...}`. |
 | `src/components/ui/EmptyState.tsx` | `actionLabel` and `onAction` made optional; button only renders when both are provided. |
 | `src/components/vendors/VendorList.tsx` | Removed "Add vendor" button (linked to a non-existent `/vendors/new` route).
+
+---
+
+## Session changes (2026-05-07)
+
+### Setup wizard overhaul
+
+- **New flow**: Organisation → Departments → License (3 steps, down from 4). StepConfirm removed entirely.
+- **Departments optional**: Continue button always enabled in `StepDepartments` — no longer gated on adding at least one department.
+- **License as final step**: `StepLicense` handles its own completion — no `onComplete` prop. Free plan: saves plan + calls `PATCH /api/setup/complete` + navigates to `/dashboard`. Paid plans: calls `startCheckout(plan)`, which Stripe redirects back to `GET /api/setup/complete?redirect=/dashboard` on success or `/setup?step=3` on cancel.
+- **`setupComplete` field**: added `Boolean @default(false)` to `Tenant` in schema; migration `20260507000000_add_setup_complete` applied. `Tenant` interface and `UpdateTenantSettingsData` updated.
+- **New API route `src/app/api/setup/complete`**: `PATCH` sets `setupComplete: true` (used by wizard). `GET` does the same then redirects to `?redirect=` param — called by Stripe `success_url`.
+- **AppLayout gate**: redirects to `/setup` if `!tenant.setupComplete` (in addition to the existing no-DB-user redirect).
+- **Stripe checkout fixes**: quantity hardcoded to `1` (flat-rate plans — previously used seat count). `success_url` updated to `GET /api/setup/complete?redirect=/dashboard`.
+- **`setup/page.tsx`**: completion check simplified to `tenant.setupComplete` only. Accepts `?step=N` (1-indexed) to resume wizard at a specific step.
+
+### Billing section overhaul (`BillingSection.tsx`)
+
+- Replaced ad-hoc upgrade buttons with plan cards matching `StepLicense` style (4 cards, `repeat(4,1fr)` grid; 3 cards for paid users — Free card hidden).
+- Current plan highlighted with dark border + "Current plan" label. Selecting a non-current paid card reveals "Upgrade to X" / "Downgrade to X" button (direction derived from `PLAN_ORDER`). Clicking the same card again deselects it.
+- Usage meters: Users meter always shown (all plans have a finite user limit); Contracts meter shown only for finite limits (Free only). AI extractions removed.
+- Plan usage header now reads "PLAN USAGE — [Plan name]".
+- Stripe not-configured error surfaced as "Stripe is not configured yet. Please contact support." when the server returns a `not configured` message.
+
+### Sidebar
+
+- Added `<SignOutButton>` (Clerk) above the user identity footer — same 13px neutral style as nav items.

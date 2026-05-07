@@ -7,6 +7,7 @@ import {
   createContract,
 } from "@/lib/db/contracts";
 import { buildCreateContractData } from "@/lib/services/contracts";
+import { checkContractLimit } from "@/lib/services/planLimits";
 import { ok, created, badRequest, forbidden, handleError } from "@/lib/api/response";
 import { UserRole } from "@/types";
 import type { CreateContractInput } from "@/types";
@@ -43,9 +44,12 @@ export async function GET(): Promise<Response> {
 // POST /api/contracts — create a new contract (Admin only)
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const { localUser, tenantId } = await resolveAuthContext();
+    const { localUser, tenant, tenantId } = await resolveAuthContext();
 
     if (localUser.role !== UserRole.Admin) return forbidden();
+
+    const limitCheck = await checkContractLimit(tenantId, tenant.plan);
+    if (!limitCheck.allowed) return forbidden(limitCheck.message);
 
     const body: unknown = await request.json();
     const input = parseCreateInput(body);

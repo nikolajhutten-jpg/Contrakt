@@ -7,11 +7,19 @@ import {
   createCheckoutSession,
   STRIPE_PRICES,
 } from "@/lib/services/stripe";
+import { getPlanUsage } from "@/lib/services/planLimits";
 import { ok, badRequest, handleError } from "@/lib/api/response";
 import { UserRole } from "@/types";
 
 const VALID_PLANS = ["starter", "team", "business"] as const;
 type PlanKey = (typeof VALID_PLANS)[number];
+
+const PLAN_USER_LIMITS: Record<string, number> = {
+  free: 1,
+  starter: 1,
+  team: 5,
+  business: 20,
+};
 
 /**
  * POST /api/billing/checkout
@@ -22,7 +30,7 @@ type PlanKey = (typeof VALID_PLANS)[number];
  */
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const { tenantId, localUser } = await requireRole([UserRole.Admin]);
+    const { tenantId, localUser } = await requireRole([UserRole.Admin], { skipSetupCheck: true });
 
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null)
@@ -39,6 +47,16 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     const tenant = await getTenantSettings(tenantId);
     if (!tenant) return badRequest("Tenant not found.");
+
+    // Downgrade guard: block if active users exceed the new plan's seat limit
+    const newPlanLimit = PLAN_USER_LIMITS[plan];
+    const usage = await getPlanUsage(tenantId);
+    if (usage.users > newPlanLimit) {
+      const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1);
+      return badRequest(
+        `You have ${usage.users} users but the ${planLabel} plan only allows ${newPlanLimit}. Please deactivate excess users before downgrading.`,
+      );
+    }
 
     // Provision a Stripe customer on first checkout
     let customerId = tenant.stripeCustomerId;

@@ -36,7 +36,36 @@ export default async function SetupPage({ searchParams }: PageProps) {
 
   if (localUser) {
     if (localUser.role !== UserRole.Admin) {
-      redirect("/dashboard");
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "#f5f5f7",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 16px",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "384px",
+              background: "#ffffff",
+              border: "0.5px solid rgba(0,0,0,0.08)",
+              borderRadius: "12px",
+              padding: "32px",
+            }}
+          >
+            <p style={{ fontSize: "16px", fontWeight: 600, color: "#171717", letterSpacing: "-0.02em", marginBottom: "8px" }}>
+              Contrakt
+            </p>
+            <p style={{ fontSize: "14px", color: "rgba(0,0,0,0.5)", lineHeight: 1.5 }}>
+              Your workspace is being set up by your administrator. You&apos;ll get access once setup is complete.
+            </p>
+          </div>
+        </div>
+      );
     }
 
     const [departments, tenant] = await Promise.all([

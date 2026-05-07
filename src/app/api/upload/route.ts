@@ -4,7 +4,8 @@ import { resolveAuthContext } from "@/lib/auth/session";
 import { createJob, completeJob, failJob } from "@/lib/services/extractionJobs";
 import { convertToText, extractContractProperties, handleExtractionFailure } from "@/lib/services/extraction";
 import { uploadFile } from "@/lib/storage/r2";
-import { ok, badRequest, handleError } from "@/lib/api/response";
+import { ok, badRequest, forbidden, handleError } from "@/lib/api/response";
+import { checkExtractionLimit } from "@/lib/services/planLimits";
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB — §14.1
 const ALLOWED_TYPES = new Set([
@@ -56,7 +57,10 @@ async function runExtractionPipeline(
  */
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const { tenantId } = await resolveAuthContext();
+    const { tenantId, tenant } = await resolveAuthContext();
+
+    const limitCheck = await checkExtractionLimit(tenantId, tenant.plan);
+    if (!limitCheck.allowed) return forbidden(limitCheck.message);
 
     let formData: FormData;
     try {

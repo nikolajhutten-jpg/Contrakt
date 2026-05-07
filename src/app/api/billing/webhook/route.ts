@@ -5,17 +5,28 @@ import {
   updateTenantBilling,
   getTenantByStripeSubscriptionId,
 } from "@/lib/db/billing";
+import { getPlanUsage } from "@/lib/services/planLimits";
 import { TenantPlan, TenantPlanStatus } from "@/types";
+
+const PLAN_USER_LIMITS: Record<string, number> = {
+  free: 1,
+  starter: 1,
+  team: 5,
+  business: 20,
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Maps a Stripe Price ID to the matching internal plan name. */
-function priceIdToPlan(priceId: string): TenantPlan {
+/** Maps a Stripe Price ID to the matching internal plan name, or null if unrecognised. */
+function priceIdToPlan(priceId: string): TenantPlan | null {
   if (priceId === process.env.STRIPE_STARTER_PRICE_ID)  return TenantPlan.Starter;
   if (priceId === process.env.STRIPE_TEAM_PRICE_ID)     return TenantPlan.Team;
   if (priceId === process.env.STRIPE_BUSINESS_PRICE_ID) return TenantPlan.Business;
-  // Unknown price — default to Starter; admin should verify Stripe configuration
-  return TenantPlan.Starter;
+  console.error(
+    `[billing/webhook] Unrecognised Stripe price ID "${priceId}". ` +
+    "Check STRIPE_STARTER_PRICE_ID, STRIPE_TEAM_PRICE_ID, and STRIPE_BUSINESS_PRICE_ID env vars.",
+  );
+  return null;
 }
 
 /** Maps a Stripe subscription status to the internal plan status. */
@@ -79,9 +90,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         const sub = await stripe.subscriptions.retrieve(session.subscription);
         const priceId = sub.items.data[0]?.price.id ?? "";
+        const plan = priceIdToPlan(priceId);
+        if (!plan) {
+          return NextResponse.json({ error: "Unrecognised price ID." }, { status: 400 });
+        }
 
         await updateTenantBilling(tenantId, {
-          plan: priceIdToPlan(priceId),
+          plan,
           planStatus: TenantPlanStatus.Active,
           stripeSubscriptionId: session.subscription,
           seatCount: sub.items.data[0]?.quantity ?? 1,
@@ -95,11 +110,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         if (!tenant) break;
 
         const priceId = sub.items.data[0]?.price.id ?? "";
+        const newPlan = priceIdToPlan(priceId);
+        if (!newPlan) {
+          return NextResponse.json({ error: "Unrecognised price ID." }, { status: 400 });
+        }
+        const newStatus = toInternalStatus(sub.status);
+
         await updateTenantBilling(tenant.id, {
-          plan: priceIdToPlan(priceId),
-          planStatus: toInternalStatus(sub.status),
+          plan: newPlan,
+          planStatus: newStatus,
           seatCount: sub.items.data[0]?.quantity ?? tenant.seatCount,
         });
+
+        // Seat overage guard: if the new plan allows fewer users than are
+        // currently active (e.g. downgrade via Stripe portal), lock the tenant
+        // to read_only so the admin must deactivate excess users before
+        // regaining full access.
+        const newLimit = PLAN_USER_LIMITS[newPlan];
+        if (newLimit !== undefined) {
+          const usage = await getPlanUsage(tenant.id);
+          if (usage.users > newLimit) {
+            console.warn(
+              `[billing/webhook] Tenant ${tenant.id} has ${usage.users} users but downgraded to ${newPlan} (limit ${newLimit}). Locking to read_only.`,
+            );
+            await updateTenantBilling(tenant.id, { planStatus: TenantPlanStatus.ReadOnly });
+          }
+        }
         break;
       }
 

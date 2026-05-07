@@ -1,5 +1,5 @@
 import { db } from "@/lib/db/client";
-import type { Tenant, TenantPlan } from "@/types";
+import type { Tenant, TenantPlan, TenantPlanStatus } from "@/types";
 
 export async function getTenantSettings(tenantId: string): Promise<Tenant | null> {
   return db.tenant.findFirst({ where: { id: tenantId } });
@@ -9,6 +9,7 @@ export interface UpdateTenantSettingsData {
   slackWebhookUrl?: string | null;
   name?: string;
   plan?: TenantPlan;
+  planStatus?: TenantPlanStatus;
   setupComplete?: boolean;
 }
 

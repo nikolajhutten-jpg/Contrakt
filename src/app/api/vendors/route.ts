@@ -1,12 +1,12 @@
 import { NextRequest } from "next/server";
-import { resolveAuthContext } from "@/lib/auth/session";
+import { resolveAuthContext, requireRole } from "@/lib/auth/session";
 import {
   getVendorsByTenant,
   getVendorsByOwner,
   getVendorsByDepartmentOrOwner,
   createVendor,
 } from "@/lib/db/vendors";
-import { ok, created, badRequest, forbidden, handleError } from "@/lib/api/response";
+import { ok, created, badRequest, handleError } from "@/lib/api/response";
 import { UserRole } from "@/types";
 
 // GET /api/vendors — list vendors scoped by the caller's role
@@ -37,9 +37,7 @@ export async function GET(): Promise<Response> {
 // POST /api/vendors — create a new vendor (Admin only)
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const { localUser, tenantId } = await resolveAuthContext();
-
-    if (localUser.role !== UserRole.Admin) return forbidden();
+    const { tenantId } = await requireRole([UserRole.Admin]);
 
     const body: unknown = await request.json();
     const input = parseCreateInput(body);

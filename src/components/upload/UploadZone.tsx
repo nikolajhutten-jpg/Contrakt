@@ -15,7 +15,7 @@ function formatBytes(bytes: number): string {
 
 interface UploadZoneProps {
   onUpload: (jobId: string, fileName: string, file: File) => void;
-  onError: (message: string) => void;
+  onError: (message: string, status?: number) => void;
 }
 
 export default function UploadZone({ onUpload, onError }: UploadZoneProps) {
@@ -55,7 +55,7 @@ export default function UploadZone({ onUpload, onError }: UploadZoneProps) {
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const json = await res.json() as { data?: { jobId: string; fileName: string }; error?: string };
       if (!res.ok) {
-        onError(json.error ?? "Upload failed. Please try again.");
+        onError(json.error ?? "Upload failed. Please try again.", res.status);
         return;
       }
       onUpload(json.data!.jobId, json.data!.fileName, file);

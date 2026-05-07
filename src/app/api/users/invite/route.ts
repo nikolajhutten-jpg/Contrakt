@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth/session";
 import { createUser, getUserByEmail } from "@/lib/db/users";
-import { ok, created, badRequest, conflict, handleError } from "@/lib/api/response";
+import { ok, created, badRequest, conflict, forbidden, handleError } from "@/lib/api/response";
+import { checkUserLimit } from "@/lib/services/planLimits";
 import { UserRole } from "@/types";
 
 const VALID_ROLES = Object.values(UserRole) as string[];
@@ -78,7 +79,7 @@ async function sendClerkInvitation(email: string, secret: string): Promise<void>
  */
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const { tenantId } = await requireRole([UserRole.Admin]);
+    const { tenantId, tenant } = await requireRole([UserRole.Admin]);
 
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null)
@@ -117,6 +118,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       return conflict("A user with this email already exists.");
 
     // ── Fresh invite path ──────────────────────────────────────────────────────
+    const limitCheck = await checkUserLimit(tenantId, tenant.plan);
+    if (!limitCheck.allowed) return forbidden(limitCheck.message);
+
     const role = b.role as UserRole;
     const clerkId = `invite:${crypto.randomUUID()}`;
 

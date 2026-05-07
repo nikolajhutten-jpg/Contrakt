@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { updateContractStatuses } from "@/lib/services/statusUpdater";
 import { ok, forbidden, handleError } from "@/lib/api/response";
 
@@ -15,10 +15,13 @@ import { ok, forbidden, handleError } from "@/lib/api/response";
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const secret = process.env.SCHEDULER_SECRET;
-    if (secret) {
-      const auth = request.headers.get("authorization");
-      if (auth !== `Bearer ${secret}`) return forbidden("Invalid scheduler secret.");
+    if (!secret) {
+      console.error("SCHEDULER_SECRET is not configured.");
+      return NextResponse.json({ error: "Scheduler not configured." }, { status: 500 });
     }
+
+    const auth = request.headers.get("authorization");
+    if (auth !== `Bearer ${secret}`) return forbidden("Invalid scheduler secret.");
 
     await updateContractStatuses();
     return ok({ updated: true });

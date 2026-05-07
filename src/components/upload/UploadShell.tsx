@@ -86,6 +86,8 @@ export default function UploadShell() {
   const [fields, setFields] = useState<FieldValues>(() => makeInitialFields(null));
   const [ownerIds, setOwnerIds] = useState<string[]>([]);
 
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [groupEntities, setGroupEntities] = useState<GroupEntity[]>([]);
@@ -105,7 +107,11 @@ export default function UploadShell() {
     });
   }, []);
 
-  function handleUploadError(message: string) {
+  function handleUploadError(message: string, status?: number) {
+    if (status === 403) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setError({ message, canRetry: true });
     setPhase("error");
   }
@@ -165,11 +171,71 @@ export default function UploadShell() {
     return () => { cancelled = true; clearInterval(timer); };
   }, [phase, jobId]);
 
-  const wrapper = (children: React.ReactNode) => (
-    <div style={{ padding: "28px 32px", maxWidth: "1280px" }}>
-      <PageHeader />
-      {children}
+  const upgradeModal = showUpgradeModal ? (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          border: "0.5px solid rgba(0,0,0,0.1)",
+          borderRadius: "12px",
+          padding: "28px 32px",
+          maxWidth: "420px",
+          width: "calc(100% - 48px)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "17px",
+            fontWeight: 600,
+            color: "#171717",
+            letterSpacing: "-0.02em",
+            marginBottom: "6px",
+          }}
+        >
+          You&apos;ve reached your limit
+        </h2>
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "24px" }}>
+          Upgrade your plan to upload more contracts.
+        </p>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => { window.location.href = "/settings/account"; }}
+          >
+            Upgrade plan
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowUpgradeModal(false)}
+          >
+            Dismiss
+          </Button>
+        </div>
+      </div>
     </div>
+  ) : null;
+
+  const wrapper = (children: React.ReactNode) => (
+    <>
+      <div style={{ padding: "28px 32px", maxWidth: "1280px" }}>
+        <PageHeader />
+        {children}
+      </div>
+      {upgradeModal}
+    </>
   );
 
   if (phase === "upload") {
@@ -230,6 +296,7 @@ export default function UploadShell() {
 
   // phase === "review"
   return (
+    <>
     <div className="flex flex-1">
       {/* Left pane — document viewer (60%) */}
       <div
@@ -297,5 +364,7 @@ export default function UploadShell() {
         </div>
       </div>
     </div>
+    {upgradeModal}
+    </>
   );
 }

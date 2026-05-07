@@ -7,7 +7,7 @@ import { UserRole, TenantPlan } from "@/types";
 // GET /api/settings/account — admin only
 export async function GET(): Promise<Response> {
   try {
-    const { tenantId } = await requireRole([UserRole.Admin]);
+    const { tenantId } = await requireRole([UserRole.Admin], { skipSetupCheck: true });
     const settings = await getTenantSettings(tenantId);
     if (!settings) return notFound("Tenant not found.");
     return ok(settings);
@@ -19,7 +19,7 @@ export async function GET(): Promise<Response> {
 // PATCH /api/settings/account — admin only
 export async function PATCH(request: NextRequest): Promise<Response> {
   try {
-    const { tenantId } = await requireRole([UserRole.Admin]);
+    const { tenantId } = await requireRole([UserRole.Admin], { skipSetupCheck: true });
 
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null)

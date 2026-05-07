@@ -9,7 +9,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 /**
  * POST /api/contracts/[id]/confirm-action
  * Marks a contract's "Action Required" status as resolved.
- * Accessible by business owners (own contracts) and admins.
+ * Admin only.
  */
 export async function POST(
   _request: NextRequest,

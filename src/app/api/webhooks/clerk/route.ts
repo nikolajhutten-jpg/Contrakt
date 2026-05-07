@@ -89,12 +89,11 @@ export async function POST(req: Request): Promise<Response> {
   // Check if this email already exists in the DB.
   const existingByEmail = await getUserByEmail(email);
   if (existingByEmail) {
-    if (existingByEmail.clerkId.startsWith("invite:")) {
-      // Invited user completing signup — replace placeholder clerkId.
-      await updateUser(existingByEmail.id, existingByEmail.tenantId, { clerkId });
-    }
-    // Otherwise: a deactivated user re-signed up with the same email.
-    // Do not provision a new tenant — just return 200.
+    // Link the new Clerk account to the existing DB record whether the user
+    // was invited (invite: placeholder) or is re-signing up after losing
+    // access to their previous Clerk account. Without this update they would
+    // have a valid Clerk session but no matching DB record.
+    await updateUser(existingByEmail.id, existingByEmail.tenantId, { clerkId });
     return new Response("OK", { status: 200 });
   }
 
