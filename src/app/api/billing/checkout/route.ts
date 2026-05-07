@@ -52,8 +52,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       customerId,
       priceId,
       tenantId,
-      `${baseUrl}/settings/account?billing=success`,
-      `${baseUrl}/setup?step=2`,
+      `${baseUrl}/api/setup/complete?redirect=/dashboard`,
+      `${baseUrl}/setup?step=3`,
     );
 
     return ok({ url: sessionUrl });

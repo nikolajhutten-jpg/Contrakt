@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { startCheckout } from "@/lib/api/billing";
 import Button from "@/components/ui/Button";
 import { TenantPlan } from "@/types";
@@ -15,28 +16,30 @@ const PLANS: Array<{ key: string; label: string; price: string; users: string; c
 ];
 
 interface Props {
-  onComplete: (plan: string) => void;
   onBack: () => void;
 }
 
-export default function StepLicense({ onComplete, onBack }: Props) {
+export default function StepLicense({ onBack }: Props) {
+  const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  function handleContinue() {
+  function handleGetStarted() {
     if (!selectedPlan) return;
     setError("");
     startTransition(async () => {
       try {
         if (selectedPlan === TenantPlan.Free) {
-          const res = await fetch("/api/settings/account", {
+          const planRes = await fetch("/api/settings/account", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ plan: TenantPlan.Free }),
           });
-          if (!res.ok) throw new Error("Failed to save plan.");
-          onComplete(TenantPlan.Free);
+          if (!planRes.ok) throw new Error("Failed to save plan.");
+          const completeRes = await fetch("/api/setup/complete", { method: "PATCH" });
+          if (!completeRes.ok) throw new Error("Failed to complete setup.");
+          router.push("/dashboard");
         } else {
           await startCheckout(selectedPlan as PaidPlan);
         }
@@ -88,10 +91,10 @@ export default function StepLicense({ onComplete, onBack }: Props) {
           type="button"
           variant="primary"
           disabled={!selectedPlan || isPending}
-          onClick={handleContinue}
+          onClick={handleGetStarted}
           style={{ width: "100%", padding: "8px 16px" }}
         >
-          {isPending ? "Loading…" : "Continue"}
+          {isPending ? "Loading…" : "Get started"}
         </Button>
         <button
           type="button"

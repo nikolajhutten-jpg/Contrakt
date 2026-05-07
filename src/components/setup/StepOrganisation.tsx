@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Button from "@/components/ui/Button";
 
 interface Props {
-  onComplete: (orgName: string) => void;
+  onComplete: () => void;
 }
 
 const FIELD_LABEL: React.CSSProperties = {
@@ -31,7 +31,7 @@ export default function StepOrganisation({ onComplete }: Props) {
           body: JSON.stringify({ name: orgName.trim() }),
         });
         if (!res.ok) throw new Error("Failed to save.");
-        onComplete(orgName.trim());
+        onComplete();
       } catch {
         setError("Failed to save. Please try again.");
       }

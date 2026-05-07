@@ -1,52 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import StepOrganisation from "@/components/setup/StepOrganisation";
-import StepLicense from "@/components/setup/StepLicense";
 import StepDepartments from "@/components/setup/StepDepartments";
-import StepConfirm from "@/components/setup/StepConfirm";
+import StepLicense from "@/components/setup/StepLicense";
 import type { Department } from "@/types";
 
-type Step = 0 | 1 | 2 | 3;
+type Step = 0 | 1 | 2;
 
 const STEPS = [
   { number: 0, label: "Organisation" },
-  { number: 1, label: "License" },
-  { number: 2, label: "Departments" },
-  { number: 3, label: "Confirm" },
+  { number: 1, label: "Departments" },
+  { number: 2, label: "License" },
 ];
 
 interface Props {
   initialDepartments: Department[];
-  initialOrgName?: string;
   initialStep?: Step;
 }
 
-export default function SetupWizard({ initialDepartments, initialOrgName = "", initialStep = 0 }: Props) {
-  const router = useRouter();
+export default function SetupWizard({ initialDepartments, initialStep = 0 }: Props) {
   const [step, setStep] = useState<Step>(initialStep);
-  const [orgName, setOrgName] = useState<string>(initialOrgName);
   const [departments, setDepartments] = useState<Department[]>(initialDepartments);
-  const [selectedPlan, setSelectedPlan] = useState<string>("");
-
-  function handleOrganisationDone(name: string) {
-    setOrgName(name);
-    setStep(1);
-  }
-
-  function handleLicenseDone(plan: string) {
-    setSelectedPlan(plan);
-    setStep(2);
-  }
 
   function handleDepartmentsDone(created: Department[]) {
     setDepartments(created);
-    setStep(3);
-  }
-
-  function handleConfirmDone() {
-    router.push("/dashboard");
+    setStep(2);
   }
 
   return (
@@ -104,29 +83,17 @@ export default function SetupWizard({ initialDepartments, initialOrgName = "", i
 
         {/* Step content */}
         {step === 0 && (
-          <StepOrganisation onComplete={handleOrganisationDone} />
+          <StepOrganisation onComplete={() => setStep(1)} />
         )}
         {step === 1 && (
-          <StepLicense
-            onComplete={handleLicenseDone}
+          <StepDepartments
+            initial={departments}
+            onComplete={handleDepartmentsDone}
             onBack={() => setStep(0)}
           />
         )}
         {step === 2 && (
-          <StepDepartments
-            initial={departments}
-            onComplete={handleDepartmentsDone}
-            onBack={() => setStep(1)}
-          />
-        )}
-        {step === 3 && (
-          <StepConfirm
-            orgName={orgName}
-            plan={selectedPlan}
-            departmentCount={departments.length}
-            onComplete={handleConfirmDone}
-            onBack={() => setStep(2)}
-          />
+          <StepLicense onBack={() => setStep(1)} />
         )}
       </div>
     </div>

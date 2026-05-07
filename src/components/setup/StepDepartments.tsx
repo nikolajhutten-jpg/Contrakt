@@ -132,7 +132,7 @@ export default function StepDepartments({ initial, onComplete, onBack }: Props) 
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         <button
           type="button"
-          disabled={departments.length === 0 || isPending}
+          disabled={isPending}
           onClick={() => onComplete(departments)}
           style={{
             width: "100%",
@@ -143,8 +143,8 @@ export default function StepDepartments({ initial, onComplete, onBack }: Props) 
             color: "#ffffff",
             border: "none",
             borderRadius: "8px",
-            cursor: (departments.length === 0 || isPending) ? "default" : "pointer",
-            opacity: (departments.length === 0 || isPending) ? 0.5 : 1,
+            cursor: isPending ? "default" : "pointer",
+            opacity: isPending ? 0.5 : 1,
             letterSpacing: "-0.01em",
           }}
         >

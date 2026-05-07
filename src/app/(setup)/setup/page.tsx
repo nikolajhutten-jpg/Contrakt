@@ -8,7 +8,7 @@ import { UserRole } from "@/types";
 
 export const metadata = { title: "Workspace setup — Contrakt" };
 
-type Step = 0 | 1 | 2 | 3;
+type Step = 0 | 1 | 2;
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -18,7 +18,7 @@ interface PageProps {
  * Setup wizard page.
  * Requires only a valid Clerk session — no DB user needed yet.
  * Redirects to /dashboard only when tenant.setupComplete is true.
- * Accepts ?step=N (1-indexed) to resume at a specific step (e.g. after Stripe cancel).
+ * Accepts ?step=N (1-indexed, 1–3) to resume at a specific step (e.g. after Stripe cancel).
  */
 export default async function SetupPage({ searchParams }: PageProps) {
   const { userId } = await auth();
@@ -26,10 +26,10 @@ export default async function SetupPage({ searchParams }: PageProps) {
 
   const params = await searchParams;
   const rawStep = typeof params.step === "string" ? parseInt(params.step, 10) : NaN;
-  // URL uses 1-indexed steps; convert to 0-indexed for the wizard
+  // URL uses 1-indexed steps; convert to 0-indexed for the wizard (max step index = 2)
   const initialStep: Step =
-    !isNaN(rawStep) && rawStep >= 1 && rawStep <= 4
-      ? (Math.max(0, rawStep - 1) as Step)
+    !isNaN(rawStep) && rawStep >= 1 && rawStep <= 3
+      ? (Math.min(2, rawStep - 1) as Step)
       : 0;
 
   const localUser = await getUserByClerkId(userId);
@@ -51,7 +51,6 @@ export default async function SetupPage({ searchParams }: PageProps) {
     return (
       <SetupWizard
         initialDepartments={departments}
-        initialOrgName={tenant?.name ?? ""}
         initialStep={initialStep}
       />
     );
