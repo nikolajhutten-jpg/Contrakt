@@ -29,6 +29,13 @@ export async function getUsersByTenant(tenantId: string): Promise<User[]> {
   });
 }
 
+export async function getActiveUsersByTenant(tenantId: string): Promise<User[]> {
+  return prisma.user.findMany({
+    where: { tenantId, NOT: { clerkId: { startsWith: "invite:" } } },
+    orderBy: { name: "asc" },
+  });
+}
+
 export interface CreateUserInput {
   tenantId: string;
   clerkId: string;

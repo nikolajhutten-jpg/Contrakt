@@ -6,7 +6,9 @@ import {
   getTenantByStripeSubscriptionId,
 } from "@/lib/db/billing";
 import { getPlanUsage } from "@/lib/services/planLimits";
-import { TenantPlan, TenantPlanStatus } from "@/types";
+import { getUsersByTenant } from "@/lib/db/users";
+import { sendEmailNotification } from "@/lib/services/notifications";
+import { TenantPlan, TenantPlanStatus, UserRole } from "@/types";
 
 const PLAN_USER_LIMITS: Record<string, number> = {
   free: 1,
@@ -42,6 +44,27 @@ function toInternalStatus(status: Stripe.Subscription.Status): TenantPlanStatus 
       return TenantPlanStatus.Canceled;
     default:
       return TenantPlanStatus.Active;
+  }
+}
+
+// ─── Email helper ─────────────────────────────────────────────────────────────
+
+/** Finds the first active admin in the tenant and sends them a billing email. */
+async function emailTenantAdmin(
+  tenantId: string,
+  subject: string,
+  body: string,
+): Promise<void> {
+  try {
+    const users = await getUsersByTenant(tenantId);
+    const admin = users.find((u) => u.role === UserRole.Admin);
+    if (!admin) {
+      console.warn(`[billing/webhook] No active admin found for tenant ${tenantId} — skipping email.`);
+      return;
+    }
+    await sendEmailNotification(admin.email, subject, body);
+  } catch (err) {
+    console.error("[billing/webhook] Failed to send admin email:", err instanceof Error ? err.message : err);
   }
 }
 
@@ -101,6 +124,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           stripeSubscriptionId: session.subscription,
           seatCount: sub.items.data[0]?.quantity ?? 1,
         });
+
+        await emailTenantAdmin(
+          tenantId,
+          "Your Contrakt subscription is active",
+          `Your ${plan} plan is now active. You can manage your subscription from the billing settings.`,
+        );
         break;
       }
 
@@ -136,6 +165,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             await updateTenantBilling(tenant.id, { planStatus: TenantPlanStatus.ReadOnly });
           }
         }
+
+        await emailTenantAdmin(
+          tenant.id,
+          "Your Contrakt plan has been updated",
+          `Your plan has been updated to ${newPlan}. If you have questions, contact support.`,
+        );
         break;
       }
 
@@ -150,6 +185,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           planStatus: TenantPlanStatus.ReadOnly,
           stripeSubscriptionId: null,
         });
+
+        await emailTenantAdmin(
+          tenant.id,
+          "Your Contrakt subscription has been canceled",
+          "Your subscription has been canceled and your account is now on the Free plan.",
+        );
         break;
       }
 
