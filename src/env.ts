@@ -15,7 +15,7 @@ export const env = createEnv({
   server: {
     // ── Clerk ────────────────────────────────────────────────────────────────
     CLERK_SECRET_KEY:        z.string().min(1),
-    CLERK_WEBHOOK_SECRET:    z.string().min(1).optional(),
+    CLERK_WEBHOOK_SECRET:    z.string().min(1),
     APP_BASE_URL:     z.string().url(),
 
     // ── Database ─────────────────────────────────────────────────────────────
@@ -37,11 +37,12 @@ export const env = createEnv({
     // ── Anthropic (optional in local dev) ────────────────────────────────────
     ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-").optional(),
 
-    // ── Stripe (optional in local dev) ───────────────────────────────────────
-    STRIPE_SECRET_KEY:       z.string().startsWith("sk_").optional(),
-    STRIPE_WEBHOOK_SECRET:   z.string().startsWith("whsec_").optional(),
-    STRIPE_STARTER_PRICE_ID: z.string().startsWith("price_").optional(),
-    STRIPE_GROWTH_PRICE_ID:  z.string().startsWith("price_").optional(),
+    // ── Stripe ───────────────────────────────────────────────────────────────
+    STRIPE_SECRET_KEY:        z.string().startsWith("sk_").optional(),
+    STRIPE_WEBHOOK_SECRET:    z.string().startsWith("whsec_"),
+    STRIPE_STARTER_PRICE_ID:  z.string().startsWith("price_"),
+    STRIPE_TEAM_PRICE_ID:     z.string().startsWith("price_"),
+    STRIPE_BUSINESS_PRICE_ID: z.string().startsWith("price_"),
 
     // ── Upstash Redis (optional — rate limiting skipped when absent) ──────────
     UPSTASH_REDIS_REST_URL:   z.string().url().optional(),

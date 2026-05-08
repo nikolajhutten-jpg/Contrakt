@@ -22,9 +22,9 @@ const PLAN_USER_LIMITS: Record<string, number> = {
 
 /** Maps a Stripe Price ID to the matching internal plan name, or null if unrecognised. */
 function priceIdToPlan(priceId: string): TenantPlan | null {
-  if (priceId === process.env.STRIPE_STARTER_PRICE_ID)  return TenantPlan.Starter;
-  if (priceId === process.env.STRIPE_TEAM_PRICE_ID)     return TenantPlan.Team;
-  if (priceId === process.env.STRIPE_BUSINESS_PRICE_ID) return TenantPlan.Business;
+  if (priceId === env.STRIPE_STARTER_PRICE_ID)  return TenantPlan.Starter;
+  if (priceId === env.STRIPE_TEAM_PRICE_ID)     return TenantPlan.Team;
+  if (priceId === env.STRIPE_BUSINESS_PRICE_ID) return TenantPlan.Business;
   console.error(
     `[billing/webhook] Unrecognised Stripe price ID "${priceId}". ` +
     "Check STRIPE_STARTER_PRICE_ID, STRIPE_TEAM_PRICE_ID, and STRIPE_BUSINESS_PRICE_ID env vars.",
@@ -91,15 +91,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Missing Stripe-Signature header." }, { status: 400 });
   }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    console.error("STRIPE_WEBHOOK_SECRET is not configured.");
-    return NextResponse.json({ error: "Webhook secret not configured." }, { status: 500 });
-  }
-
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+    event = stripe.webhooks.constructEvent(body, sig, env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid signature";
     return NextResponse.json({ error: `Webhook error: ${message}` }, { status: 400 });

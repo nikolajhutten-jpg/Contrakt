@@ -6,6 +6,7 @@ import { convertToText, extractContractProperties, handleExtractionFailure } fro
 import { uploadFile } from "@/lib/storage/r2";
 import { ok, badRequest, forbidden, handleError } from "@/lib/api/response";
 import { checkExtractionLimit } from "@/lib/services/planLimits";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB — §14.1
 const ALLOWED_TYPES = new Set([
@@ -58,6 +59,10 @@ async function runExtractionPipeline(
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const { tenantId, tenant } = await resolveAuthContext();
+
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "anonymous";
+    const rl = await checkRateLimit(ip, "standard");
+    if (!rl.success) return new Response(JSON.stringify({ error: "Too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } });
 
     const limitCheck = await checkExtractionLimit(tenantId, tenant.plan);
     if (!limitCheck.allowed) return forbidden(limitCheck.message);

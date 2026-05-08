@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth/session";
 import { createUser, getUserByEmail } from "@/lib/db/users";
 import { ok, created, badRequest, conflict, forbidden, handleError } from "@/lib/api/response";
 import { checkUserLimit } from "@/lib/services/planLimits";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 import { UserRole } from "@/types";
 
 const VALID_ROLES = Object.values(UserRole) as string[];
@@ -80,6 +81,10 @@ async function sendClerkInvitation(email: string, secret: string): Promise<void>
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const { tenantId, tenant } = await requireRole([UserRole.Admin]);
+
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "anonymous";
+    const rl = await checkRateLimit(ip, "strict");
+    if (!rl.success) return new Response(JSON.stringify({ error: "Too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } });
 
     const body: unknown = await request.json();
     if (typeof body !== "object" || body === null)

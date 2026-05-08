@@ -9,6 +9,7 @@ import {
 import { buildCreateContractData } from "@/lib/services/contracts";
 import { checkContractLimit } from "@/lib/services/planLimits";
 import { ok, created, badRequest, forbidden, handleError } from "@/lib/api/response";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 import { UserRole } from "@/types";
 import type { CreateContractInput } from "@/types";
 
@@ -47,6 +48,10 @@ export async function POST(request: NextRequest): Promise<Response> {
     const { localUser, tenant, tenantId } = await resolveAuthContext();
 
     if (localUser.role !== UserRole.Admin) return forbidden();
+
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "anonymous";
+    const rl = await checkRateLimit(ip, "standard");
+    if (!rl.success) return new Response(JSON.stringify({ error: "Too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } });
 
     const limitCheck = await checkContractLimit(tenantId, tenant.plan);
     if (!limitCheck.allowed) return forbidden(limitCheck.message);

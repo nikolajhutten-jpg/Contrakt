@@ -1,4 +1,4 @@
-import "@/env"; // validates all required environment variables at startup
+import { env } from "@/env";
 import Stripe from "stripe";
 
 /**
@@ -17,9 +17,9 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
  * in your Stripe dashboard.
  */
 export const STRIPE_PRICES = {
-  starter:  process.env.STRIPE_STARTER_PRICE_ID ?? "",
-  team:     process.env.STRIPE_TEAM_PRICE_ID ?? "",
-  business: process.env.STRIPE_BUSINESS_PRICE_ID ?? "",
+  starter:  env.STRIPE_STARTER_PRICE_ID,
+  team:     env.STRIPE_TEAM_PRICE_ID,
+  business: env.STRIPE_BUSINESS_PRICE_ID,
 } as const;
 
 // ─── Customer ─────────────────────────────────────────────────────────────────
@@ -100,18 +100,4 @@ export async function cancelSubscription(
   return stripe.subscriptions.update(subscriptionId, {
     cancel_at_period_end: true,
   });
-}
-
-/**
- * Syncs the active seat count to Stripe (§15.5).
- * Call on user invite and deactivation.
- */
-export async function syncSeatCount(
-  subscriptionId: string,
-  quantity: number,
-): Promise<void> {
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  const itemId = subscription.items.data[0]?.id;
-  if (!itemId) throw new Error("Subscription has no line items to update.");
-  await stripe.subscriptionItems.update(itemId, { quantity });
 }
