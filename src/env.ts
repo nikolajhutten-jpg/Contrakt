@@ -25,6 +25,9 @@ export const env = createEnv({
     RESEND_API_KEY:    z.string().min(1),
     RESEND_FROM_EMAIL: z.string().email(),
 
+    // ── Superadmin ───────────────────────────────────────────────────────────
+    SUPERADMIN_EMAIL: z.string().email().default("nikolajhutten@gmail.com"),
+
     // ── Scheduler (optional in local dev) ────────────────────────────────────
     SCHEDULER_SECRET: z.string().min(1).optional(),
 
