@@ -4,10 +4,10 @@
  * Failures are logged but never thrown — a notification failure must not crash the scheduler.
  */
 import { Resend } from "resend";
+import { env } from "@/env";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL ?? "noreply@contrakt.io";
+const resend = new Resend(env.RESEND_API_KEY);
+const FROM_EMAIL = env.RESEND_FROM_EMAIL;
 const BASE_RETRY_MS = 1_000;
 
 function sleep(ms: number): Promise<void> {

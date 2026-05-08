@@ -70,8 +70,12 @@ export default function ExtractionReview({
       setSaveError("Please select or create a supplier.");
       return;
     }
-    if (!fields.startDate || !fields.endDate || !fields.termType || !fields.departmentId) {
-      setSaveError("Start date, end date, term, and department are required.");
+    if (!fields.startDate || !fields.termType || !fields.departmentId) {
+      setSaveError("Start date, term, and department are required.");
+      return;
+    }
+    if (fields.termType !== "indefinite" && !fields.endDate) {
+      setSaveError("End date is required for fixed-term contracts.");
       return;
     }
     if (fields.autoRenewal && !fields.renewalPeriodMonths) {
@@ -88,7 +92,7 @@ export default function ExtractionReview({
           departmentId: fields.departmentId,
           groupEntityId: fields.groupEntityId || null,
           startDate: fields.startDate,
-          endDate: fields.endDate,
+          ...(fields.termType !== "indefinite" && { endDate: fields.endDate }),
           termType: fields.termType,
           autoRenewal: fields.autoRenewal,
           renewalPeriodMonths: fields.renewalPeriodMonths ? Number(fields.renewalPeriodMonths) : null,

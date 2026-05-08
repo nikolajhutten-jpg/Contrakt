@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { inviteUser } from "@/lib/api/users";
+import { inviteUser, ApiError } from "@/lib/api/users";
+import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
 import { UserRole } from "@/types";
 import type { Department } from "@/types";
@@ -30,6 +31,7 @@ export default function InviteUserForm({ departments }: InviteUserFormProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -57,12 +59,74 @@ export default function InviteUserForm({ departments }: InviteUserFormProps) {
         setDepartmentId("");
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to invite user.");
+        if (err instanceof ApiError && err.status === 403) {
+          setShowUpgradeModal(true);
+        } else {
+          setError(err instanceof Error ? err.message : "Failed to invite user.");
+        }
       }
     });
   }
 
+  const upgradeModal = showUpgradeModal ? (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          border: "0.5px solid rgba(0,0,0,0.1)",
+          borderRadius: "12px",
+          padding: "28px 32px",
+          maxWidth: "420px",
+          width: "calc(100% - 48px)",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.12)",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "17px",
+            fontWeight: 600,
+            color: "#171717",
+            letterSpacing: "-0.02em",
+            marginBottom: "6px",
+          }}
+        >
+          You&apos;ve reached your limit
+        </h2>
+        <p style={{ fontSize: "13px", color: "rgba(0,0,0,0.5)", marginBottom: "24px" }}>
+          Upgrade your plan to invite more users.
+        </p>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => { window.location.href = "/settings/account"; }}
+          >
+            Upgrade plan
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowUpgradeModal(false)}
+          >
+            Dismiss
+          </Button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
+    <>
     <form
       onSubmit={handleSubmit}
       style={{
@@ -137,5 +201,7 @@ export default function InviteUserForm({ departments }: InviteUserFormProps) {
         </button>
       </div>
     </form>
+    {upgradeModal}
+    </>
   );
 }

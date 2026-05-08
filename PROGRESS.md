@@ -8,9 +8,9 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `prisma/schema.prisma` | Full Prisma schema — 10 tables (added `GroupEntity`); `internalGroupEntity` made nullable on `Contract`; `groupEntityId` FK added to `Contract`; `TenantPlan` + `TenantPlanStatus` enums and 6 billing fields on `Tenant` (§15). `User.auth0Id` renamed to `User.clerkId` (DB column `clerk_id`). `Tenant.setupComplete Boolean @default(false)` added — gates dashboard access. |
+| `prisma/schema.prisma` | Full Prisma schema — 10 tables (added `GroupEntity`); `internalGroupEntity` made nullable on `Contract`; `groupEntityId` FK added to `Contract`; `contractName String @map("contract_name")` added to `Contract` (migration `20260508000000_add_contract_name`). `TenantPlan` + `TenantPlanStatus` enums and 6 billing fields on `Tenant` (§15). `User.auth0Id` renamed to `User.clerkId` (DB column `clerk_id`). `Tenant.setupComplete Boolean @default(false)` added — gates dashboard access. |
 | `prisma.config.ts` | Prisma 7 external config; moves the database URL out of the schema file. |
-| `src/types/index.ts` | All TypeScript interfaces and `const`+union enums. Added `GroupEntity` interface. `Contract` gains `groupEntityId: string | null` and `internalGroupEntity: string | null`. `ContractSummary` replaces `internalGroupEntity: string` with `groupEntity: { id; name } | null` and adds `autoRenewal: boolean`. `ContractWithRelations` gains `groupEntity: GroupEntity | null`. `CreateContractInput` uses `groupEntityId`. `User.auth0Id` renamed to `User.clerkId`. `Tenant` gains `setupComplete: boolean`. |
+| `src/types/index.ts` | All TypeScript interfaces and `const`+union enums. Added `GroupEntity` interface. `Contract` gains `contractName: string`, `groupEntityId: string | null`, and `internalGroupEntity: string | null`. `ContractSummary` gains `contractName: string`; replaces `internalGroupEntity: string` with `groupEntity: { id; name } | null` and adds `autoRenewal: boolean`. `ContractWithRelations` gains `groupEntity: GroupEntity | null`. `CreateContractInput` gains `contractName: string` and uses `groupEntityId`. `User.auth0Id` renamed to `User.clerkId`. `Tenant` gains `setupComplete: boolean`. |
 | `src/env.ts` | `@t3-oss/env-nextjs` + Zod schema validating all required env vars at startup. Clerk vars: `CLERK_SECRET_KEY` (server), `CLERK_WEBHOOK_SECRET` (optional), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (client). Optional vars (Upstash, Sentry, Stripe, Resend) use `.optional()` so dev runs without them. |
 | `src/proxy.ts` | Clerk middleware via `clerkMiddleware()` from `@clerk/nextjs/server`. Public routes: `/sign-in(.*)`, `/sign-up(.*)`, `/api/billing/webhook`, `/api/webhooks/clerk`. All other routes require authentication via `auth.protect()`. Named `proxy` export per Next.js 16 convention. |
 | `next.config.ts` | Applies `getSecurityHeaders()` to all routes via the Next.js `headers()` config hook. |
@@ -69,6 +69,7 @@ Files created to date, organised by layer.
 |---|---|
 | `src/lib/api/auth.ts` | **Retired** — stub only; all new signups go through the Clerk webhook. |
 | `src/lib/hooks/useToast.ts` | `useToast()` hook — provides `showToast(message, variant?)`. |
+| `src/lib/hooks/useTablePreferences.ts` | `ALL_CONTRACT_COLUMNS` (12 columns; `contractName` is second, visible by default), `useTablePreferences(tableId)` (column visibility + per-table sort state from `localStorage`), `useViewOptions()` (full column control for settings UI). |
 | `src/lib/api/billing.ts` | `startCheckout(plan)`, `openBillingPortal()`. |
 | `src/lib/api/contracts.ts` | `confirmAction(contractId)`. |
 | `src/lib/api/vendors.ts` | `updateVendor(id, data)`. |
@@ -184,7 +185,7 @@ Files created to date, organised by layer.
 |---|---|
 | `src/components/dashboard/DashboardShell.tsx` | KPIs, contract tables, onboarding checklist. |
 | `src/components/dashboard/KpiRow.tsx` | Total contracts and Action required tiles. |
-| `src/components/dashboard/ContractTable.tsx` | White card table with `StatusBadge`. |
+| `src/components/dashboard/ContractTable.tsx` | White card table with `StatusBadge`. Renders and sorts the `contractName` column; included in the filter search terms. |
 
 ### All Contracts
 
@@ -192,7 +193,7 @@ Files created to date, organised by layer.
 |---|---|
 | `src/components/contracts/ContractsShell.tsx` | Page shell — title, "Add contract" button, filter bar, empty states. |
 | `src/components/contracts/ContractFilters.tsx` | Search + filter row. |
-| `src/components/contracts/ContractTableFull.tsx` | Table with table/card toggle. |
+| `src/components/contracts/ContractTableFull.tsx` | Table with table/card toggle. Renders and sorts the `contractName` column. |
 | `src/components/contracts/ContractCard.tsx` | Card view per contract. |
 
 ### Contract Detail
@@ -202,7 +203,7 @@ Files created to date, organised by layer.
 | `src/components/contracts/detail/ContractDetailShell.tsx` | Split-pane layout. |
 | `src/components/contracts/detail/DocumentViewer.tsx` | Fetches signed R2 URL; PDF iframe or DOCX download. |
 | `src/components/contracts/detail/PropertiesPanel.tsx` | Tab bar. Delete Contract (two-step, admin). |
-| `src/components/contracts/detail/PropertiesTab.tsx` | Editable contract fields. |
+| `src/components/contracts/detail/PropertiesTab.tsx` | Editable contract fields. `contractName` is the first field — `EditableField` (text) when `canEdit`, static `Field` otherwise. |
 | `src/components/contracts/detail/EditableField.tsx` | Inline edit with Save/Cancel. |
 | `src/components/contracts/detail/EditableOwnersField.tsx` | Inline owner multi-select. |
 | `src/components/contracts/detail/DocumentsTab.tsx` | Document list with type badges. |
@@ -213,10 +214,10 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/components/upload/UploadShell.tsx` | Phase state machine: upload → polling → review / error. |
+| `src/components/upload/UploadShell.tsx` | Phase state machine: upload → polling → review / error. `makeInitialFields()` initialises `contractName: ""`. |
 | `src/components/upload/UploadZone.tsx` | Drag-and-drop zone. |
-| `src/components/upload/ExtractionReview.tsx` | Two-column AI preview / editable form. |
-| `src/components/upload/ContractFormFields.tsx` | Form fields with confidence indicators. |
+| `src/components/upload/ExtractionReview.tsx` | Two-column AI preview / editable form. Validates `contractName` before save; includes it in the `POST /api/contracts` body. |
+| `src/components/upload/ContractFormFields.tsx` | Form fields with confidence indicators. `contractName` required text input is the first field. `FieldValues` includes `contractName: string`. |
 | `src/components/upload/ConfidenceIndicator.tsx` | Coloured dot with hover tooltip. |
 | `src/components/upload/OwnerSelect.tsx` | Multi-select pill autocomplete. |
 

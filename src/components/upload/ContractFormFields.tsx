@@ -143,12 +143,15 @@ export default function ContractFormFields({
 
       <FieldRow
         label="End date"
-        confidence={<ConfidenceIndicator level={confidence?.end_date} />}
+        confidence={values.termType !== "indefinite" ? <ConfidenceIndicator level={confidence?.end_date} /> : undefined}
       >
         <input
           type="date"
-          value={values.endDate}
+          value={values.termType === "indefinite" ? "" : values.endDate}
           onChange={(e) => onChange({ endDate: e.target.value })}
+          disabled={values.termType === "indefinite"}
+          placeholder={values.termType === "indefinite" ? "Not applicable" : undefined}
+          style={values.termType === "indefinite" ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
         />
       </FieldRow>
 
@@ -158,7 +161,10 @@ export default function ContractFormFields({
       >
         <select
           value={values.termType}
-          onChange={(e) => onChange({ termType: e.target.value })}
+          onChange={(e) => {
+            const t = e.target.value;
+            onChange({ termType: t, ...(t === "indefinite" ? { endDate: "" } : {}) });
+          }}
         >
           <option value="">Select term</option>
           <option value="fixed">Fixed</option>

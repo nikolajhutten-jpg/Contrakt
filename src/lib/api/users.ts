@@ -3,6 +3,13 @@
  */
 import type { User, UserRole } from "@/types";
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 interface InviteUserInput {
   email: string;
   name: string;
@@ -18,7 +25,7 @@ export async function inviteUser(input: InviteUserInput): Promise<User> {
   });
   if (!res.ok) {
     const data = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(data.error ?? "Failed to invite user.");
+    throw new ApiError(data.error ?? "Failed to invite user.", res.status);
   }
   const body = (await res.json()) as { data: User };
   return body.data;

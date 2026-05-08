@@ -84,8 +84,8 @@ function parseCreateInput(
   if (typeof b.vendorId !== "string") return "vendorId is required.";
   if (typeof b.departmentId !== "string") return "departmentId is required.";
   if (typeof b.startDate !== "string") return "startDate is required.";
-  if (typeof b.endDate !== "string") return "endDate is required.";
   if (typeof b.termType !== "string") return "termType is required.";
+  if (b.termType !== "indefinite" && (typeof b.endDate !== "string" || !b.endDate)) return "endDate is required for fixed-term contracts.";
   if (typeof b.autoRenewal !== "boolean") return "autoRenewal is required.";
   if (!Array.isArray(b.ownerIds)) return "ownerIds must be an array.";
 
@@ -95,7 +95,7 @@ function parseCreateInput(
     departmentId: b.departmentId,
     groupEntityId: typeof b.groupEntityId === "string" ? b.groupEntityId : null,
     startDate: b.startDate,
-    endDate: b.endDate,
+    endDate: b.termType === "indefinite" ? "9999-12-31" : b.endDate as string,
     termType: b.termType as CreateContractInput["termType"],
     autoRenewal: b.autoRenewal,
     renewalPeriodMonths:

@@ -92,14 +92,14 @@ Contrakt is a B2B SaaS contract management platform that lets teams upload, extr
 | Auth config | `src/lib/auth/config.ts`, `src/lib/auth/session.ts`, `src/middleware.ts` |
 | Shared types | `src/types/index.ts` |
 | DB helpers | `src/lib/db/contractHelpers.ts` (`toSummary()`), `src/lib/db/client.ts` (Prisma singleton) |
-| Table prefs hook | `src/lib/hooks/useTablePreferences.ts` — exports `ALL_CONTRACT_COLUMNS`, `useTablePreferences()`, `useViewOptions()` |
+| Table prefs hook | `src/lib/hooks/useTablePreferences.ts` — exports `ALL_CONTRACT_COLUMNS` (12 cols; `contractName` is the second, visible by default), `useTablePreferences()`, `useViewOptions()` |
 | Pages | `src/app/(app)/` — dashboard, contracts, action-required, vendors, notifications, settings/*, setup |
 | Layout | `src/components/layout/AppLayout.tsx`, `Sidebar.tsx` |
 
 ## What's Been Built
 
 - **Multi-tenant auth** with Clerk, role-based access, invite flow, onboarding setup wizard
-- **Contract lifecycle** — upload (PDF/DOCX), AI extraction via Anthropic, extraction review, contract save, detail view with document viewer and tabbed UI
+- **Contract lifecycle** — upload (PDF/DOCX), AI extraction via Anthropic, extraction review, contract name + field capture, contract save, detail view with document viewer and tabbed UI
 - **Sortable, configurable tables** across all contract views — column visibility and order stored globally in `localStorage` (`contrakt_view_options`), sort state per-table (`contrakt_sort_<id>`); View Options in account settings with drag-and-drop reorder
 - **Vendor management** — list, detail page with scoped contract table, inline edit form
 - **Alert system** — notice-deadline and expiry alerts, cron job route, status auto-updater
