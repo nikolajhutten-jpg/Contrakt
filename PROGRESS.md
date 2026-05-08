@@ -11,7 +11,7 @@ Files created to date, organised by layer.
 | `prisma/schema.prisma` | Full Prisma schema — 10 tables (added `GroupEntity`); `internalGroupEntity` made nullable on `Contract`; `groupEntityId` FK added to `Contract`; `TenantPlan` + `TenantPlanStatus` enums and 6 billing fields on `Tenant` (§15). `User.auth0Id` renamed to `User.clerkId` (DB column `clerk_id`). `Tenant.setupComplete Boolean @default(false)` added — gates dashboard access. |
 | `prisma.config.ts` | Prisma 7 external config; moves the database URL out of the schema file. |
 | `src/types/index.ts` | All TypeScript interfaces and `const`+union enums. Added `GroupEntity` interface. `Contract` gains `groupEntityId: string | null` and `internalGroupEntity: string | null`. `ContractSummary` replaces `internalGroupEntity: string` with `groupEntity: { id; name } | null` and adds `autoRenewal: boolean`. `ContractWithRelations` gains `groupEntity: GroupEntity | null`. `CreateContractInput` uses `groupEntityId`. `User.auth0Id` renamed to `User.clerkId`. `Tenant` gains `setupComplete: boolean`. |
-| `src/env.ts` | `@t3-oss/env-nextjs` + Zod schema validating all required env vars at startup. Clerk vars: `CLERK_SECRET_KEY` (server), `CLERK_WEBHOOK_SECRET` (optional), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (client). Optional vars (Upstash, Sentry, Stripe, SendGrid) use `.optional()` so dev runs without them. |
+| `src/env.ts` | `@t3-oss/env-nextjs` + Zod schema validating all required env vars at startup. Clerk vars: `CLERK_SECRET_KEY` (server), `CLERK_WEBHOOK_SECRET` (optional), `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (client). Optional vars (Upstash, Sentry, Stripe, Resend) use `.optional()` so dev runs without them. |
 | `src/proxy.ts` | Clerk middleware via `clerkMiddleware()` from `@clerk/nextjs/server`. Public routes: `/sign-in(.*)`, `/sign-up(.*)`, `/api/billing/webhook`, `/api/webhooks/clerk`. All other routes require authentication via `auth.protect()`. Named `proxy` export per Next.js 16 convention. |
 | `next.config.ts` | Applies `getSecurityHeaders()` to all routes via the Next.js `headers()` config hook. |
 | `sentry.client.config.ts` | Sentry browser-side init — reads `NEXT_PUBLIC_SENTRY_DSN`; 10 % trace sampling; replay integration with full text+media masking; no-op when DSN is absent. |
@@ -38,7 +38,7 @@ Files created to date, organised by layer.
 | `src/lib/db/departments.ts` | `getDepartmentsByTenant`, `getDepartmentById`, `createDepartment`, `renameDepartment`, `deactivateDepartment`. |
 | `src/lib/db/documents.ts` | `getDocumentsByContract`, `getDocumentById`, `createDocument`, `deleteDocument`, `getLatestRenewalVersion`. |
 | `src/lib/db/alerts.ts` | `getAlertsByContract`, `getAlertById`, `createAlert`, `updateAlert`, `deleteAlert`. |
-| `src/lib/db/settings.ts` | `getTenantSettings`, `updateTenantSettings`. `UpdateTenantSettingsData` accepts `setupComplete?: boolean`. |
+| `src/lib/db/settings.ts` | `getTenantSettings`, `updateTenantSettings`. `UpdateTenantSettingsData` accepts `setupComplete?: boolean`, `plan?: TenantPlan`, `planStatus?: TenantPlanStatus`. |
 | `src/lib/db/billing.ts` | `updateTenantBilling`, `getTenantByStripeCustomerId`, `getTenantByStripeSubscriptionId`. |
 | `src/lib/db/extractionResults.ts` | `saveExtractionResult`, `getExtractionResultByDocument`. |
 
@@ -52,9 +52,9 @@ Files created to date, organised by layer.
 | `src/lib/security/headers.ts` | `getSecurityHeaders()` — X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions-Policy. CSP `script-src` includes `*.clerk.com`, `*.clerk.accounts.dev`, `challenges.cloudflare.com`. `connect-src` and `frame-src` include same Clerk + Cloudflare domains. |
 | `src/lib/security/sanitize.ts` | `sanitizeText`, `sanitizeEmail`, `validateUUID` — boundary-level input sanitisation helpers. |
 | `src/lib/services/stripe.ts` | Stripe v22 singleton + helpers: `createCustomer`, `createCheckoutSession`, `createPortalSession`, `getSubscription`, `cancelSubscription`, `syncSeatCount`. |
-| `src/lib/services/notifications.ts` | SendGrid email and Slack Incoming Webhook helpers; both retry up to 3 times with exponential backoff; failures logged but never thrown. |
+| `src/lib/services/notifications.ts` | Resend email and Slack Incoming Webhook helpers (backend only — no frontend UI); both retry up to 3 times with exponential backoff; failures logged but never thrown. Invites are sent via Clerk's `/v1/invitations` API, not Resend. |
 | `src/lib/services/planLimits.ts` | `getPlanUsage`, `checkContractLimit`, `checkUserLimit`, `checkExtractionLimit`. |
-| `src/lib/auth/session.ts` | Clerk-based auth helpers. `resolveAuthContext()` — gets `userId` from `auth()`, looks up DB user by `clerkId`, resolves tenant from `user.tenantId`; returns `{ localUser, tenant, tenantId }`. `requireAuth()` — returns `userId` or throws. `requireRole(role)` — resolves context and asserts role; accepts single role or array. |
+| `src/lib/auth/session.ts` | Clerk-based auth helpers. `resolveAuthContext(options?)` — gets `userId` from `auth()`, looks up DB user by `clerkId`, resolves tenant; enforces `planStatus` (canceled/read_only → 403) and `setupComplete` gate (bypassed via `{ skipSetupCheck: true }`); returns `{ localUser, tenant, tenantId, isPastDue }`. `requireRole(role, options?)` — resolves context and asserts role; accepts single role or array; forwards `AuthOptions`. |
 | `src/lib/api/response.ts` | `ok`, `created`, `notFound`, `forbidden`, `badRequest`, `handleError`. |
 | `src/lib/services/contracts.ts` | `calculateDurationMonths`, `calculateNoticeDeadline`, `determineInitialStatus`, `buildCreateContractData`. |
 | `src/lib/services/extraction.ts` | `convertToText` (pdf-parse / mammoth), `extractContractProperties` (Claude API), `handleExtractionFailure`. |
@@ -67,14 +67,14 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/lib/api/auth.ts` | `signup(input)` — POST to `/api/auth/signup`; legacy onboarding helper. |
+| `src/lib/api/auth.ts` | **Retired** — stub only; all new signups go through the Clerk webhook. |
 | `src/lib/hooks/useToast.ts` | `useToast()` hook — provides `showToast(message, variant?)`. |
 | `src/lib/api/billing.ts` | `startCheckout(plan)`, `openBillingPortal()`. |
 | `src/lib/api/contracts.ts` | `confirmAction(contractId)`. |
 | `src/lib/api/vendors.ts` | `updateVendor(id, data)`. |
 | `src/lib/api/users.ts` | `inviteUser`, `updateUserRole`, `deactivateUser`, `updateMyProfile`. |
 | `src/lib/api/departments.ts` | `createDepartment`, `renameDepartment`, `deactivateDepartment`. |
-| `src/lib/api/settings.ts` | `updateAccountSettings`, `testSlackWebhook`. |
+| `src/lib/api/settings.ts` | `updateAccountSettings`. |
 
 ---
 
@@ -82,13 +82,13 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/app/api/auth/signup/route.ts` | `POST` — legacy onboarding: validates input, creates `Tenant` + admin `User` with placeholder `clerkId`; sets `trialEndsAt` (+14 days). Superseded by the Clerk webhook for new signups. |
-| `src/app/api/webhooks/clerk/route.ts` | `POST` — Clerk webhook receiver. Verifies Svix signature. On `user.created`: idempotency check by Clerk ID; if email matches a DB user with `invite:*` clerkId, updates it (invited user flow); if email matches a real clerkId, returns 200 without provisioning (deactivated user guard); otherwise provisions a new `Tenant` + admin `User`. On `user.deleted`: looks up DB user by clerkId and deletes them if found. |
+| `src/app/api/auth/signup/route.ts` | **Retired** — returns 410 Gone. All new signups go through the Clerk `user.created` webhook. |
+| `src/app/api/webhooks/clerk/route.ts` | `POST` — Clerk webhook receiver. Verifies Svix signature. On `user.created`: idempotency check by Clerk ID; if email matches any existing DB user (invited or deactivated), updates their clerkId uniformly (re-signup recovery); otherwise provisions a new `Tenant` + admin `User`. On `user.deleted`: looks up DB user by clerkId and deletes them if found. |
 | `src/app/api/billing/checkout/route.ts` | `POST` — admin only; provisions Stripe customer, creates hosted Checkout Session. Quantity hardcoded to 1 (flat-rate plans). `success_url` → `GET /api/setup/complete?redirect=/dashboard`; `cancel_url` → `/setup?step=3`. |
-| `src/app/api/setup/complete/route.ts` | `PATCH` — admin only; sets `setupComplete: true`. `GET` — called by Stripe `success_url`; sets `setupComplete: true` and redirects to the `?redirect=` param (validated to start with `/`). |
+| `src/app/api/setup/complete/route.ts` | `PATCH` — admin only (`skipSetupCheck: true`); sets `setupComplete: true`; atomically writes `plan: Free, planStatus: Active` for free-plan tenants. `GET` — called by Stripe `success_url`; same write + redirects to `?redirect=` param (validated to start with `/`). |
 | `src/app/api/billing/portal/route.ts` | `POST` — admin only; creates Stripe Customer Portal session. |
-| `src/app/api/billing/webhook/route.ts` | `POST` — Stripe webhook receiver; handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`. |
-| `src/app/api/contracts/route.ts` | `GET` list (role-filtered) and `POST` create. |
+| `src/app/api/billing/webhook/route.ts` | `POST` — Stripe webhook receiver; handles `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`. `priceIdToPlan` returns `TenantPlan \| null`; unknown price IDs return 400 (Stripe retry). After a plan update, checks seat overage — sets `planStatus: ReadOnly` if active users exceed the new plan's limit. |
+| `src/app/api/contracts/route.ts` | `GET` list (role-filtered) and `POST` create (admin only; enforces `checkContractLimit`). |
 | `src/app/api/contracts/[id]/route.ts` | `GET` single contract, `PATCH` update, `DELETE` (admin only). |
 | `src/app/api/contracts/[id]/confirm-action/route.ts` | `POST` — marks action taken, resets status to Active; idempotent. |
 | `src/app/api/contracts/[id]/documents/route.ts` | `GET` list and `POST` upload linked documents. |
@@ -97,17 +97,17 @@ Files created to date, organised by layer.
 | `src/app/api/documents/[docId]/url/route.ts` | `GET` — returns a signed R2 URL (1-hour expiry). |
 | `src/app/api/group-entities/route.ts` | `GET` list active group entities. `POST` create (admin only). |
 | `src/app/api/group-entities/[id]/route.ts` | `DELETE` soft-deactivates a group entity (admin only). |
-| `src/app/api/vendors/route.ts` | `GET` list and `POST` create vendors. |
+| `src/app/api/vendors/route.ts` | `GET` list (role-scoped) and `POST` create (admin only via `requireRole([UserRole.Admin])`). |
 | `src/app/api/vendors/[id]/route.ts` | `GET` vendor with contracts and `PATCH` update (admin only). |
 | `src/app/api/users/route.ts` | `GET` all users in tenant (admin only). |
-| `src/app/api/users/invite/route.ts` | `POST` — validates no duplicate email in the tenant (409 if found), creates a local user record with placeholder `clerkId`, then calls Clerk's `/v1/invitations` to send the invite email (best-effort; errors logged but do not fail the request). |
+| `src/app/api/users/invite/route.ts` | `POST` — enforces `checkUserLimit`; validates no duplicate email (409); creates a local user record with placeholder `clerkId`; calls Clerk's `/v1/invitations` (best-effort). |
 | `src/app/api/users/[id]/route.ts` | `PATCH` update role/department and `DELETE` deactivate (admin only). |
 | `src/app/api/users/me/route.ts` | `PATCH` — update own profile. |
 | `src/app/api/departments/route.ts` | `GET` list and `POST` create departments. |
 | `src/app/api/departments/[id]/route.ts` | `PATCH` rename and `DELETE` deactivate (admin only). |
 | `src/app/api/settings/account/route.ts` | `GET` and `PATCH` tenant account settings (admin only). |
-| `src/app/api/settings/account/test-slack/route.ts` | `POST` — sends a test Slack message. |
-| `src/app/api/upload/route.ts` | `POST` — validates file, creates extraction job, fires pipeline. |
+| `src/app/api/settings/account/test-slack/route.ts` | `POST` — sends a test Slack message via the backend helper; frontend Slack settings UI has been removed. |
+| `src/app/api/upload/route.ts` | `POST` — enforces `checkExtractionLimit`; validates file, creates extraction job, fires pipeline. |
 | `src/app/api/upload/[jobId]/status/route.ts` | `GET` — returns job status for polling. |
 | `src/app/api/upload/[jobId]/result/route.ts` | `GET` — returns extracted fields once job is complete. |
 
@@ -126,7 +126,7 @@ Files created to date, organised by layer.
 | `src/app/(auth)/layout.tsx` | Minimal centred layout for public auth pages. |
 | `src/app/(app)/layout.tsx` | Authenticated route group layout — wraps every protected page in `AppLayout`. |
 | `src/app/(app)/dashboard/page.tsx` | Home page — fetches KPIs, active contracts, upcoming renewals, and onboarding state. |
-| `src/app/(setup)/setup/page.tsx` | Setup wizard — requires only a valid Clerk session (no DB user needed). If DB user exists: admin-only; redirects to `/dashboard` only if `tenant.setupComplete` is true. Accepts `?step=N` (1-indexed, 1–3) to resume at a specific step — used by Stripe cancel redirect. If no DB user: checks Clerk email — redirects to `/sign-in` if deactivated; otherwise renders wizard with empty state. |
+| `src/app/(setup)/setup/page.tsx` | Setup wizard — requires only a valid Clerk session (no DB user needed). If DB user exists: admin sees wizard (redirects to `/dashboard` if `setupComplete`); non-admin sees a styled "Only administrators can complete setup" message card. Accepts `?step=N` (1-indexed, 1–3) to resume — used by Stripe cancel redirect. If no DB user: checks Clerk email — redirects to `/sign-in` if deactivated; otherwise renders wizard with empty state. |
 | `src/app/(app)/contracts/page.tsx` | All Contracts page — role-filtered, passes data to `ContractsShell`. |
 | `src/app/(app)/contracts/[id]/page.tsx` | Contract Detail page. |
 | `src/app/(app)/contracts/new/page.tsx` | Upload Contract page — renders `UploadShell`. |
@@ -162,7 +162,7 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/components/layout/AppLayout.tsx` | Server component — calls `auth()` from Clerk, looks up DB user by `clerkId`. Redirects to `/sign-in` if no Clerk session; to `/setup` if no DB user or `tenant.setupComplete` is false. Fetches badge counts and renders sidebar. |
+| `src/components/layout/AppLayout.tsx` | Server component — calls `auth()` from Clerk, looks up DB user by `clerkId`. Redirects to `/sign-in` if no Clerk session; to `/setup` if no DB user or `tenant.setupComplete` is false. Fetches badge counts, renders `PastDueBanner` (amber, dismissible) when `planStatus === past_due`, then renders sidebar. |
 | `src/components/layout/Sidebar.tsx` | White sidebar. Nav: Home, All contracts, Upcoming renewals, Notifications, Vendors, Settings. Sign out button (`<SignOutButton>` from Clerk) above user identity footer. |
 
 ### UI primitives
@@ -266,14 +266,14 @@ Files created to date, organised by layer.
 
 | File | Description |
 |---|---|
-| `src/components/settings/account/AccountSettingsForm.tsx` | Company, Slack, and tenant settings. |
+| `src/components/settings/account/AccountSettingsForm.tsx` | Company and tenant settings. |
 | `src/components/settings/account/BillingSection.tsx` | Plan cards (matching StepLicense style) for all plans — current plan highlighted; selecting a different plan reveals an "Upgrade/Downgrade to X" button. Free card hidden for paid users. Users and Contracts usage meters (contracts meter only shown for finite limits). Stripe not-configured error surfaced explicitly. |
 
 ### Settings — Profile
 
 | File | Description |
 |---|---|
-| `src/components/settings/profile/ProfileForm.tsx` | Identity, Slack, and notification preferences. |
+| `src/components/settings/profile/ProfileForm.tsx` | Identity and notification preferences. |
 
 ---
 
@@ -436,3 +436,51 @@ Full replacement of `@auth0/nextjs-auth0` with `@clerk/nextjs@7.3.0`.
 ### Sidebar
 
 - Added `<SignOutButton>` (Clerk) above the user identity footer — same 13px neutral style as nav items.
+
+---
+
+## Session changes (2026-05-07, continued)
+
+### License enforcement
+
+- `src/app/api/contracts/route.ts` — `POST` calls `checkContractLimit(tenantId, tenant.plan)` before creating; returns 403 if the tenant is at or over their plan's contract limit.
+- `src/app/api/users/invite/route.ts` — calls `checkUserLimit(tenantId, tenant.plan)` before creating the user record; returns 403 if the tenant is at or over their plan's seat limit.
+- `src/app/api/upload/route.ts` — calls `checkExtractionLimit(tenantId, tenant.plan)` before starting the extraction pipeline; returns 403 if the tenant is at their monthly extraction limit.
+- `src/app/api/billing/checkout/route.ts` — downgrade guard: if the target plan's seat limit is lower than the current active user count, returns 400 before creating the Stripe session.
+
+### Upload upgrade modal
+
+- `src/components/upload/UploadZone.tsx` — `onError` prop extended to `(message: string, status?: number) => void`; HTTP status forwarded to parent on upload failure.
+- `src/components/upload/UploadShell.tsx` — `handleUploadError` intercepts 403 responses and shows a fixed-position upgrade modal ("You've reached your limit") with an "Upgrade plan" button (→ `/settings/account`) and a "Dismiss" button, instead of entering the error phase.
+
+### Security audit and fixes (13 issues)
+
+Full audit across middleware, plan enforcement, setup gates, Stripe webhooks, scheduler auth, and role consistency.
+
+**Batch 1 — High severity**
+
+- `src/lib/auth/session.ts` — `AuthOptions { skipSetupCheck?: boolean }` interface added. `resolveAuthContext` enforces `planStatus`: `canceled` or `read_only` → throws 403. `setupComplete` gate throws 403 unless `skipSetupCheck` is true. Returns `isPastDue` flag. `requireRole` accepts and forwards `AuthOptions`.
+- `src/components/layout/PastDueBanner.tsx` — new client component. Amber dismissible banner for `past_due` tenants; links to `/settings/account`.
+- `src/components/layout/AppLayout.tsx` — renders `PastDueBanner` above `OfflineBanner` when `isPastDue`.
+- `src/proxy.ts` / `src/middleware.ts` — confirmed `proxy.ts` is the correct Next.js 16 convention. `src/middleware.ts` was created by error and hard-deleted (`rm`) — even a comment-only file causes Next.js 16 to error.
+
+**Batch 2 — Medium severity**
+
+- `src/app/(setup)/setup/page.tsx` — non-Admin users see a styled message card instead of `redirect("/dashboard")`, eliminating a redirect loop.
+- `src/app/api/billing/webhook/route.ts` — `priceIdToPlan` returns `TenantPlan | null`; unknown price IDs return 400. `customer.subscription.updated` checks seat overage post-update and sets `planStatus: ReadOnly` if active users exceed the new plan's limit.
+- `src/app/api/auth/signup/route.ts` — retired; returns 410 Gone.
+- `src/lib/api/auth.ts` — retired; stub only.
+- `src/app/api/webhooks/clerk/route.ts` — `existingByEmail` branch simplified: always calls `updateUser(..., { clerkId })` regardless of old clerkId format, covering both invited and deactivated user re-signup.
+- `src/app/api/settings/account/route.ts` — both GET and PATCH use `skipSetupCheck: true` so admins can configure settings during onboarding.
+- `src/app/api/jobs/update-statuses/route.ts` — scheduler auth is now unconditional: missing `SCHEDULER_SECRET` → 500; non-matching → 403. Previously skipped auth entirely when the env var was absent.
+
+**Batch 3 — Low severity**
+
+- `src/lib/db/settings.ts` — `UpdateTenantSettingsData` gains `planStatus?: TenantPlanStatus`.
+- `src/app/api/setup/complete/route.ts` — both GET and PATCH use `skipSetupCheck: true` and atomically write `{ plan: Free, planStatus: Active }` for free-plan tenants alongside `setupComplete: true`.
+- `src/app/api/contracts/[id]/confirm-action/route.ts` — doc comment corrected to "Admin only".
+- `src/app/api/vendors/route.ts` — `POST` uses `requireRole([UserRole.Admin])` directly instead of `resolveAuthContext` + manual role check.
+
+### DB backfill
+
+All 10 existing tenants had `setup_complete` set to `true` via direct SQL, preventing the new `setupComplete` gate from locking out pre-existing users.
