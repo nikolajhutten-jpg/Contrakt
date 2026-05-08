@@ -84,6 +84,7 @@ export async function getContractsByDepartmentOrOwner(
 
 export interface CreateContractData {
   tenantId: string;
+  contractName: string;
   vendorId: string;
   departmentId: string;
   groupEntityId: string | null;
@@ -116,6 +117,7 @@ export async function createContract(
 }
 
 export interface UpdateContractData {
+  contractName?: string;
   vendorId?: string;
   departmentId?: string;
   groupEntityId?: string | null;

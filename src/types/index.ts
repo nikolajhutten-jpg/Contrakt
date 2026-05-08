@@ -138,6 +138,7 @@ export interface GroupEntity {
 
 export interface Contract {
   id: string;
+  contractName: string;
   tenantId: string;
   vendorId: string;
   departmentId: string;
@@ -259,6 +260,7 @@ export interface ContractWithRelations extends Contract {
 /** Lighter contract shape for list/dashboard views (§7.4) */
 export interface ContractSummary {
   id: string;
+  contractName: string;
   tenantId: string;
   groupEntity: Pick<GroupEntity, "id" | "name"> | null;
   startDate: Date;
@@ -282,6 +284,7 @@ export interface ExtractionResultWithDocument extends ExtractionResult {
 
 /** Body accepted by POST /api/contracts */
 export interface CreateContractInput {
+  contractName: string;
   vendorId: string;
   departmentId: string;
   groupEntityId: string | null;

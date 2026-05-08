@@ -150,6 +150,7 @@ model Vendor {
 
 model Contract {
   id                        String         @id @default(uuid())
+  contractName              String         @map("contract_name")
   tenantId                  String         @map("tenant_id")
   vendorId                  String         @map("vendor_id")
   departmentId              String         @map("department_id")

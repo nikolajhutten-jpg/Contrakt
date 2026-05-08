@@ -38,11 +38,12 @@ export const summaryInclude = {
   owners: { include: { user: { select: { id: true, name: true } } } },
 } as const;
 
-// Note: startDate is a scalar on the contract row itself — no include needed.
+// Note: startDate and contractName are scalars on the contract row — no include needed.
 
 /** Maps a Prisma row (with nested includes) to the ContractSummary shape. */
 export function toSummary(row: {
   id: string;
+  contractName: string;
   tenantId: string;
   groupEntity: { id: string; name: string } | null;
   startDate: Date;
@@ -58,6 +59,7 @@ export function toSummary(row: {
 }): ContractSummary {
   return {
     id: row.id,
+    contractName: row.contractName,
     tenantId: row.tenantId,
     groupEntity: row.groupEntity,
     startDate: row.startDate,

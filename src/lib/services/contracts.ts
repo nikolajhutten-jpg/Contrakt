@@ -75,6 +75,7 @@ export function buildCreateContractData(
 
   return {
     tenantId,
+    contractName: input.contractName,
     vendorId: input.vendorId,
     departmentId: input.departmentId,
     groupEntityId: input.groupEntityId,

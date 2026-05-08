@@ -80,6 +80,7 @@ function parseCreateInput(
   }
   const b = body as Record<string, unknown>;
 
+  if (typeof b.contractName !== "string" || b.contractName.trim() === "") return "contractName is required.";
   if (typeof b.vendorId !== "string") return "vendorId is required.";
   if (typeof b.departmentId !== "string") return "departmentId is required.";
   if (typeof b.startDate !== "string") return "startDate is required.";
@@ -89,6 +90,7 @@ function parseCreateInput(
   if (!Array.isArray(b.ownerIds)) return "ownerIds must be an array.";
 
   return {
+    contractName: b.contractName,
     vendorId: b.vendorId,
     departmentId: b.departmentId,
     groupEntityId: typeof b.groupEntityId === "string" ? b.groupEntityId : null,

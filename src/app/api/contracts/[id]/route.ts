@@ -105,6 +105,7 @@ function parseUpdateInput(
 
   const patch: import("@/lib/db/contracts").UpdateContractData = {};
 
+  if (typeof b.contractName === "string" && b.contractName.trim() !== "") patch.contractName = b.contractName;
   if (typeof b.vendorId === "string") patch.vendorId = b.vendorId;
   if (typeof b.departmentId === "string") patch.departmentId = b.departmentId;
   if (typeof b.groupEntityId === "string" || b.groupEntityId === null)
