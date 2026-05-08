@@ -9,7 +9,9 @@ Contrakt is a B2B SaaS contract management platform that lets teams upload, extr
 - **Clerk** (`@clerk/nextjs@7.3.0`) — auth via `clerkMiddleware()` in `src/proxy.ts`; webhook at `/api/webhooks/clerk` provisions tenants and handles invite flow
 - **Anthropic Claude SDK** — AI extraction of contract fields from uploaded PDFs/DOCX
 - **Stripe** — billing, checkout, webhook at `/api/billing/webhook`
-- **SendGrid** — transactional email (invite, alert notifications)
+- **Clerk** — invite and signup emails
+- **Resend** — transactional email (renewal alerts, payment notifications)
+- **Slack** — backend helper retained in `src/lib/services/notifications.ts` for future use; no frontend UI
 - **Tailwind CSS v4** — utility classes used sparingly; most styling is inline `style={{}}`
 - **Zod v4** — request validation in API routes
 
@@ -29,7 +31,6 @@ Contrakt is a B2B SaaS contract management platform that lets teams upload, extr
 
 **Mocked / incomplete:**
 - Notifications UI — page and components exist but not wired to real-time delivery
-- Slack notifications — webhook URL saved, sending not fully implemented
 - Renewals page (`/renewals`) — route exists, content unknown
 
 ## Recent Changes
@@ -73,14 +74,13 @@ Contrakt is a B2B SaaS contract management platform that lets teams upload, extr
 - **`• ()` invite bug** — `inviteUser()` in `src/lib/api/users.ts` was casting `res.json()` directly to `User`, but the API wraps responses as `{ data: T }`. Fixed to `(await res.json() as { data: User }).data`. Invited users now display correctly in the list.
 - **Setup bypass fix** — `src/app/(setup)/setup/page.tsx` completion check tightened: redirects to `/dashboard` only when `tenant.name` + `departmentsAdded` + (`firstUserInvited` **or** plan is `FREE`). Previously only required name + departments, so paid-plan users mid-wizard were incorrectly bounced.
 
-## The 6 Coding Rules
+## The 5 Coding Rules
 
 1. **Strict layer separation** — UI → `src/components/`, DB queries → `src/lib/db/`, business logic → `src/lib/services/`, API functions → `src/lib/api/`, types → `src/types/`, routes → `src/app/api/`
-2. **200-line file limit** — split any file that exceeds it on a genuine concern boundary
-3. **Single-responsibility functions** — a function fetches, transforms, *or* renders; never all three
-4. **No `any`** — explicit TypeScript types everywhere
-5. **Tenant scoping** — every DB query must filter by `tenantId`; never fetch without it
-6. **Auth/role check first** — every API route validates session and role before any other logic
+2. **Single-responsibility functions** — a function fetches, transforms, *or* renders; never all three
+3. **No `any`** — explicit TypeScript types everywhere
+4. **Tenant scoping** — every DB query must filter by `tenantId`; never fetch without it
+5. **Auth/role check first** — every API route validates session and role before any other logic
 
 ## Key File Locations
 
