@@ -97,7 +97,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const email = b.email.trim();
     const secret = process.env.CLERK_SECRET_KEY;
 
-    const existing = await getUserByEmail(email);
+    const existing = await getUserByEmail(email, tenantId);
 
     // ── Resend path ────────────────────────────────────────────────────────────
     // The user was already invited (placeholder clerkId). Reuse the existing DB

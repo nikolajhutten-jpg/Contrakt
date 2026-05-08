@@ -8,6 +8,7 @@ import {
 import { getPlanUsage } from "@/lib/services/planLimits";
 import { getUsersByTenant } from "@/lib/db/users";
 import { sendEmailNotification } from "@/lib/services/notifications";
+import { env } from "@/env";
 import { TenantPlan, TenantPlanStatus, UserRole } from "@/types";
 
 const PLAN_USER_LIMITS: Record<string, number> = {
@@ -115,7 +116,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const priceId = sub.items.data[0]?.price.id ?? "";
         const plan = priceIdToPlan(priceId);
         if (!plan) {
-          return NextResponse.json({ error: "Unrecognised price ID." }, { status: 400 });
+          await sendEmailNotification(
+            env.SUPERADMIN_EMAIL,
+            "[Contrakt] Unknown Stripe price ID on checkout",
+            `checkout.session.completed received an unrecognised price ID "${priceId}" for tenant ${tenantId}. Check STRIPE_*_PRICE_ID env vars.`,
+          );
+          break;
         }
 
         await updateTenantBilling(tenantId, {
@@ -141,7 +147,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         const priceId = sub.items.data[0]?.price.id ?? "";
         const newPlan = priceIdToPlan(priceId);
         if (!newPlan) {
-          return NextResponse.json({ error: "Unrecognised price ID." }, { status: 400 });
+          await sendEmailNotification(
+            env.SUPERADMIN_EMAIL,
+            "[Contrakt] Unknown Stripe price ID on subscription update",
+            `customer.subscription.updated received an unrecognised price ID "${priceId}" for tenant ${tenant.id}. Check STRIPE_*_PRICE_ID env vars.`,
+          );
+          break;
         }
         const newStatus = toInternalStatus(sub.status);
 

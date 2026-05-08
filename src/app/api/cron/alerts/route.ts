@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAndFireAlerts } from "@/lib/services/alertScheduler";
 import { updateContractStatuses } from "@/lib/services/statusUpdater";
+import { env } from "@/env";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const auth = req.headers.get("authorization");
+  if (auth !== `Bearer ${env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {

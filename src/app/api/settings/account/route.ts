@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth/session";
 import { getTenantSettings, updateTenantSettings } from "@/lib/db/settings";
+import { getPlanUsage } from "@/lib/services/planLimits";
 import { ok, notFound, badRequest, handleError } from "@/lib/api/response";
 import { UserRole, TenantPlan } from "@/types";
 
@@ -42,6 +43,9 @@ export async function PATCH(request: NextRequest): Promise<Response> {
       const raw = typeof b.plan === "string" ? b.plan.toLowerCase() : "";
       if (raw !== TenantPlan.Free)
         return badRequest("Only the Free plan can be set via this endpoint. Use Stripe checkout for paid plans.");
+      const usage = await getPlanUsage(tenantId);
+      if (usage.users > 1)
+        return badRequest("Cannot downgrade — too many active users for this plan.");
       patch.plan = TenantPlan.Free;
     }
 

@@ -16,9 +16,23 @@ export async function getUserByClerkId(clerkId: string) {
   })
 }
 
-export async function getUserByEmail(email: string) {
+export async function getUserByEmail(email: string, tenantId: string) {
   return prisma.user.findFirst({
-    where: { email },
+    where: { email, tenantId },
+  });
+}
+
+/** Finds a pending invite (clerkId starts with "invite:") by email across all tenants. */
+export async function getUserByEmailPending(email: string) {
+  return prisma.user.findFirst({
+    where: { email, clerkId: { startsWith: "invite:" } },
+  });
+}
+
+/** Finds any active (non-invite) user by email across all tenants. Used only in setup flow. */
+export async function getUserByEmailActive(email: string) {
+  return prisma.user.findFirst({
+    where: { email, NOT: { clerkId: { startsWith: "invite:" } } },
   });
 }
 

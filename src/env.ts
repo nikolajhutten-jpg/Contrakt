@@ -28,6 +28,9 @@ export const env = createEnv({
     // ── Superadmin ───────────────────────────────────────────────────────────
     SUPERADMIN_EMAIL: z.string().email().default("nikolajhutten@gmail.com"),
 
+    // ── Cron ─────────────────────────────────────────────────────────────────
+    CRON_SECRET: z.string().min(1),
+
     // ── Scheduler (optional in local dev) ────────────────────────────────────
     SCHEDULER_SECRET: z.string().min(1).optional(),
 

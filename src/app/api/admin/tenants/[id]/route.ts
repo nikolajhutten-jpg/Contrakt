@@ -44,6 +44,19 @@ export async function PATCH(
     update.planStatus = body.planStatus as TenantPlanStatus;
   }
 
-  const tenant = await updateTenant(id, update);
-  return NextResponse.json({ data: tenant });
+  try {
+    const tenant = await updateTenant(id, update);
+    return NextResponse.json({ data: tenant });
+  } catch (err) {
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code: string }).code === "P2025"
+    ) {
+      return NextResponse.json({ error: "Tenant not found." }, { status: 404 });
+    }
+    console.error("[admin/tenants] updateTenant failed:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+  }
 }

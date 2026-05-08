@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { getUserByClerkId, getUserByEmail } from "@/lib/db/users";
+import { getUserByClerkId, getUserByEmailActive } from "@/lib/db/users";
 import { getDepartmentsByTenant } from "@/lib/db/departments";
 import { getTenantSettings } from "@/lib/db/settings";
 import SetupWizard from "@/components/setup/SetupWizard";
@@ -93,7 +93,7 @@ export default async function SetupPage({ searchParams }: PageProps) {
     )?.emailAddress ?? clerkUser?.emailAddresses[0]?.emailAddress;
 
   if (primaryEmail) {
-    const existingByEmail = await getUserByEmail(primaryEmail);
+    const existingByEmail = await getUserByEmailActive(primaryEmail);
     if (existingByEmail && !existingByEmail.clerkId.startsWith("invite:")) {
       redirect("/sign-in");
     }

@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { Webhook } from "svix";
 import { createTenant } from "@/lib/db/tenants";
-import { createUser, getUserByClerkId, getUserByEmail, updateUser, deactivateUser } from "@/lib/db/users";
+import { createUser, getUserByClerkId, getUserByEmailPending, updateUser, deactivateUser } from "@/lib/db/users";
 import { UserRole } from "@/types";
 
 const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -72,45 +72,52 @@ export async function POST(req: Request): Promise<Response> {
     return new Response("OK", { status: 200 });
   }
 
-  // Idempotency: skip if user already exists by Clerk ID
-  const existingByClerkId = await getUserByClerkId(clerkId);
-  if (existingByClerkId) {
+  try {
+    // Idempotency: skip if user already exists by Clerk ID
+    const existingByClerkId = await getUserByClerkId(clerkId);
+    if (existingByClerkId) {
+      return new Response("OK", { status: 200 });
+    }
+
+    const { email_addresses, primary_email_address_id, first_name, last_name } = event.data;
+
+    const primaryEmail = email_addresses?.find(e => e.id === primary_email_address_id)
+      ?? email_addresses?.[0];
+    const email = primaryEmail?.email_address ?? "";
+
+    if (!email) {
+      console.error("[clerk/webhook] user.created event missing email address for clerkId:", clerkId);
+      return new Response("Missing email", { status: 400 });
+    }
+
+    const name = [first_name, last_name].filter(Boolean).join(" ") || email.split("@")[0];
+
+    // Check if a pending invite placeholder exists for this email.
+    const pendingInvite = await getUserByEmailPending(email);
+    if (pendingInvite) {
+      // Link the new Clerk account to the invited DB record.
+      await updateUser(pendingInvite.id, pendingInvite.tenantId, { clerkId });
+      return new Response("OK", { status: 200 });
+    }
+
+    // New signup: provision a fresh tenant for this user.
+    const baseSlug = toSlug(name) || "workspace";
+    const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
+    const gcsBucket = `contrakt-${slug}-documents`;
+
+    const tenant = await createTenant({ name, slug, gcsBucket });
+
+    await createUser({
+      tenantId: tenant.id,
+      clerkId,
+      name,
+      email,
+      role: UserRole.Admin,
+    });
+
     return new Response("OK", { status: 200 });
+  } catch (err) {
+    console.error("[clerk/webhook] handler error:", err instanceof Error ? err.message : err);
+    return new Response("Internal server error", { status: 500 });
   }
-
-  const { email_addresses, primary_email_address_id, first_name, last_name } = event.data;
-
-  const primaryEmail = email_addresses?.find(e => e.id === primary_email_address_id)
-    ?? email_addresses?.[0];
-  const email = primaryEmail?.email_address ?? "";
-
-  const name = [first_name, last_name].filter(Boolean).join(" ") || email.split("@")[0];
-
-  // Check if this email already exists in the DB.
-  const existingByEmail = await getUserByEmail(email);
-  if (existingByEmail) {
-    // Link the new Clerk account to the existing DB record whether the user
-    // was invited (invite: placeholder) or is re-signing up after losing
-    // access to their previous Clerk account. Without this update they would
-    // have a valid Clerk session but no matching DB record.
-    await updateUser(existingByEmail.id, existingByEmail.tenantId, { clerkId });
-    return new Response("OK", { status: 200 });
-  }
-
-  // New signup: provision a fresh tenant for this user.
-  const baseSlug = toSlug(name) || "workspace";
-  const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 8)}`;
-  const gcsBucket = `contrakt-${slug}-documents`;
-
-  const tenant = await createTenant({ name, slug, gcsBucket });
-
-  await createUser({
-    tenantId: tenant.id,
-    clerkId,
-    name,
-    email,
-    role: UserRole.Admin,
-  });
-
-  return new Response("OK", { status: 200 });
 }

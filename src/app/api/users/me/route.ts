@@ -30,11 +30,6 @@ function parsePatch(body: unknown): UpdateUserInput | string {
       return "name must be a non-empty string.";
     patch.name = b.name.trim();
   }
-  if ("email" in b) {
-    if (typeof b.email !== "string" || b.email.trim() === "")
-      return "email must be a non-empty string.";
-    patch.email = b.email.trim();
-  }
   if ("slackUserId" in b) {
     if (typeof b.slackUserId !== "string" && b.slackUserId !== null)
       return "slackUserId must be a string or null.";
