@@ -6,6 +6,7 @@ import ConfidenceIndicator from "@/components/upload/ConfidenceIndicator";
 import type { ConfidenceRatings, User } from "@/types";
 
 export interface FieldValues {
+  contractName: string;
   vendorId: string | null;
   groupEntityId: string | null;
   departmentId: string | null;
@@ -81,6 +82,16 @@ export default function ContractFormFields({
 }: ContractFormFieldsProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      <FieldRow label="Contract name">
+        <input
+          type="text"
+          value={values.contractName}
+          onChange={(e) => onChange({ contractName: e.target.value })}
+          placeholder="e.g. Acme SaaS Agreement 2026"
+          required
+        />
+      </FieldRow>
+
       <FieldRow label="Supplier / vendor">
         <ComboSelect
           options={vendors}

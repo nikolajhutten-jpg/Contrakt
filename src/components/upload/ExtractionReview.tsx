@@ -62,6 +62,10 @@ export default function ExtractionReview({
 
   function handleSave() {
     setSaveError(null);
+    if (!fields.contractName.trim()) {
+      setSaveError("Contract name is required.");
+      return;
+    }
     if (!fields.vendorId) {
       setSaveError("Please select or create a supplier.");
       return;
@@ -79,6 +83,7 @@ export default function ExtractionReview({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          contractName: fields.contractName,
           vendorId: fields.vendorId,
           departmentId: fields.departmentId,
           groupEntityId: fields.groupEntityId || null,

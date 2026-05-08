@@ -15,6 +15,7 @@ function str(v: string | number | boolean | null | undefined): string {
 
 function makeInitialFields(extracted: ExtractionOutput | null): FieldValues {
   return {
+    contractName: "",
     vendorId: null,
     groupEntityId: null,
     departmentId: null,

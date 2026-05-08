@@ -110,6 +110,19 @@ export default function PropertiesTab({ contract, canEdit }: PropertiesTabProps)
 
   return (
     <div>
+      {/* Contract name */}
+      {canEdit ? (
+        <EditableField
+          label="Contract name"
+          value={contract.contractName}
+          displayValue={contract.contractName}
+          inputType="text"
+          onSave={(v) => patch({ contractName: String(v) })}
+        />
+      ) : (
+        <Field label="Contract name" value={contract.contractName} />
+      )}
+
       {/* Vendor name */}
       <h2
         style={{
@@ -118,6 +131,7 @@ export default function PropertiesTab({ contract, canEdit }: PropertiesTabProps)
           letterSpacing: "-0.02em",
           color: "#171717",
           marginBottom: "16px",
+          marginTop: "8px",
         }}
       >
         {contract.vendor.name}

@@ -57,6 +57,7 @@ function ownerNames(owners: { name: string }[]): string {
 function getCellValue(col: string, c: ContractSummary): string | number | Date | null {
   switch (col) {
     case "supplier":              return c.vendor.name.toLowerCase();
+    case "contractName":          return c.contractName.toLowerCase();
     case "department":            return c.department.name.toLowerCase();
     case "owner":                 return ownerNames(c.owners).toLowerCase();
     case "startDate":             return c.startDate;
@@ -74,6 +75,7 @@ function getCellValue(col: string, c: ContractSummary): string | number | Date |
 function renderCell(col: string, c: ContractSummary): React.ReactNode {
   switch (col) {
     case "supplier":              return c.vendor.name;
+    case "contractName":          return c.contractName;
     case "department":            return c.department.name;
     case "owner":                 return ownerNames(c.owners);
     case "startDate":             return formatDate(c.startDate);
@@ -111,6 +113,7 @@ export default function ContractTable({
     if (!q) return contracts;
     return contracts.filter(
       (c) =>
+        c.contractName.toLowerCase().includes(q) ||
         c.vendor.name.toLowerCase().includes(q) ||
         c.department.name.toLowerCase().includes(q) ||
         (c.groupEntity?.name ?? "").toLowerCase().includes(q) ||

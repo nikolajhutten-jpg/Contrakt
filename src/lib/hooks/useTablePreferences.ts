@@ -15,6 +15,7 @@ export interface ColumnDef {
 /** All contract-table columns in their default display order. */
 export const ALL_CONTRACT_COLUMNS: ColumnDef[] = [
   { key: "supplier",              label: "Supplier",        weight: 18, defaultVisible: true  },
+  { key: "contractName",          label: "Contract name",   weight: 18, defaultVisible: true  },
   { key: "department",            label: "Department",      weight: 12, defaultVisible: true  },
   { key: "owner",                 label: "Owner",           weight: 12, defaultVisible: true  },
   { key: "startDate",             label: "Start date",      weight: 10, defaultVisible: false },
