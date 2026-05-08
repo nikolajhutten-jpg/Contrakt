@@ -5,21 +5,6 @@ import OwnerSelect from "@/components/upload/OwnerSelect";
 import ConfidenceIndicator from "@/components/upload/ConfidenceIndicator";
 import type { ConfidenceRatings, User } from "@/types";
 
-async function postUser(name: string): Promise<User> {
-  const res = await fetch("/api/users/invite", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name,
-      email: `invite-${Date.now()}@placeholder.local`,
-      role: "business_owner",
-    }),
-  });
-  const json = await res.json() as { data?: User; error?: string };
-  if (!res.ok) throw new Error(json.error ?? "Failed to create user.");
-  return json.data!;
-}
-
 export interface FieldValues {
   vendorId: string | null;
   groupEntityId: string | null;
@@ -131,7 +116,7 @@ export default function ContractFormFields({
       </FieldRow>
 
       <FieldRow label="Business owners">
-        <OwnerSelect users={users} selected={ownerIds} onChange={onOwnersChange} onCreateNew={postUser} />
+        <OwnerSelect users={users} selected={ownerIds} onChange={onOwnersChange} />
       </FieldRow>
 
       <FieldRow
